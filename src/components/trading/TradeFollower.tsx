@@ -76,10 +76,13 @@ export const TradeFollower = () => {
   };
 
   const handleToggleFollowing = (enabled: boolean) => {
+    console.log('Toggle following:', enabled);
     setIsFollowing(enabled);
     if (!enabled) {
-      // Clear signals when stopping
+      console.log('Stopping trade following, clearing signals');
       setSignals([]);
+    } else {
+      console.log('Starting trade following');
     }
   };
 

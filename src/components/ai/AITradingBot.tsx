@@ -83,11 +83,15 @@ export const AITradingBot = () => {
   }, []);
 
   const toggleBot = (botId: string) => {
-    setBots(prev => prev.map(bot => 
-      bot.id === botId 
-        ? { ...bot, status: bot.status === 'active' ? 'paused' : 'active' }
-        : bot
-    ));
+    console.log('Toggling bot:', botId);
+    setBots(prev => prev.map(bot => {
+      if (bot.id === botId) {
+        const newStatus = bot.status === 'active' ? 'paused' : 'active';
+        console.log(`Bot ${bot.name} status changed from ${bot.status} to ${newStatus}`);
+        return { ...bot, status: newStatus };
+      }
+      return bot;
+    }));
   };
 
   const getStatusColor = (status: string) => {

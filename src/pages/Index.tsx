@@ -17,6 +17,7 @@ import { AdvancedTradingInterface } from "@/components/AdvancedTradingInterface"
 import { RiskManagementDashboard } from "@/components/RiskManagementDashboard";
 import { AccountManager } from "@/components/AccountManager";
 import { AccountHistoryManager } from "@/components/AccountHistoryManager";
+import { BotManagement } from "@/components/settings/BotManagement";
 
 const Index = () => {
   const { user, loading } = useAuth();
@@ -53,6 +54,7 @@ const Index = () => {
       case "settings":
         return (
           <div className="space-y-6">
+            <BotManagement />
             <PaperAccountSettings />
             <AccountHistoryManager />
           </div>
