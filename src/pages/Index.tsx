@@ -10,6 +10,11 @@ import { MarketOverview } from "@/components/MarketOverview";
 import { PaperAccountSettings } from "@/components/PaperAccountSettings";
 import { PortfolioDashboard } from "@/components/PortfolioDashboard";
 import { TradingHistory } from "@/components/TradingHistory";
+import { RealTimeTracker } from "@/components/trading/RealTimeTracker";
+import { TradeFollower } from "@/components/trading/TradeFollower";
+import { AITradingBot } from "@/components/ai/AITradingBot";
+import { AdvancedTradingInterface } from "@/components/AdvancedTradingInterface";
+import { RiskManagementDashboard } from "@/components/RiskManagementDashboard";
 
 const Index = () => {
   const { user, loading } = useAuth();
@@ -30,17 +35,28 @@ const Index = () => {
   const renderContent = () => {
     switch (activeTab) {
       case "trading":
-        return <TradingPanel />;
+        return (
+          <div className="space-y-6">
+            <AdvancedTradingInterface />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <TradeFollower />
+              <AITradingBot />
+            </div>
+          </div>
+        );
       case "traders":
         return <TopTraders />;
       case "settings":
         return <PaperAccountSettings />;
       case "history":
         return <TradingHistory />;
+      case "risk":
+        return <RiskManagementDashboard />;
       default:
         return (
           <div className="space-y-6">
             <PortfolioDashboard />
+            <RealTimeTracker />
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2 space-y-6">
                 <MarketOverview />
@@ -48,6 +64,7 @@ const Index = () => {
               </div>
               <div className="space-y-6">
                 <TradingHistory />
+                <AITradingBot />
               </div>
             </div>
           </div>
