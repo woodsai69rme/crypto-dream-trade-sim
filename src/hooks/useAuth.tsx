@@ -27,12 +27,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Set loading timeout fallback (5 seconds max)
+    const loadingTimeout = setTimeout(() => {
+      console.warn('Auth loading timeout - falling back to signed out state');
+      setLoading(false);
+    }, 5000);
+
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+        clearTimeout(loadingTimeout);
       }
     );
 
@@ -41,9 +48,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+      clearTimeout(loadingTimeout);
+    }).catch((error) => {
+      console.error('Failed to get initial session:', error);
+      setLoading(false);
+      clearTimeout(loadingTimeout);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(loadingTimeout);
+    };
   }, []);
 
   const signUp = async (email: string, password: string) => {
