@@ -10,6 +10,8 @@ import { Switch } from "@/components/ui/switch";
 import { Progress } from "@/components/ui/progress";
 import { useMultipleAccounts, type PaperAccount } from "@/hooks/useMultipleAccounts";
 import { useRealTimePortfolio } from "@/hooks/useRealTimePortfolio";
+import { useAccountReset } from "@/hooks/useAccountReset";
+import { useFollowingAccounts } from "@/hooks/useFollowingAccounts";
 import { AccountTemplateSelector } from "./AccountTemplateSelector";
 import { AccountComparison } from "./AccountComparison";
 import { AccountSharing } from "./AccountSharing";
@@ -23,7 +25,8 @@ import {
   Zap, Shield, BarChart3, BookOpen, Bitcoin, Bot, Trophy, Target,
   ExternalLink, Maximize2, Activity, PieChart, LineChart, Monitor,
   Play, Pause, StopCircle, RefreshCw, Download, Upload, Calendar,
-  Wallet, History, ChevronUp, ChevronDown, Minimize2
+  Wallet, History, ChevronUp, ChevronDown, Minimize2, RotateCcw,
+  UserCheck, Trash2
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
@@ -168,6 +171,131 @@ const PopOutDashboard = ({ account, onClose }: { account: PaperAccount; onClose:
   );
 };
 
+const FollowingAccountsTab = () => {
+  const { followingAccounts, loading } = useFollowingAccounts();
+
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        {[...Array(3)].map((_, i) => (
+          <Card key={i} className="crypto-card-gradient text-white animate-pulse">
+            <CardContent className="p-4">
+              <div className="h-20 bg-white/10 rounded"></div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-medium text-white">Following Accounts ({followingAccounts.length})</h3>
+        <Badge className="bg-green-500/20 text-green-400">
+          <Activity className="w-3 h-3 mr-1" />
+          Live Updates
+        </Badge>
+      </div>
+
+      {followingAccounts.length === 0 ? (
+        <Card className="crypto-card-gradient text-white">
+          <CardContent className="p-8 text-center">
+            <UserCheck className="w-12 h-12 mx-auto mb-4 text-white/60" />
+            <p className="text-white/60">You're not following any traders yet.</p>
+            <p className="text-sm text-white/40 mt-1">Visit the Top Traders section to start following.</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-3">
+          {followingAccounts.map((account) => (
+            <Card key={account.id} className="crypto-card-gradient text-white">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
+                      <span className="font-bold text-white">
+                        {account.trader_name.slice(0, 2).toUpperCase()}
+                      </span>
+                    </div>
+                    
+                    <div>
+                      <h4 className="font-semibold text-lg">{account.trader_name}</h4>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Badge className="bg-purple-500/20 text-purple-400">
+                          {account.trader_category}
+                        </Badge>
+                        <span className="text-sm text-white/60">
+                          Following since {formatDistanceToNow(new Date(account.followed_at))} ago
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {account.live_data && (
+                    <div className="text-right">
+                      <div className="text-xl font-bold">
+                        ${account.live_data.current_balance.toLocaleString()}
+                      </div>
+                      <div className={`text-sm ${
+                        account.live_data.total_pnl >= 0 ? 'text-green-400' : 'text-red-400'
+                      }`}>
+                        {account.live_data.total_pnl >= 0 ? '+' : ''}${account.live_data.total_pnl.toFixed(2)} 
+                        ({account.live_data.total_pnl_percentage >= 0 ? '+' : ''}{account.live_data.total_pnl_percentage.toFixed(2)}%)
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {account.live_data && (
+                  <div className="mt-4 grid grid-cols-3 gap-4">
+                    <div className="text-center p-2 bg-white/5 rounded">
+                      <div className="text-lg font-bold text-green-400">{account.live_data.win_rate.toFixed(1)}%</div>
+                      <div className="text-xs text-white/60">Win Rate</div>
+                    </div>
+                    <div className="text-center p-2 bg-white/5 rounded">
+                      <div className="text-lg font-bold">{account.live_data.total_trades}</div>
+                      <div className="text-xs text-white/60">Total Trades</div>
+                    </div>
+                    <div className="text-center p-2 bg-white/5 rounded">
+                      <div className="text-lg font-bold text-blue-400">{account.live_data.recent_trades.length}</div>
+                      <div className="text-xs text-white/60">Recent Trades</div>
+                    </div>
+                  </div>
+                )}
+
+                {account.live_data && account.live_data.recent_trades.length > 0 && (
+                  <div className="mt-4">
+                    <h5 className="text-sm font-medium mb-2">Recent Activity</h5>
+                    <ScrollArea className="h-32">
+                      <div className="space-y-1">
+                        {account.live_data.recent_trades.map((trade, index) => (
+                          <div key={index} className="flex items-center justify-between p-2 bg-white/5 rounded text-xs">
+                            <div className="flex items-center gap-2">
+                              <Badge className={trade.side === 'buy' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}>
+                                {trade.side.toUpperCase()}
+                              </Badge>
+                              <span>{trade.symbol}</span>
+                              <span>${trade.price.toLocaleString()}</span>
+                            </div>
+                            <div className={`font-medium ${trade.pnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                              {trade.pnl >= 0 ? '+' : ''}${trade.pnl.toFixed(2)}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </ScrollArea>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export const AccountManager = () => {
   const {
     accounts,
@@ -182,6 +310,8 @@ export const AccountManager = () => {
     markNotificationRead
   } = useMultipleAccounts();
 
+  const { resetAccount, resetAllAccounts, resetting } = useAccountReset();
+
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [selectedAccounts, setSelectedAccounts] = useState<string[]>([]);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -190,6 +320,8 @@ export const AccountManager = () => {
   const [popOutAccount, setPopOutAccount] = useState<PaperAccount | null>(null);
   const [showTopTicker, setShowTopTicker] = useState(true);
   const [showBottomTicker, setShowBottomTicker] = useState(true);
+  const [showResetDialog, setShowResetDialog] = useState(false);
+  const [accountToReset, setAccountToReset] = useState<string | null>(null);
 
   // Mock market data for tickers
   const topTickers = [
@@ -218,6 +350,21 @@ export const AccountManager = () => {
         ? prev.filter(id => id !== accountId)
         : [...prev, accountId]
     );
+  };
+
+  const handleResetAccount = async (accountId: string) => {
+    const success = await resetAccount(accountId);
+    if (success) {
+      setAccountToReset(null);
+      setShowResetDialog(false);
+    }
+  };
+
+  const handleResetAllAccounts = async () => {
+    const success = await resetAllAccounts();
+    if (success) {
+      setShowResetDialog(false);
+    }
   };
 
   const renderAccountCard = (account: PaperAccount) => {
@@ -465,6 +612,63 @@ export const AccountManager = () => {
               </Button>
             </>
           )}
+
+          {/* Reset Actions */}
+          <Dialog open={showResetDialog} onOpenChange={setShowResetDialog}>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="border-red-500/30 text-red-400 hover:bg-red-500/10">
+                <RotateCcw className="w-4 h-4 mr-2" />
+                Reset
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle className="text-red-400">Reset Account Data</DialogTitle>
+                <DialogDescription>
+                  This will permanently delete all trades, analytics, and history. This action cannot be undone.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                {accountToReset && (
+                  <div className="p-4 bg-red-500/10 border border-red-500/20 rounded">
+                    <p className="text-sm">
+                      Reset: {accounts.find(a => a.id === accountToReset)?.account_name}
+                    </p>
+                  </div>
+                )}
+                <div className="flex gap-2">
+                  {accountToReset ? (
+                    <Button
+                      onClick={() => handleResetAccount(accountToReset)}
+                      disabled={resetting}
+                      className="flex-1 bg-red-600 hover:bg-red-700"
+                    >
+                      {resetting ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <Trash2 className="w-4 h-4 mr-2" />}
+                      Reset Account
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={handleResetAllAccounts}
+                      disabled={resetting}
+                      className="flex-1 bg-red-600 hover:bg-red-700"
+                    >
+                      {resetting ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <Trash2 className="w-4 h-4 mr-2" />}
+                      Reset All Accounts
+                    </Button>
+                  )}
+                  <Button
+                    onClick={() => {
+                      setShowResetDialog(false);
+                      setAccountToReset(null);
+                    }}
+                    variant="outline"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
           
           <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
             <DialogTrigger asChild>
@@ -537,126 +741,190 @@ export const AccountManager = () => {
         </Card>
       )}
 
-      {/* Accounts Grid/List */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-white/60">View:</span>
-            <Button
-              variant={viewMode === 'grid' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setViewMode('grid')}
-            >
-              Grid
-            </Button>
-            <Button
-              variant={viewMode === 'list' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setViewMode('list')}
-            >
-              List
-            </Button>
-          </div>
-          
-          <div className="text-sm text-white/60">
-            {selectedAccounts.length > 0 && `${selectedAccounts.length} selected • `}
-            {accounts.length} total accounts
-          </div>
-        </div>
+      {/* Main Content with Tabs */}
+      <Tabs defaultValue="accounts" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="accounts">My Accounts</TabsTrigger>
+          <TabsTrigger value="following">Following</TabsTrigger>
+          <TabsTrigger value="analytics">Analytics</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="accounts" className="space-y-4">
+          {/* Accounts Grid/List */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-white/60">View:</span>
+                <Button
+                  variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setViewMode('grid')}
+                >
+                  Grid
+                </Button>
+                <Button
+                  variant={viewMode === 'list' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setViewMode('list')}
+                >
+                  List
+                </Button>
+              </div>
+              
+              <div className="text-sm text-white/60">
+                {selectedAccounts.length > 0 && `${selectedAccounts.length} selected • `}
+                {accounts.length} total accounts
+              </div>
+            </div>
 
-        {viewMode === 'grid' ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {accounts.map(renderAccountCard)}
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {accounts.map(account => (
-              <Card 
-                key={account.id}
-                className={`crypto-card-gradient text-white cursor-pointer transition-all duration-200 hover:bg-white/5 ${
-                  currentAccount?.id === account.id ? 'ring-2 ring-blue-400' : ''
-                }`}
-                onClick={() => handleAccountClick(account.id)}
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div 
-                        className="w-12 h-12 rounded-lg flex items-center justify-center"
-                        style={{ backgroundColor: account.color_theme + '33' }}
-                      >
-                        {React.createElement(ACCOUNT_TYPE_ICONS[account.account_type as keyof typeof ACCOUNT_TYPE_ICONS] || BarChart3, {
-                          className: "w-6 h-6",
-                          style: { color: account.color_theme }
-                        })}
-                      </div>
-                      
-                      <div>
-                        <h3 className="font-semibold text-lg">{account.account_name}</h3>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Badge className={RISK_LEVEL_COLORS[account.risk_level as keyof typeof RISK_LEVEL_COLORS]}>
-                            {account.risk_level.replace('_', ' ')}
-                          </Badge>
-                          <span className="text-sm text-white/60">
-                            {account.trading_strategy.replace('_', ' ')}
-                          </span>
-                          <Badge className="bg-green-500/20 text-green-400">
-                            <Activity className="w-3 h-3 mr-1" />
-                            Following
-                          </Badge>
-                        </div>
-                        <div className="text-xs text-white/60 mt-1">
-                          Last trade: BTC BUY $67,432 • Win: 73.2% • 156 trades
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-8">
-                      <div className="text-right">
-                        <p className="text-xl font-bold">${account.balance.toLocaleString()}</p>
-                        <p className={`text-sm ${
-                          account.total_pnl >= 0 ? 'text-green-400' : 'text-red-400'
-                        }`}>
-                          {account.total_pnl >= 0 ? '+' : ''}${account.total_pnl.toFixed(2)} 
-                          ({account.total_pnl_percentage >= 0 ? '+' : ''}{account.total_pnl_percentage.toFixed(2)}%)
-                        </p>
-                      </div>
-                      
-                      <div className="flex items-center gap-2">
-                        {currentAccount?.id === account.id && (
-                          <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">
-                            Active
-                          </Badge>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setPopOutAccount(account);
-                          }}
-                        >
-                          <ExternalLink className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleAccountSelect(account.id);
-                          }}
-                        >
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
+            {viewMode === 'grid' ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {accounts.map(account => (
+                  <div key={account.id} className="relative">
+                    {renderAccountCard(account)}
+                    <Button
+                      onClick={() => {
+                        setAccountToReset(account.id);
+                        setShowResetDialog(true);
+                      }}
+                      variant="ghost"
+                      size="sm"
+                      className="absolute top-2 right-2 bg-red-500/20 hover:bg-red-500/30 text-red-400"
+                    >
+                      <RotateCcw className="w-3 h-3" />
+                    </Button>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {accounts.map(account => (
+                  <div key={account.id} className="relative">
+                    {/* List view implementation similar to grid but horizontal layout */}
+                    <Card 
+                      className={`crypto-card-gradient text-white cursor-pointer transition-all duration-200 hover:bg-white/5 ${
+                        currentAccount?.id === account.id ? 'ring-2 ring-blue-400' : ''
+                      }`}
+                      onClick={() => handleAccountClick(account.id)}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-4">
+                            <div 
+                              className="w-12 h-12 rounded-lg flex items-center justify-center"
+                              style={{ backgroundColor: account.color_theme + '33' }}
+                            >
+                              <span className="font-bold text-white">
+                                {account.account_name.slice(0, 2).toUpperCase()}
+                              </span>
+                            </div>
+                            
+                            <div>
+                              <h3 className="font-semibold text-lg">{account.account_name}</h3>
+                              <div className="flex items-center gap-2 mt-1">
+                                <Badge className={RISK_LEVEL_COLORS[account.risk_level as keyof typeof RISK_LEVEL_COLORS]}>
+                                  {account.risk_level.replace('_', ' ')}
+                                </Badge>
+                                <span className="text-sm text-white/60">
+                                  {account.trading_strategy.replace('_', ' ')}
+                                </span>
+                                {currentAccount?.id === account.id && (
+                                  <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">
+                                    Active
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center gap-8">
+                            <div className="text-right">
+                              <p className="text-xl font-bold">${account.balance.toLocaleString()}</p>
+                              <p className={`text-sm ${
+                                account.total_pnl >= 0 ? 'text-green-400' : 'text-red-400'
+                              }`}>
+                                {account.total_pnl >= 0 ? '+' : ''}${account.total_pnl.toFixed(2)} 
+                                ({account.total_pnl_percentage >= 0 ? '+' : ''}{account.total_pnl_percentage.toFixed(2)}%)
+                              </p>
+                            </div>
+                            
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setPopOutAccount(account);
+                                }}
+                              >
+                                <ExternalLink className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleAccountSelect(account.id);
+                                }}
+                              >
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setAccountToReset(account.id);
+                                  setShowResetDialog(true);
+                                }}
+                                variant="ghost"
+                                size="sm"
+                                className="text-red-400 hover:bg-red-500/20"
+                              >
+                                <RotateCcw className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        </TabsContent>
+        
+        <TabsContent value="following" className="space-y-4">
+          <FollowingAccountsTab />
+        </TabsContent>
+        
+        <TabsContent value="analytics" className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card className="crypto-card-gradient text-white">
+              <CardHeader>
+                <CardTitle>Portfolio Performance</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-64 flex items-center justify-center text-white/60">
+                  <LineChart className="w-12 h-12 mb-4" />
+                  <p>Portfolio analytics will be displayed here</p>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="crypto-card-gradient text-white">
+              <CardHeader>
+                <CardTitle>Risk Analysis</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-64 flex items-center justify-center text-white/60">
+                  <PieChart className="w-12 h-12 mb-4" />
+                  <p>Risk analysis will be displayed here</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+      </Tabs>
 
       {/* Bottom Market Ticker */}
       {showBottomTicker && (
@@ -681,7 +949,7 @@ export const AccountManager = () => {
         </Card>
       )}
 
-      {/* Comparison Dialog */}
+      {/* Existing Dialogs */}
       <Dialog open={showComparisonDialog} onOpenChange={setShowComparisonDialog}>
         <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -698,7 +966,6 @@ export const AccountManager = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Sharing Dialog */}
       <Dialog open={showSharingDialog} onOpenChange={setShowSharingDialog}>
         <DialogContent className="max-w-4xl">
           <DialogHeader>

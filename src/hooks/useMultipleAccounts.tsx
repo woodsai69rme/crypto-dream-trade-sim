@@ -242,6 +242,8 @@ export const useMultipleAccounts = () => {
         account_name: accountData.account_name!,
         balance: accountData.initial_balance || 100000,
         initial_balance: accountData.initial_balance || 100000,
+        total_pnl: 0, // Ensure new accounts start with zero P&L
+        total_pnl_percentage: 0, // Ensure new accounts start with zero P&L percentage
         account_type: (accountData.account_type as any) || 'balanced',
         risk_level: (accountData.risk_level as any) || 'medium',
         description: accountData.description,
@@ -254,7 +256,10 @@ export const useMultipleAccounts = () => {
         performance_target: accountData.performance_target || 10,
         max_drawdown_limit: accountData.max_drawdown_limit || 20,
         currency: accountData.currency || 'USD',
-        timezone: accountData.timezone || 'UTC'
+        timezone: accountData.timezone || 'UTC',
+        status: 'active',
+        is_active: true,
+        is_default: false
       };
 
       const { data, error } = await supabase
@@ -267,7 +272,7 @@ export const useMultipleAccounts = () => {
 
       toast({
         title: "Account Created",
-        description: `${accountData.account_name} has been created successfully!`,
+        description: `${accountData.account_name} has been created successfully with a clean slate!`,
       });
 
       await fetchAccounts();
