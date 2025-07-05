@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -149,18 +150,24 @@ export const TopTraders = () => {
 
   const loadFollowedTraders = async () => {
     try {
-      const { data, error } = await supabase
+      // Use type assertion to work with the table until types are regenerated
+      const { data, error } = await (supabase as any)
         .from('trader_follows')
         .select('trader_name')
         .eq('user_id', user?.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error loading followed traders:', error);
+        setFollowedTraders([]);
+        return;
+      }
 
-      const followed = data?.map(item => item.trader_name) || [];
+      const followed = data?.map((item: any) => item.trader_name) || [];
       setFollowedTraders(followed);
       console.log('Loaded followed traders:', followed);
     } catch (error) {
       console.error('Error loading followed traders:', error);
+      setFollowedTraders([]);
     } finally {
       setLoading(false);
     }
@@ -182,7 +189,7 @@ export const TopTraders = () => {
     try {
       if (isCurrentlyFollowing) {
         // Unfollow
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from('trader_follows')
           .delete()
           .eq('user_id', user.id)
@@ -197,7 +204,7 @@ export const TopTraders = () => {
         });
       } else {
         // Follow
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from('trader_follows')
           .insert({
             user_id: user.id,

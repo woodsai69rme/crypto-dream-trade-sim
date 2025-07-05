@@ -48,15 +48,29 @@ export const AITradingBot = () => {
 
       if (error) throw error;
 
-      const formattedBots = data?.map(bot => ({
-        id: bot.id,
-        name: bot.name,
-        strategy: bot.strategy,
-        status: bot.status as 'active' | 'paused' | 'learning',
-        performance: bot.performance || { winRate: 0, totalTrades: 0, profit: 0 },
-        confidence: Math.random() * 50 + 50, // Dynamic confidence
-        lastAction: `Analyzing ${bot.target_symbols?.[0] || 'market'}...`
-      })) || [];
+      const formattedBots = data?.map(bot => {
+        // Safely parse performance data with proper type checking
+        let performanceData = { winRate: 0, totalTrades: 0, profit: 0 };
+        
+        if (bot.performance && typeof bot.performance === 'object' && bot.performance !== null) {
+          const perf = bot.performance as any;
+          performanceData = {
+            winRate: typeof perf.winRate === 'number' ? perf.winRate : 0,
+            totalTrades: typeof perf.totalTrades === 'number' ? perf.totalTrades : 0,
+            profit: typeof perf.profit === 'number' ? perf.profit : 0
+          };
+        }
+
+        return {
+          id: bot.id,
+          name: bot.name,
+          strategy: bot.strategy,
+          status: bot.status as 'active' | 'paused' | 'learning',
+          performance: performanceData,
+          confidence: Math.random() * 50 + 50, // Dynamic confidence
+          lastAction: `Analyzing ${bot.target_symbols?.[0] || 'market'}...`
+        };
+      }) || [];
 
       setBots(formattedBots);
       console.log('Loaded bots:', formattedBots);

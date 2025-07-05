@@ -3691,6 +3691,39 @@ export type Database = {
           },
         ]
       }
+      trader_follows: {
+        Row: {
+          created_at: string
+          followed_at: string
+          id: string
+          is_active: boolean
+          trader_category: string
+          trader_name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          followed_at?: string
+          id?: string
+          is_active?: boolean
+          trader_category?: string
+          trader_name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          followed_at?: string
+          id?: string
+          is_active?: boolean
+          trader_category?: string
+          trader_name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       trader_profiles: {
         Row: {
           avatar_url: string | null
