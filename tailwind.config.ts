@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,6 +62,14 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				crypto: {
+					bitcoin: 'hsl(var(--crypto-bitcoin))',
+					ethereum: 'hsl(var(--crypto-ethereum))',
+					success: 'hsl(var(--crypto-success))',
+					danger: 'hsl(var(--crypto-danger))',
+					warning: 'hsl(var(--crypto-warning))',
+					info: 'hsl(var(--crypto-info))'
 				}
 			},
 			borderRadius: {
@@ -84,11 +93,20 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'pulse-glow': {
+					'0%, 100%': {
+						boxShadow: '0 0 20px rgba(102, 126, 234, 0.3)'
+					},
+					'50%': {
+						boxShadow: '0 0 30px rgba(102, 126, 234, 0.6)'
+					}
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'pulse-glow': 'pulse-glow 2s ease-in-out infinite'
 			}
 		}
 	},
