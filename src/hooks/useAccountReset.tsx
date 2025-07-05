@@ -13,6 +13,8 @@ export const useAccountReset = () => {
     if (!user) return false;
 
     setResetting(true);
+    console.log('Starting account reset for:', accountId);
+    
     try {
       // Get account details
       const { data: account, error: accountError } = await supabase
@@ -23,45 +25,73 @@ export const useAccountReset = () => {
         .single();
 
       if (accountError || !account) {
+        console.error('Account fetch error:', accountError);
         throw new Error('Account not found');
       }
 
       const newBalance = resetToBalance || account.initial_balance;
+      console.log('Resetting account to balance:', newBalance);
 
-      // Delete all trades for this account
-      const { error: tradesError } = await supabase
-        .from('paper_trades')
-        .delete()
-        .eq('account_id', accountId)
-        .eq('user_id', user.id);
+      // Start transaction-like operations
+      const promises = [];
 
-      if (tradesError) {
-        console.warn('Error deleting trades:', tradesError);
-      }
+      // 1. Delete all trades for this account
+      console.log('Deleting trades for account:', accountId);
+      promises.push(
+        supabase
+          .from('paper_trades')
+          .delete()
+          .eq('account_id', accountId)
+          .eq('user_id', user.id)
+      );
 
-      // Delete all analytics for this account
-      const { error: analyticsError } = await supabase
-        .from('account_analytics')
-        .delete()
-        .eq('account_id', accountId)
-        .eq('user_id', user.id);
+      // 2. Delete all analytics for this account
+      console.log('Deleting analytics for account:', accountId);
+      promises.push(
+        supabase
+          .from('account_analytics')
+          .delete()
+          .eq('account_id', accountId)
+          .eq('user_id', user.id)
+      );
 
-      if (analyticsError) {
-        console.warn('Error deleting analytics:', analyticsError);
-      }
+      // 3. Delete all notifications for this account
+      console.log('Deleting notifications for account:', accountId);
+      promises.push(
+        supabase
+          .from('account_notifications')
+          .delete()
+          .eq('account_id', accountId)
+          .eq('user_id', user.id)
+      );
 
-      // Delete all notifications for this account
-      const { error: notificationsError } = await supabase
-        .from('account_notifications')
-        .delete()
-        .eq('account_id', accountId)
-        .eq('user_id', user.id);
+      // 4. Stop all bots associated with this account
+      console.log('Stopping bots for account:', accountId);
+      promises.push(
+        supabase
+          .from('ai_trading_bots')
+          .update({ 
+            status: 'paused',
+            updated_at: new Date().toISOString()
+          })
+          .eq('account_id', accountId)
+          .eq('user_id', user.id)
+      );
 
-      if (notificationsError) {
-        console.warn('Error deleting notifications:', notificationsError);
-      }
+      // Execute all deletions
+      const results = await Promise.allSettled(promises);
+      
+      // Log any errors but don't fail the reset
+      results.forEach((result, index) => {
+        if (result.status === 'rejected') {
+          console.warn(`Reset operation ${index} failed:`, result.reason);
+        } else {
+          console.log(`Reset operation ${index} completed`);
+        }
+      });
 
-      // Reset account balance and stats - ensure complete reset
+      // 5. Reset account balance and stats - this is the critical operation
+      console.log('Updating account balance and stats');
       const { error: updateError } = await supabase
         .from('paper_trading_accounts')
         .update({
@@ -75,12 +105,28 @@ export const useAccountReset = () => {
         .eq('user_id', user.id);
 
       if (updateError) {
+        console.error('Account update error:', updateError);
         throw updateError;
       }
 
+      // 6. Create audit record
+      console.log('Creating audit record');
+      await supabase
+        .from('paper_account_audit')
+        .insert({
+          user_id: user.id,
+          account_id: accountId,
+          action: 'reset',
+          old_balance: account.balance,
+          new_balance: newBalance,
+          amount_changed: newBalance - account.balance,
+          reason: 'Complete account reset with trade history cleared'
+        });
+
+      console.log('Account reset completed successfully');
       toast({
         title: "Account Reset Complete",
-        description: `Account has been reset to $${newBalance.toLocaleString()}`,
+        description: `Account has been reset to $${newBalance.toLocaleString()} with all history cleared`,
       });
 
       return true;
@@ -101,27 +147,38 @@ export const useAccountReset = () => {
     if (!user) return false;
 
     setResetting(true);
+    console.log('Starting reset for all accounts');
+    
     try {
       // Get all user accounts
       const { data: accounts, error: accountsError } = await supabase
         .from('paper_trading_accounts')
-        .select('id, initial_balance')
+        .select('id, account_name, initial_balance')
         .eq('user_id', user.id);
 
       if (accountsError || !accounts) {
         throw new Error('Failed to fetch accounts');
       }
 
-      // Reset each account
-      const resetPromises = accounts.map(account => resetAccount(account.id));
-      await Promise.all(resetPromises);
+      console.log('Found accounts to reset:', accounts.length);
+
+      // Reset each account sequentially to avoid database conflicts
+      let successCount = 0;
+      for (const account of accounts) {
+        console.log(`Resetting account: ${account.account_name}`);
+        const success = await resetAccount(account.id, account.initial_balance);
+        if (success) successCount++;
+        
+        // Small delay between resets
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
 
       toast({
         title: "All Accounts Reset",
-        description: `Successfully reset ${accounts.length} accounts`,
+        description: `Successfully reset ${successCount} of ${accounts.length} accounts`,
       });
 
-      return true;
+      return successCount === accounts.length;
     } catch (error: any) {
       console.error('Error resetting all accounts:', error);
       toast({
