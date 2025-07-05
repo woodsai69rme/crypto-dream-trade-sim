@@ -340,25 +340,28 @@ export const RiskManagementDashboard = () => {
                         {correlationMatrix.map(row => (
                           <tr key={row.asset}>
                             <td className="p-2 font-medium">{row.asset}</td>
-                            {Object.entries(row).slice(1).map(([key, value]) => (
-                              <td key={key} className="text-center p-2">
-                                <span className={`px-2 py-1 rounded text-xs ${
-                                  value === 1.00 ? 'bg-blue-500/20 text-blue-400' :
-                                  value > 0.8 ? 'bg-red-500/20 text-red-400' :
-                                  value > 0.6 ? 'bg-yellow-500/20 text-yellow-400' :
-                                  'bg-green-500/20 text-green-400'
-                                }`}>
-                                  {value.toFixed(2)}
-                                </span>
-                              </td>
-                            ))}
+                             {Object.entries(row).slice(1).map(([key, value]) => {
+                               const numValue = Number(value);
+                               return (
+                                 <td key={key} className="text-center p-2">
+                                   <span className={`px-2 py-1 rounded text-xs ${
+                                     numValue === 1.00 ? 'bg-blue-500/20 text-blue-400' :
+                                     numValue > 0.8 ? 'bg-red-500/20 text-red-400' :
+                                     numValue > 0.6 ? 'bg-yellow-500/20 text-yellow-400' :
+                                     'bg-green-500/20 text-green-400'
+                                   }`}>
+                                     {numValue.toFixed(2)}
+                                   </span>
+                                 </td>
+                               );
+                             })}
                           </tr>
                         ))}
                       </tbody>
                     </table>
                   </div>
                   <p className="text-xs text-white/60 mt-4">
-                    <strong>High correlation (>0.8)</strong> indicates assets move together, reducing diversification benefits.
+                    <strong>High correlation ({'>'}0.8)</strong> indicates assets move together, reducing diversification benefits.
                   </p>
                 </CardContent>
               </Card>

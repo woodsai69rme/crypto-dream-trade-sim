@@ -418,6 +418,71 @@ export const useMultipleAccounts = () => {
     }
   }, [user, currentAccount, accounts, switchAccount, toast]);
 
+  // Execute trade method
+  const executeTrade = useCallback(async (trade: {
+    symbol: string;
+    side: 'buy' | 'sell';
+    amount: number;
+    price: number;
+    type: 'market' | 'limit';
+  }) => {
+    if (!user || !currentAccount) return false;
+
+    try {
+      const totalValue = trade.amount * trade.price;
+      const fee = totalValue * 0.001; // 0.1% fee
+      
+      // For buy orders, check if sufficient balance
+      if (trade.side === 'buy' && (totalValue + fee) > currentAccount.balance) {
+        toast({
+          title: "Insufficient Balance",
+          description: "Not enough funds to execute this trade",
+          variant: "destructive",
+        });
+        return false;
+      }
+
+      // Insert trade record
+      const { error } = await supabase
+        .from('paper_trades')
+        .insert({
+          user_id: user.id,
+          account_id: currentAccount.id,
+          symbol: trade.symbol,
+          side: trade.side,
+          amount: trade.amount,
+          price: trade.price,
+          total_value: totalValue,
+          fees: fee,
+          trade_type: trade.type,
+          status: 'completed'
+        });
+
+      if (error) throw error;
+
+      // Update account balance
+      const balanceChange = trade.side === 'buy' ? -(totalValue + fee) : (totalValue - fee);
+      await updateAccount(currentAccount.id, {
+        balance: currentAccount.balance + balanceChange
+      });
+
+      toast({
+        title: "Trade Executed",
+        description: `${trade.side.toUpperCase()} ${trade.amount} ${trade.symbol} at $${trade.price}`,
+      });
+
+      return true;
+    } catch (error: any) {
+      console.error('Trade execution error:', error);
+      toast({
+        title: "Trade Failed",
+        description: error.message || "Failed to execute trade",
+        variant: "destructive",
+      });
+      return false;
+    }
+  }, [user, currentAccount, updateAccount, toast]);
+
   // Mark notification as read
   const markNotificationRead = useCallback(async (notificationId: string) => {
     try {
@@ -525,6 +590,7 @@ export const useMultipleAccounts = () => {
     updateAccount,
     deleteAccount,
     markNotificationRead,
-    fetchAccountAnalytics
+    executeTrade,
+    fetchAccountAnalytics,
   };
 };
