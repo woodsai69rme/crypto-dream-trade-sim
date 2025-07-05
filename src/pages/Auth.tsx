@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -9,18 +10,30 @@ import { useToast } from '@/hooks/use-toast';
 import { Navigate } from 'react-router-dom';
 
 export const Auth = () => {
-  const { user, signIn, signUp } = useAuth();
+  const { user, signIn, signUp, loading } = useAuth();
   const { toast } = useToast();
-  const [loading, setLoading] = useState(false);
+  const [formLoading, setFormLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     confirmPassword: ''
   });
 
+  console.log('Auth render - loading:', loading, 'user:', user?.email);
+
   // Redirect if already authenticated
-  if (user) {
+  if (!loading && user) {
+    console.log('User authenticated, redirecting to dashboard');
     return <Navigate to="/" replace />;
+  }
+
+  // Show loading screen while auth is initializing
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+        <div className="text-white text-xl">Loading...</div>
+      </div>
+    );
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -32,24 +45,34 @@ export const Auth = () => {
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    setFormLoading(true);
 
-    const { error } = await signIn(formData.email, formData.password);
-    
-    if (error) {
+    try {
+      const { error } = await signIn(formData.email, formData.password);
+      
+      if (error) {
+        console.error('Sign in error:', error);
+        toast({
+          title: "Sign In Failed",
+          description: error.message || "Failed to sign in",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Welcome back!",
+          description: "Successfully signed in.",
+        });
+      }
+    } catch (error) {
+      console.error('Sign in exception:', error);
       toast({
-        title: "Sign In Failed",
-        description: error.message,
+        title: "Sign In Error",
+        description: "An unexpected error occurred",
         variant: "destructive",
-      });
-    } else {
-      toast({
-        title: "Welcome back!",
-        description: "Successfully signed in.",
       });
     }
     
-    setLoading(false);
+    setFormLoading(false);
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
@@ -64,32 +87,42 @@ export const Auth = () => {
       return;
     }
 
-    setLoading(true);
+    setFormLoading(true);
 
-    const { error } = await signUp(formData.email, formData.password);
-    
-    if (error) {
-      if (error.message.includes('already registered')) {
-        toast({
-          title: "Account Exists",
-          description: "This email is already registered. Please sign in instead.",
-          variant: "destructive",
-        });
+    try {
+      const { error } = await signUp(formData.email, formData.password);
+      
+      if (error) {
+        console.error('Sign up error:', error);
+        if (error.message?.includes('already registered')) {
+          toast({
+            title: "Account Exists",
+            description: "This email is already registered. Please sign in instead.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Sign Up Failed",
+            description: error.message || "Failed to create account",
+            variant: "destructive",
+          });
+        }
       } else {
         toast({
-          title: "Sign Up Failed",
-          description: error.message,
-          variant: "destructive",
+          title: "Account Created!",
+          description: "Check your email to confirm your account.",
         });
       }
-    } else {
+    } catch (error) {
+      console.error('Sign up exception:', error);
       toast({
-        title: "Account Created!",
-        description: "Check your email to confirm your account.",
+        title: "Sign Up Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
       });
     }
     
-    setLoading(false);
+    setFormLoading(false);
   };
 
   return (
@@ -143,9 +176,9 @@ export const Auth = () => {
                 <Button 
                   type="submit" 
                   className="w-full bg-green-600 hover:bg-green-700"
-                  disabled={loading}
+                  disabled={formLoading}
                 >
-                  {loading ? 'Signing In...' : 'Sign In'}
+                  {formLoading ? 'Signing In...' : 'Sign In'}
                 </Button>
               </form>
             </TabsContent>
@@ -196,9 +229,9 @@ export const Auth = () => {
                 <Button 
                   type="submit" 
                   className="w-full bg-blue-600 hover:bg-blue-700"
-                  disabled={loading}
+                  disabled={formLoading}
                 >
-                  {loading ? 'Creating Account...' : 'Create Account'}
+                  {formLoading ? 'Creating Account...' : 'Create Account'}
                 </Button>
               </form>
             </TabsContent>
