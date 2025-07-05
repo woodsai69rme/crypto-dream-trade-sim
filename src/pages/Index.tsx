@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -18,6 +17,7 @@ import { RiskManagementDashboard } from "@/components/RiskManagementDashboard";
 import { AccountManager } from "@/components/AccountManager";
 import { AccountHistoryManager } from "@/components/AccountHistoryManager";
 import { BotManagement } from "@/components/settings/BotManagement";
+import { SystemAudit } from "@/components/testing/SystemAudit";
 
 const Index = () => {
   const { user, loading } = useAuth();
@@ -54,6 +54,7 @@ const Index = () => {
       case "settings":
         return (
           <div className="space-y-6">
+            <SystemAudit />
             <BotManagement />
             <PaperAccountSettings />
             <AccountHistoryManager />

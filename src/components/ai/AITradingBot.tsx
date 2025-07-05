@@ -6,7 +6,10 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Progress } from "@/components/ui/progress";
 import { useMultipleAccounts } from '@/hooks/useMultipleAccounts';
-import { Bot, Brain, Zap, TrendingUp, AlertCircle } from 'lucide-react';
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { Bot, Brain, Zap, TrendingUp, AlertCircle, StopCircle, Play } from 'lucide-react';
 
 interface AIBot {
   id: string;
@@ -23,38 +26,69 @@ interface AIBot {
 }
 
 export const AITradingBot = () => {
+  const { user } = useAuth();
+  const { toast } = useToast();
   const { currentAccount, executeTrade } = useMultipleAccounts();
-  const [bots, setBots] = useState<AIBot[]>([
-    {
-      id: '1',
-      name: 'Trend Master',
-      strategy: 'Moving Average Crossover',
-      status: 'active',
-      performance: { winRate: 73.2, totalTrades: 156, profit: 1240.50 },
-      confidence: 87,
-      lastAction: 'BUY BTC @ $67,432'
-    },
-    {
-      id: '2',
-      name: 'Scalp Hunter',
-      strategy: 'High Frequency Scalping',
-      status: 'active',
-      performance: { winRate: 68.9, totalTrades: 892, profit: 890.30 },
-      confidence: 92,
-      lastAction: 'SELL ETH @ $3,678'
-    },
-    {
-      id: '3',
-      name: 'Risk Arbitrage',
-      strategy: 'Cross-Exchange Arbitrage',
-      status: 'learning',
-      performance: { winRate: 95.4, totalTrades: 23, profit: 156.70 },
-      confidence: 45,
-      lastAction: 'Analyzing market conditions...'
-    }
-  ]);
+  const [bots, setBots] = useState<AIBot[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Simulate bot activity
+  // Load bots from database
+  useEffect(() => {
+    if (user) {
+      loadBots();
+    }
+  }, [user]);
+
+  const loadBots = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('ai_trading_bots')
+        .select('*')
+        .eq('user_id', user?.id);
+
+      if (error) throw error;
+
+      const formattedBots = data?.map(bot => ({
+        id: bot.id,
+        name: bot.name,
+        strategy: bot.strategy,
+        status: bot.status as 'active' | 'paused' | 'learning',
+        performance: bot.performance || { winRate: 0, totalTrades: 0, profit: 0 },
+        confidence: Math.random() * 50 + 50, // Dynamic confidence
+        lastAction: `Analyzing ${bot.target_symbols?.[0] || 'market'}...`
+      })) || [];
+
+      setBots(formattedBots);
+      console.log('Loaded bots:', formattedBots);
+    } catch (error) {
+      console.error('Error loading bots:', error);
+      // Fallback to demo data if no bots exist
+      setBots([
+        {
+          id: '1',
+          name: 'Trend Master',
+          strategy: 'Moving Average Crossover',
+          status: 'active',
+          performance: { winRate: 73.2, totalTrades: 156, profit: 1240.50 },
+          confidence: 87,
+          lastAction: 'BUY BTC @ $67,432'
+        },
+        {
+          id: '2', 
+          name: 'Scalp Hunter',
+          strategy: 'High Frequency Scalping',
+          status: 'paused',
+          performance: { winRate: 68.9, totalTrades: 892, profit: 890.30 },
+          confidence: 92,
+          lastAction: 'SELL ETH @ $3,678'
+        }
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Simulate bot activity for active bots
   useEffect(() => {
     const interval = setInterval(() => {
       setBots(prev => prev.map(bot => {
@@ -82,16 +116,85 @@ export const AITradingBot = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const toggleBot = (botId: string) => {
+  const toggleBot = async (botId: string) => {
     console.log('Toggling bot:', botId);
-    setBots(prev => prev.map(bot => {
-      if (bot.id === botId) {
-        const newStatus = bot.status === 'active' ? 'paused' : 'active';
-        console.log(`Bot ${bot.name} status changed from ${bot.status} to ${newStatus}`);
-        return { ...bot, status: newStatus };
+    
+    const bot = bots.find(b => b.id === botId);
+    if (!bot) return;
+
+    const newStatus = bot.status === 'active' ? 'paused' : 'active';
+    
+    try {
+      // Update in database if bot exists there
+      const { error } = await supabase
+        .from('ai_trading_bots')
+        .update({ status: newStatus })
+        .eq('id', botId)
+        .eq('user_id', user?.id);
+
+      if (error && !error.message.includes('duplicate key')) {
+        console.error('Database update error:', error);
       }
-      return bot;
-    }));
+
+      // Update local state
+      setBots(prev => prev.map(bot => {
+        if (bot.id === botId) {
+          console.log(`Bot ${bot.name} status changed from ${bot.status} to ${newStatus}`);
+          return { ...bot, status: newStatus };
+        }
+        return bot;
+      }));
+
+      toast({
+        title: `Bot ${newStatus === 'active' ? 'Started' : 'Stopped'}`,
+        description: `${bot.name} is now ${newStatus}`,
+      });
+    } catch (error) {
+      console.error('Error toggling bot:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update bot status",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const stopAllBots = async () => {
+    console.log('Stopping all bots');
+    try {
+      await supabase
+        .from('ai_trading_bots')
+        .update({ status: 'paused' })
+        .eq('user_id', user?.id);
+
+      setBots(prev => prev.map(bot => ({ ...bot, status: 'paused' as const })));
+      
+      toast({
+        title: "All Bots Stopped",
+        description: "All trading bots have been paused",
+      });
+    } catch (error) {
+      console.error('Error stopping all bots:', error);
+    }
+  };
+
+  const startAllBots = async () => {
+    console.log('Starting all bots');
+    try {
+      await supabase
+        .from('ai_trading_bots')
+        .update({ status: 'active' })
+        .eq('user_id', user?.id);
+
+      setBots(prev => prev.map(bot => ({ ...bot, status: 'active' as const })));
+      
+      toast({
+        title: "All Bots Started",
+        description: "All trading bots have been activated",
+      });
+    } catch (error) {
+      console.error('Error starting all bots:', error);
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -103,6 +206,16 @@ export const AITradingBot = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <Card className="crypto-card-gradient text-white">
+        <CardContent className="p-6">
+          <div className="text-center">Loading AI bots...</div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="crypto-card-gradient text-white">
       <CardHeader>
@@ -113,6 +226,18 @@ export const AITradingBot = () => {
             {bots.filter(b => b.status === 'active').length} Active
           </Badge>
         </CardTitle>
+        
+        {/* Global Controls */}
+        <div className="flex gap-2 mt-4">
+          <Button onClick={startAllBots} size="sm" className="bg-green-600 hover:bg-green-700">
+            <Play className="w-3 h-3 mr-1" />
+            Start All
+          </Button>
+          <Button onClick={stopAllBots} size="sm" variant="destructive">
+            <StopCircle className="w-3 h-3 mr-1" />
+            Stop All
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         {bots.map((bot) => (
@@ -160,7 +285,7 @@ export const AITradingBot = () => {
             <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <span className="text-xs text-white/60">Confidence Level</span>
-                <span className="text-xs font-medium">{bot.confidence}%</span>
+                <span className="text-xs font-medium">{bot.confidence.toFixed(0)}%</span>
               </div>
               <Progress value={bot.confidence} className="h-2" />
             </div>

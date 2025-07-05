@@ -1,10 +1,12 @@
-
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Users, TrendingUp, Star, ExternalLink, Twitter, Youtube, Instagram } from "lucide-react";
-import { useState } from "react";
+import { Users, TrendingUp, Star, ExternalLink, Twitter, Youtube } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
 
 const topTraders = [
   {
@@ -130,24 +132,110 @@ const topTraders = [
 ];
 
 export const TopTraders = () => {
-  const [followedTraders, setFollowedTraders] = useState<string[]>(
-    topTraders.filter(trader => trader.following).map(trader => trader.name)
-  );
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [followedTraders, setFollowedTraders] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [loading, setLoading] = useState(true);
 
   const categories = ["All", "Billionaire Traders", "Crypto Influencers", "YouTube Influencers"];
+
+  // Load followed traders from database
+  useEffect(() => {
+    if (user) {
+      loadFollowedTraders();
+    }
+  }, [user]);
+
+  const loadFollowedTraders = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('trader_follows')
+        .select('trader_name')
+        .eq('user_id', user?.id);
+
+      if (error) throw error;
+
+      const followed = data?.map(item => item.trader_name) || [];
+      setFollowedTraders(followed);
+      console.log('Loaded followed traders:', followed);
+    } catch (error) {
+      console.error('Error loading followed traders:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleFollow = async (traderName: string) => {
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to follow traders",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const isCurrentlyFollowing = followedTraders.includes(traderName);
+    console.log(`Toggling follow for ${traderName}, currently following: ${isCurrentlyFollowing}`);
+
+    try {
+      if (isCurrentlyFollowing) {
+        // Unfollow
+        const { error } = await supabase
+          .from('trader_follows')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('trader_name', traderName);
+
+        if (error) throw error;
+
+        setFollowedTraders(prev => prev.filter(name => name !== traderName));
+        toast({
+          title: "Unfollowed",
+          description: `You are no longer following ${traderName}`,
+        });
+      } else {
+        // Follow
+        const { error } = await supabase
+          .from('trader_follows')
+          .insert({
+            user_id: user.id,
+            trader_name: traderName,
+            trader_category: topTraders.find(t => t.name === traderName)?.category || 'Other'
+          });
+
+        if (error) throw error;
+
+        setFollowedTraders(prev => [...prev, traderName]);
+        toast({
+          title: "Following",
+          description: `You are now following ${traderName}`,
+        });
+      }
+    } catch (error) {
+      console.error('Error toggling follow:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update follow status",
+        variant: "destructive",
+      });
+    }
+  };
 
   const filteredTraders = selectedCategory === "All" 
     ? topTraders 
     : topTraders.filter(trader => trader.category === selectedCategory);
 
-  const toggleFollow = (traderName: string) => {
-    setFollowedTraders(prev => 
-      prev.includes(traderName)
-        ? prev.filter(name => name !== traderName)
-        : [...prev, traderName]
+  if (loading) {
+    return (
+      <Card className="crypto-card-gradient text-white">
+        <CardContent className="p-6">
+          <div className="text-center">Loading traders...</div>
+        </CardContent>
+      </Card>
     );
-  };
+  }
 
   return (
     <Card className="crypto-card-gradient text-white">
@@ -155,6 +243,9 @@ export const TopTraders = () => {
         <CardTitle className="flex items-center gap-2">
           <Users className="w-5 h-5" />
           Top Crypto Traders & Influencers
+          <Badge className="bg-green-500/20 text-green-400">
+            {followedTraders.length} Following
+          </Badge>
         </CardTitle>
         <div className="flex flex-wrap gap-2 mt-4">
           {categories.map(category => (
@@ -196,6 +287,11 @@ export const TopTraders = () => {
                         <Star className="w-3 h-3 mr-1" />
                         {trader.netWorth}
                       </Badge>
+                      {isFollowing && (
+                        <Badge className="bg-green-500/20 text-green-400 text-xs">
+                          Following
+                        </Badge>
+                      )}
                     </div>
                     
                     <p className="text-sm text-purple-300 mb-2">{trader.title}</p>
