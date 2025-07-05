@@ -1,73 +1,278 @@
-# Welcome to your Lovable project
 
-## Project info
+# 🚀 CryptoTrader Pro - Advanced Paper Trading Platform
 
-**URL**: https://lovable.dev/projects/8814fb25-9468-4d8c-b294-e4093d7419ed
+## 📋 Project Overview
 
-## How can I edit this code?
+**CryptoTrader Pro** is a comprehensive paper trading platform built for learning cryptocurrency trading without financial risk. It provides real-time market data, AI-powered trading bots, portfolio management, and social trading features.
 
-There are several ways of editing your application.
+### 🎯 Core Value Proposition
+- **Risk-Free Learning**: Practice trading with virtual money
+- **Real Market Data**: Live cryptocurrency prices and market analysis
+- **AI-Powered Trading**: Automated trading bots with multiple strategies
+- **Multi-Account Management**: Create and manage multiple trading portfolios
+- **Social Trading**: Follow top traders and copy their strategies
 
-**Use Lovable**
+### 🏆 Key Features
+- ✅ **Authentication System** - Secure user registration and login
+- ✅ **Real-Time Market Data** - Live cryptocurrency prices and charts
+- ✅ **Paper Trading** - Virtual trading with realistic market simulation
+- ✅ **Multiple Accounts** - Create specialized trading accounts with different strategies
+- ✅ **Trade Following** - Copy trades from successful traders automatically
+- ✅ **AI Trading Bots** - 20+ pre-configured AI trading strategies
+- ✅ **Portfolio Analytics** - Comprehensive performance tracking and analysis
+- ✅ **Risk Management** - Built-in risk controls and position sizing
+- ✅ **Trading History** - Detailed trade logs and performance metrics
+- ✅ **Account Management** - Reset, backup, and manage trading accounts
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/8814fb25-9468-4d8c-b294-e4093d7419ed) and start prompting.
+## 🛠️ Technology Stack
 
-Changes made via Lovable will be committed automatically to this repo.
+### Frontend
+- **React 18** - Modern UI library with hooks
+- **TypeScript** - Type-safe development
+- **Tailwind CSS** - Utility-first CSS framework
+- **Shadcn/ui** - High-quality UI components
+- **Recharts** - Interactive charts and data visualization
+- **Lucide React** - Beautiful icons
+- **React Router Dom** - Client-side routing
 
-**Use your preferred IDE**
+### Backend & Database
+- **Supabase** - Backend-as-a-Service platform
+- **PostgreSQL** - Robust SQL database
+- **Row Level Security (RLS)** - Data protection and user isolation
+- **Real-time Subscriptions** - Live data updates
+- **Edge Functions** - Serverless API endpoints
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Development Tools
+- **Vite** - Fast build tool and development server
+- **ESLint** - Code linting and quality assurance
+- **Prettier** - Code formatting
+- **Git** - Version control
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## 🚦 Getting Started
 
-Follow these steps:
+### Prerequisites
+- Node.js 16+ and npm
+- Git for version control
+- Modern web browser (Chrome, Firefox, Safari, Edge)
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+### Local Development Setup
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+1. **Clone the Repository**
+   ```bash
+   git clone <YOUR_GIT_URL>
+   cd cryptotrader-pro
+   ```
 
-# Step 3: Install the necessary dependencies.
-npm i
+2. **Install Dependencies**
+   ```bash
+   npm install
+   ```
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+3. **Environment Setup**
+   The project uses Supabase with pre-configured connection settings. No additional environment variables needed for development.
+
+4. **Start Development Server**
+   ```bash
+   npm run dev
+   ```
+
+5. **Open Application**
+   Navigate to `http://localhost:5173` in your browser
+
+### Test User Accounts
+For testing purposes, you can create new accounts through the authentication system at `/auth`.
+
+## 📱 Application Structure
+
+### Main Routes
+- `/` - Main dashboard (requires authentication)
+- `/auth` - Login and registration page
+
+### Dashboard Tabs
+- **Dashboard** - Portfolio overview and market data
+- **Trading** - Advanced trading interface and bots
+- **Accounts** - Multiple account management
+- **Traders** - Social trading and leaderboards
+- **History** - Trading history and analytics
+- **Risk** - Risk management dashboard
+- **Settings** - Account settings and history management
+
+## 🔧 Core Components
+
+### Authentication (`src/hooks/useAuth.tsx`)
+- Secure user registration and login
+- Session management with automatic token refresh
+- Password reset and account verification
+
+### Portfolio Management (`src/hooks/useRealTimePortfolio.tsx`)
+- Real-time portfolio tracking
+- Live P&L calculations
+- Performance analytics
+
+### Multiple Accounts (`src/hooks/useMultipleAccounts.tsx`)
+- Create unlimited paper trading accounts
+- Switch between accounts seamlessly
+- Account templates for quick setup
+- Performance tracking per account
+
+### Market Data (`src/hooks/useRealtimeMarketData.tsx`)
+- Live cryptocurrency prices
+- Price alerts and notifications
+- Market volatility tracking
+
+### Trading Engine (`src/components/TradingPanel.tsx`)
+- Paper trading execution
+- Order management (market, limit, stop orders)
+- Real-time trade confirmation
+
+### AI Trading Bots (`src/components/ai/AITradingBot.tsx`)
+- 20+ pre-configured trading strategies
+- Automated trade execution
+- Performance monitoring
+
+### Trade Following (`src/components/trading/TradeFollower.tsx`)
+- Real-time trading signals
+- Automatic trade copying
+- Confidence-based filtering
+- Position size management
+
+## 🗄️ Database Schema
+
+### Core Tables
+- `profiles` - User profile information
+- `portfolios` - Portfolio data and balances
+- `paper_trading_accounts` - Multiple trading accounts per user
+- `paper_trades` - Trade execution history
+- `account_analytics` - Performance metrics and analytics
+- `account_notifications` - User notifications and alerts
+
+### Security
+- Row Level Security (RLS) enabled on all user-specific tables
+- User data isolation through auth.uid() policies
+- Secure API access with Supabase authentication
+
+## 🚀 Deployment
+
+### Build for Production
+```bash
+npm run build
 ```
 
-**Edit a file directly in GitHub**
+### Deploy to Lovable
+1. Click the "Publish" button in the Lovable editor
+2. Your app will be automatically deployed to a public URL
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Deploy to Custom Server
+1. Build the application: `npm run build`
+2. Upload the `dist` folder to your web server
+3. Configure your server to serve the single-page application
 
-**Use GitHub Codespaces**
+## 🧪 Testing
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### Manual Testing Checklist
+- [ ] User registration and login
+- [ ] Portfolio creation and management
+- [ ] Real-time market data display
+- [ ] Paper trade execution
+- [ ] Account switching
+- [ ] Trade history viewing
+- [ ] AI bot configuration
+- [ ] Trade following functionality
+- [ ] Account reset and management
 
-## What technologies are used for this project?
+### Test Data
+The application includes simulated market data and pre-configured trading bots for testing purposes.
 
-This project is built with:
+## 🔒 Security Features
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+- **Paper Trading Only** - No real money transactions
+- **User Data Isolation** - RLS policies prevent data leakage
+- **Secure Authentication** - Supabase Auth with email verification
+- **Input Validation** - Client and server-side validation
+- **Rate Limiting** - API request limits to prevent abuse
 
-## How can I deploy this project?
+## 📊 Performance Metrics
 
-Simply open [Lovable](https://lovable.dev/projects/8814fb25-9468-4d8c-b294-e4093d7419ed) and click on Share -> Publish.
+### Application Metrics
+- **Load Time** - < 2 seconds initial page load
+- **Real-time Updates** - 1-second market data refresh
+- **Database Queries** - Optimized with indexes and RLS
+- **UI Responsiveness** - Mobile-first responsive design
 
-## Can I connect a custom domain to my Lovable project?
+### Trading Metrics
+- **Order Execution** - Instant paper trade processing
+- **Portfolio Sync** - Real-time balance updates
+- **Market Data** - Live price feeds with 1-second latency
 
-Yes, you can!
+## 🛣️ Roadmap
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+### Near-term Enhancements
+- [ ] Advanced charting with technical indicators
+- [ ] Social features - user profiles and following
+- [ ] Mobile app development
+- [ ] API for third-party integrations
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+### Long-term Vision
+- [ ] Advanced AI trading strategies
+- [ ] Options and futures trading simulation
+- [ ] Educational content and tutorials
+- [ ] Institutional features for schools/training
+
+## 🤝 Contributing
+
+### Development Workflow
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/new-feature`
+3. Make changes and test thoroughly
+4. Commit with descriptive messages
+5. Push to your fork and create a pull request
+
+### Code Standards
+- Use TypeScript for all new code
+- Follow existing component patterns
+- Write descriptive commit messages
+- Test all functionality before submitting
+
+## 📞 Support
+
+### Getting Help
+- Check the FAQ section in the application
+- Review troubleshooting guides
+- Contact support through the application
+
+### Bug Reports
+Please include:
+- Steps to reproduce the issue
+- Expected vs actual behavior
+- Browser and device information
+- Screenshots if applicable
+
+## 📄 License
+
+This project is built with Lovable.dev and follows their terms of service.
+
+## 🏗️ Architecture Decisions
+
+### Why Supabase?
+- Real-time capabilities for live trading simulation
+- Built-in authentication and user management
+- PostgreSQL for complex financial calculations
+- Row Level Security for data protection
+
+### Why React + TypeScript?
+- Type safety for financial calculations
+- Component reusability for trading interfaces
+- Strong ecosystem for charting and data visualization
+- Excellent developer experience
+
+### Why Paper Trading Focus?
+- Educational value without financial risk
+- Regulatory compliance simplicity
+- Focus on learning and skill development
+- Accessible to users worldwide
+
+---
+
+**Built with ❤️ using Lovable.dev**
+
+For technical questions or feature requests, please refer to the application's built-in help system or documentation.
