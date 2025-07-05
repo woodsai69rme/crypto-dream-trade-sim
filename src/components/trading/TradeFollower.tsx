@@ -31,6 +31,12 @@ export const TradeFollower = () => {
     autoExecute: false
   });
 
+  // Convert trades to the expected format for TradeTooltip
+  const formattedTrades = trades.map(trade => ({
+    ...trade,
+    side: (trade.side === 'buy' || trade.side === 'sell') ? trade.side : 'buy' as 'buy' | 'sell'
+  }));
+
   // Simulate incoming trade signals with real market movements
   useEffect(() => {
     if (!isFollowing) return;
@@ -180,7 +186,7 @@ export const TradeFollower = () => {
                           </Badge>
                           <span className="font-medium">{signal.symbol}</span>
                         </div>
-                        <TradeTooltip trades={trades}>
+                        <TradeTooltip trades={formattedTrades}>
                           <Button
                             size="sm"
                             variant="outline"
