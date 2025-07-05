@@ -9,6 +9,285 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      account_analytics: {
+        Row: {
+          account_id: string
+          active_positions: number | null
+          alpha: number | null
+          analytics_date: string
+          avg_loss: number | null
+          avg_win: number | null
+          benchmark_return: number | null
+          beta: number | null
+          cash_percentage: number | null
+          correlation: number | null
+          created_at: string | null
+          current_drawdown: number | null
+          custom_metrics: Json | null
+          daily_return: number | null
+          id: string
+          largest_position: number | null
+          losing_trades: number | null
+          max_drawdown: number | null
+          monthly_return: number | null
+          portfolio_diversity: number | null
+          profit_factor: number | null
+          quarterly_return: number | null
+          sharpe_ratio: number | null
+          sortino_ratio: number | null
+          total_trades: number | null
+          updated_at: string | null
+          user_id: string
+          volatility: number | null
+          weekly_return: number | null
+          win_rate: number | null
+          winning_trades: number | null
+          yearly_return: number | null
+        }
+        Insert: {
+          account_id: string
+          active_positions?: number | null
+          alpha?: number | null
+          analytics_date?: string
+          avg_loss?: number | null
+          avg_win?: number | null
+          benchmark_return?: number | null
+          beta?: number | null
+          cash_percentage?: number | null
+          correlation?: number | null
+          created_at?: string | null
+          current_drawdown?: number | null
+          custom_metrics?: Json | null
+          daily_return?: number | null
+          id?: string
+          largest_position?: number | null
+          losing_trades?: number | null
+          max_drawdown?: number | null
+          monthly_return?: number | null
+          portfolio_diversity?: number | null
+          profit_factor?: number | null
+          quarterly_return?: number | null
+          sharpe_ratio?: number | null
+          sortino_ratio?: number | null
+          total_trades?: number | null
+          updated_at?: string | null
+          user_id: string
+          volatility?: number | null
+          weekly_return?: number | null
+          win_rate?: number | null
+          winning_trades?: number | null
+          yearly_return?: number | null
+        }
+        Update: {
+          account_id?: string
+          active_positions?: number | null
+          alpha?: number | null
+          analytics_date?: string
+          avg_loss?: number | null
+          avg_win?: number | null
+          benchmark_return?: number | null
+          beta?: number | null
+          cash_percentage?: number | null
+          correlation?: number | null
+          created_at?: string | null
+          current_drawdown?: number | null
+          custom_metrics?: Json | null
+          daily_return?: number | null
+          id?: string
+          largest_position?: number | null
+          losing_trades?: number | null
+          max_drawdown?: number | null
+          monthly_return?: number | null
+          portfolio_diversity?: number | null
+          profit_factor?: number | null
+          quarterly_return?: number | null
+          sharpe_ratio?: number | null
+          sortino_ratio?: number | null
+          total_trades?: number | null
+          updated_at?: string | null
+          user_id?: string
+          volatility?: number | null
+          weekly_return?: number | null
+          win_rate?: number | null
+          winning_trades?: number | null
+          yearly_return?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_analytics_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "paper_trading_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      account_notifications: {
+        Row: {
+          account_id: string
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          is_read: boolean | null
+          message: string
+          metadata: Json | null
+          notification_type: string
+          severity: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          account_id: string
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message: string
+          metadata?: Json | null
+          notification_type: string
+          severity?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          account_id?: string
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message?: string
+          metadata?: Json | null
+          notification_type?: string
+          severity?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_notifications_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "paper_trading_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      account_shares: {
+        Row: {
+          account_id: string
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          owner_id: string
+          permissions: Json | null
+          share_token: string | null
+          share_type: string | null
+          shared_with_email: string | null
+          shared_with_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          account_id: string
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          owner_id: string
+          permissions?: Json | null
+          share_token?: string | null
+          share_type?: string | null
+          shared_with_email?: string | null
+          shared_with_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          account_id?: string
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          owner_id?: string
+          permissions?: Json | null
+          share_token?: string | null
+          share_type?: string | null
+          shared_with_email?: string | null
+          shared_with_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_shares_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "paper_trading_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      account_templates: {
+        Row: {
+          account_type: Database["public"]["Enums"]["account_type"]
+          color_theme: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          icon: string | null
+          id: string
+          initial_balance: number
+          is_public: boolean | null
+          max_daily_loss: number | null
+          max_position_size: number | null
+          name: string
+          rating: number | null
+          risk_level: Database["public"]["Enums"]["risk_level"]
+          tags: string[] | null
+          trading_strategy: string | null
+          updated_at: string | null
+          usage_count: number | null
+        }
+        Insert: {
+          account_type: Database["public"]["Enums"]["account_type"]
+          color_theme?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          initial_balance?: number
+          is_public?: boolean | null
+          max_daily_loss?: number | null
+          max_position_size?: number | null
+          name: string
+          rating?: number | null
+          risk_level: Database["public"]["Enums"]["risk_level"]
+          tags?: string[] | null
+          trading_strategy?: string | null
+          updated_at?: string | null
+          usage_count?: number | null
+        }
+        Update: {
+          account_type?: Database["public"]["Enums"]["account_type"]
+          color_theme?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          initial_balance?: number
+          is_public?: boolean | null
+          max_daily_loss?: number | null
+          max_position_size?: number | null
+          name?: string
+          rating?: number | null
+          risk_level?: Database["public"]["Enums"]["risk_level"]
+          tags?: string[] | null
+          trading_strategy?: string | null
+          updated_at?: string | null
+          usage_count?: number | null
+        }
+        Relationships: []
+      }
       activity_logs: {
         Row: {
           action: string
@@ -2187,11 +2466,17 @@ export type Database = {
           action: string
           amount_changed: number | null
           created_at: string | null
+          device_info: string | null
           id: string
           ip_address: unknown | null
+          location_info: Json | null
+          metadata: Json | null
           new_balance: number | null
           old_balance: number | null
           reason: string | null
+          related_trade_id: string | null
+          session_id: string | null
+          transaction_hash: string | null
           user_agent: string | null
           user_id: string
         }
@@ -2200,11 +2485,17 @@ export type Database = {
           action: string
           amount_changed?: number | null
           created_at?: string | null
+          device_info?: string | null
           id?: string
           ip_address?: unknown | null
+          location_info?: Json | null
+          metadata?: Json | null
           new_balance?: number | null
           old_balance?: number | null
           reason?: string | null
+          related_trade_id?: string | null
+          session_id?: string | null
+          transaction_hash?: string | null
           user_agent?: string | null
           user_id: string
         }
@@ -2213,11 +2504,17 @@ export type Database = {
           action?: string
           amount_changed?: number | null
           created_at?: string | null
+          device_info?: string | null
           id?: string
           ip_address?: unknown | null
+          location_info?: Json | null
+          metadata?: Json | null
           new_balance?: number | null
           old_balance?: number | null
           reason?: string | null
+          related_trade_id?: string | null
+          session_id?: string | null
+          transaction_hash?: string | null
           user_agent?: string | null
           user_id?: string
         }
@@ -2229,55 +2526,96 @@ export type Database = {
             referencedRelation: "paper_trading_accounts"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "paper_account_audit_related_trade_id_fkey"
+            columns: ["related_trade_id"]
+            isOneToOne: false
+            referencedRelation: "paper_trades"
+            referencedColumns: ["id"]
+          },
         ]
       }
       paper_trades: {
         Row: {
+          account_id: string | null
           amount: number
-          bot_id: string
+          bot_id: string | null
+          confidence_level: number | null
           created_at: string
+          execution_time_ms: number | null
           fee: number
           id: string
+          notes: string | null
           price: number
           reasoning: string | null
+          risk_score: number | null
           side: string
           status: string
+          stop_loss: number | null
           symbol: string
+          tags: string[] | null
+          take_profit: number | null
           timestamp: string
           total_value: number
+          trade_category: string | null
           user_id: string
         }
         Insert: {
+          account_id?: string | null
           amount?: number
-          bot_id: string
+          bot_id?: string | null
+          confidence_level?: number | null
           created_at?: string
+          execution_time_ms?: number | null
           fee?: number
           id?: string
+          notes?: string | null
           price?: number
           reasoning?: string | null
+          risk_score?: number | null
           side: string
           status?: string
+          stop_loss?: number | null
           symbol: string
+          tags?: string[] | null
+          take_profit?: number | null
           timestamp?: string
           total_value?: number
+          trade_category?: string | null
           user_id: string
         }
         Update: {
+          account_id?: string | null
           amount?: number
-          bot_id?: string
+          bot_id?: string | null
+          confidence_level?: number | null
           created_at?: string
+          execution_time_ms?: number | null
           fee?: number
           id?: string
+          notes?: string | null
           price?: number
           reasoning?: string | null
+          risk_score?: number | null
           side?: string
           status?: string
+          stop_loss?: number | null
           symbol?: string
+          tags?: string[] | null
+          take_profit?: number | null
           timestamp?: string
           total_value?: number
+          trade_category?: string | null
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "paper_trades_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "paper_trading_accounts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "paper_trades_bot_id_fkey"
             columns: ["bot_id"]
@@ -2289,48 +2627,125 @@ export type Database = {
       }
       paper_trading_accounts: {
         Row: {
+          access_count: number | null
           account_name: string
+          account_type: Database["public"]["Enums"]["account_type"] | null
+          auto_rebalance: boolean | null
           balance: number
+          benchmark_symbol: string | null
+          color_theme: string | null
+          copied_from_account_id: string | null
+          copy_settings: Json | null
           created_at: string | null
+          currency: string | null
+          description: string | null
+          icon: string | null
           id: string
           initial_balance: number
           is_active: boolean | null
           is_default: boolean | null
+          is_public: boolean | null
+          last_accessed: string | null
+          max_daily_loss: number | null
+          max_drawdown_limit: number | null
+          max_position_size: number | null
           name: string | null
+          notification_settings: Json | null
+          performance_target: number | null
+          risk_level: Database["public"]["Enums"]["risk_level"] | null
+          share_token: string | null
+          status: Database["public"]["Enums"]["account_status"] | null
+          tags: string[] | null
+          timezone: string | null
           total_pnl: number
           total_pnl_percentage: number
+          trading_strategy: string | null
           updated_at: string | null
           user_id: string
         }
         Insert: {
+          access_count?: number | null
           account_name?: string
+          account_type?: Database["public"]["Enums"]["account_type"] | null
+          auto_rebalance?: boolean | null
           balance?: number
+          benchmark_symbol?: string | null
+          color_theme?: string | null
+          copied_from_account_id?: string | null
+          copy_settings?: Json | null
           created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          icon?: string | null
           id?: string
           initial_balance?: number
           is_active?: boolean | null
           is_default?: boolean | null
+          is_public?: boolean | null
+          last_accessed?: string | null
+          max_daily_loss?: number | null
+          max_drawdown_limit?: number | null
+          max_position_size?: number | null
           name?: string | null
+          notification_settings?: Json | null
+          performance_target?: number | null
+          risk_level?: Database["public"]["Enums"]["risk_level"] | null
+          share_token?: string | null
+          status?: Database["public"]["Enums"]["account_status"] | null
+          tags?: string[] | null
+          timezone?: string | null
           total_pnl?: number
           total_pnl_percentage?: number
+          trading_strategy?: string | null
           updated_at?: string | null
           user_id: string
         }
         Update: {
+          access_count?: number | null
           account_name?: string
+          account_type?: Database["public"]["Enums"]["account_type"] | null
+          auto_rebalance?: boolean | null
           balance?: number
+          benchmark_symbol?: string | null
+          color_theme?: string | null
+          copied_from_account_id?: string | null
+          copy_settings?: Json | null
           created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          icon?: string | null
           id?: string
           initial_balance?: number
           is_active?: boolean | null
           is_default?: boolean | null
+          is_public?: boolean | null
+          last_accessed?: string | null
+          max_daily_loss?: number | null
+          max_drawdown_limit?: number | null
+          max_position_size?: number | null
           name?: string | null
+          notification_settings?: Json | null
+          performance_target?: number | null
+          risk_level?: Database["public"]["Enums"]["risk_level"] | null
+          share_token?: string | null
+          status?: Database["public"]["Enums"]["account_status"] | null
+          tags?: string[] | null
+          timezone?: string | null
           total_pnl?: number
           total_pnl_percentage?: number
+          trading_strategy?: string | null
           updated_at?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "paper_trading_accounts_copied_from_account_id_fkey"
+            columns: ["copied_from_account_id"]
+            isOneToOne: false
+            referencedRelation: "paper_trading_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       platform_connections: {
         Row: {
@@ -3709,6 +4124,18 @@ export type Database = {
         }
         Returns: undefined
       }
+      calculate_account_metrics: {
+        Args: { account_id_param: string }
+        Returns: Json
+      }
+      create_account_from_template: {
+        Args: {
+          template_id_param: string
+          account_name_param: string
+          custom_balance_param?: number
+        }
+        Returns: string
+      }
       create_initial_trading_bots: {
         Args: { user_id: string }
         Returns: undefined
@@ -3721,8 +4148,24 @@ export type Database = {
         Args: { account_id_param: string; reset_balance_param?: number }
         Returns: undefined
       }
+      set_default_account: {
+        Args: { account_id_param: string }
+        Returns: boolean
+      }
     }
     Enums: {
+      account_status: "active" | "paused" | "closed" | "suspended" | "archived"
+      account_type:
+        | "aggressive_growth"
+        | "conservative"
+        | "balanced"
+        | "day_trading"
+        | "swing_trading"
+        | "long_term"
+        | "experimental"
+        | "educational"
+        | "competition"
+        | "copy_trading"
       alert_type:
         | "price_above"
         | "price_below"
@@ -3743,6 +4186,13 @@ export type Database = {
         | "stop_loss"
         | "take_profit"
         | "stop_limit"
+      risk_level:
+        | "very_low"
+        | "low"
+        | "medium"
+        | "high"
+        | "very_high"
+        | "extreme"
       strategy_type:
         | "trend_following"
         | "mean_reversion"
@@ -3871,6 +4321,19 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      account_status: ["active", "paused", "closed", "suspended", "archived"],
+      account_type: [
+        "aggressive_growth",
+        "conservative",
+        "balanced",
+        "day_trading",
+        "swing_trading",
+        "long_term",
+        "experimental",
+        "educational",
+        "competition",
+        "copy_trading",
+      ],
       alert_type: [
         "price_above",
         "price_below",
@@ -3888,6 +4351,7 @@ export const Constants = {
       ],
       order_status: ["pending", "filled", "cancelled", "rejected"],
       order_type: ["market", "limit", "stop_loss", "take_profit", "stop_limit"],
+      risk_level: ["very_low", "low", "medium", "high", "very_high", "extreme"],
       strategy_type: [
         "trend_following",
         "mean_reversion",
