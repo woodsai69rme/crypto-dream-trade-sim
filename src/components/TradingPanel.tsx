@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TrendingUp, TrendingDown, DollarSign, Zap } from "lucide-react";
-import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, CandlestickChart } from "recharts";
+import { LineChart, Line, XAxis, YAxis, ResponsiveContainer } from "recharts";
 
 const tradingPairs = [
   { symbol: "BTC/USDT", price: 67432.15, change: 3.6 },
