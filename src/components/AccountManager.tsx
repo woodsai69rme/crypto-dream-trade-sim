@@ -20,6 +20,7 @@ import { PerformanceMetrics } from "./analytics/PerformanceMetrics";
 import { NotificationCenter } from "./notifications/NotificationCenter";
 import { PortfolioChart } from "./portfolio/PortfolioChart";
 import { StatusIndicator } from "./StatusIndicator";
+import { RealTimeAuditLog } from "./RealTimeAuditLog";
 import { Plus, Settings, Eye, TrendingUp, TrendingDown, DollarSign, 
   Users, Bell, Star, Copy, Share2, MoreHorizontal, AlertTriangle,
   Zap, Shield, BarChart3, BookOpen, Bitcoin, Bot, Trophy, Target,
@@ -70,15 +71,13 @@ const LiveAuditPanel = ({ account }: { account: PaperAccount }) => {
   
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h4 className="font-medium">Live Trading Audit</h4>
-        <div className="flex items-center gap-2">
-          <Badge className={isFollowing ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'}>
-            {isFollowing ? 'Following' : 'Paused'}
-          </Badge>
-          <Switch checked={isFollowing} onCheckedChange={setIsFollowing} />
-        </div>
-      </div>
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-medium">Live Trading Audit</h4>
+                    <div className="flex items-center gap-2">
+                      <StatusIndicator isActive={isFollowing} label="Following" />
+                      <Switch checked={isFollowing} onCheckedChange={setIsFollowing} />
+                    </div>
+                  </div>
       
       <div className="grid grid-cols-3 gap-4">
         <div className="text-center p-3 bg-white/5 rounded">
@@ -222,6 +221,7 @@ const FollowingAccountsTab = () => {
                     <div>
                       <h4 className="font-semibold text-lg">{account.trader_name}</h4>
                       <div className="flex items-center gap-2 mt-1">
+                        <StatusIndicator isActive={account.is_active} label="Active" />
                         <Badge className="bg-purple-500/20 text-purple-400">
                           {account.trader_category}
                         </Badge>
@@ -942,31 +942,7 @@ export const AccountManager = () => {
         </TabsContent>
         
         <TabsContent value="analytics" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card className="crypto-card-gradient text-white">
-              <CardHeader>
-                <CardTitle>Portfolio Performance</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-64 flex items-center justify-center text-white/60">
-                  <LineChart className="w-12 h-12 mb-4" />
-                  <p>Portfolio analytics will be displayed here</p>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card className="crypto-card-gradient text-white">
-              <CardHeader>
-                <CardTitle>Risk Analysis</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-64 flex items-center justify-center text-white/60">
-                  <PieChart className="w-12 h-12 mb-4" />
-                  <p>Risk analysis will be displayed here</p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          <RealTimeAuditLog />
         </TabsContent>
       </Tabs>
 

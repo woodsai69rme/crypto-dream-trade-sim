@@ -107,27 +107,38 @@ export const PaperAccountSettings = () => {
     try {
       const { data: trades, error } = await supabase
         .from('paper_trades')
-        .select('total_value, side')
+        .select('total_value, side, account_id')
         .eq('user_id', user.id)
         .eq('status', 'completed');
 
-      if (trades) {
-        const totalTrades = trades.length;
-        const buyTrades = trades.filter(t => t.side === 'buy');
-        const sellTrades = trades.filter(t => t.side === 'sell');
+      if (trades && paperAccount) {
+        // Filter trades for current account only
+        const accountTrades = trades.filter(t => t.account_id === paperAccount.id);
+        const totalTrades = accountTrades.length;
+        
+        // If no trades exist (like after reset), set all stats to 0
+        if (totalTrades === 0) {
+          setTradeStats({ totalTrades: 0, winRate: 0, bestTrade: 0, worstTrade: 0 });
+          return;
+        }
         
         // Calculate win rate based on actual profitable trades
-        const profitableTrades = trades.filter(t => t.total_value > 0).length;
+        const profitableTrades = accountTrades.filter(t => t.total_value > 0).length;
         const winRate = totalTrades > 0 ? (profitableTrades / totalTrades) * 100 : 0;
         
-        const tradeValues = trades.map(t => t.total_value);
+        const tradeValues = accountTrades.map(t => t.total_value);
         const bestTrade = tradeValues.length > 0 ? Math.max(...tradeValues) : 0;
         const worstTrade = tradeValues.length > 0 ? Math.min(...tradeValues) : 0;
 
         setTradeStats({ totalTrades, winRate, bestTrade, worstTrade });
+      } else {
+        // No trades found, reset all stats
+        setTradeStats({ totalTrades: 0, winRate: 0, bestTrade: 0, worstTrade: 0 });
       }
     } catch (error) {
       console.error('Error fetching trade stats:', error);
+      // On error, also reset stats to avoid showing stale data
+      setTradeStats({ totalTrades: 0, winRate: 0, bestTrade: 0, worstTrade: 0 });
     }
   };
 

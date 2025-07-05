@@ -61,7 +61,7 @@ export const useAccountReset = () => {
         console.warn('Error deleting notifications:', notificationsError);
       }
 
-      // Reset account balance and stats
+      // Reset account balance and stats - ensure complete reset
       const { error: updateError } = await supabase
         .from('paper_trading_accounts')
         .update({
