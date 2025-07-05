@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -17,7 +18,10 @@ import { RiskManagementDashboard } from "@/components/RiskManagementDashboard";
 import { AccountManager } from "@/components/AccountManager";
 import { AccountHistoryManager } from "@/components/AccountHistoryManager";
 import { BotManagement } from "@/components/settings/BotManagement";
+import { APISettings } from "@/components/settings/APISettings";
+import { MCPSettings } from "@/components/settings/MCPSettings";
 import { SystemAudit } from "@/components/testing/SystemAudit";
+import { LiveMonitoringDashboard } from "@/components/dashboard/LiveMonitoringDashboard";
 
 const Index = () => {
   const { user, loading } = useAuth();
@@ -40,6 +44,9 @@ const Index = () => {
       case "trading":
         return (
           <div className="space-y-6">
+            <div className="flex justify-end">
+              <LiveMonitoringDashboard />
+            </div>
             <AdvancedTradingInterface />
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <TradeFollower />
@@ -55,6 +62,10 @@ const Index = () => {
         return (
           <div className="space-y-6">
             <SystemAudit />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <APISettings />
+              <MCPSettings />
+            </div>
             <BotManagement />
             <PaperAccountSettings />
             <AccountHistoryManager />
@@ -67,6 +78,9 @@ const Index = () => {
       default:
         return (
           <div className="space-y-6">
+            <div className="flex justify-end">
+              <LiveMonitoringDashboard />
+            </div>
             <PortfolioDashboard />
             <RealTimeTracker />
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

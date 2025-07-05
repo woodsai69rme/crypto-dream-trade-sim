@@ -19,8 +19,8 @@ import { CreateCustomAccountForm } from "./CreateCustomAccountForm";
 import { PerformanceMetrics } from "./analytics/PerformanceMetrics";
 import { NotificationCenter } from "./notifications/NotificationCenter";
 import { PortfolioChart } from "./portfolio/PortfolioChart";
-import { 
-  Plus, Settings, Eye, TrendingUp, TrendingDown, DollarSign, 
+import { StatusIndicator } from "./StatusIndicator";
+import { Plus, Settings, Eye, TrendingUp, TrendingDown, DollarSign, 
   Users, Bell, Star, Copy, Share2, MoreHorizontal, AlertTriangle,
   Zap, Shield, BarChart3, BookOpen, Bitcoin, Bot, Trophy, Target,
   ExternalLink, Maximize2, Activity, PieChart, LineChart, Monitor,
@@ -372,6 +372,10 @@ export const AccountManager = () => {
     const isSelected = selectedAccounts.includes(account.id);
     const isCurrentAccount = currentAccount?.id === account.id;
 
+    // Simulate following trades and AI bot status
+    const hasFollowingTrades = Math.random() > 0.5;
+    const hasActiveBots = Math.random() > 0.3;
+
     return (
       <Card 
         key={account.id}
@@ -432,6 +436,25 @@ export const AccountManager = () => {
         </CardHeader>
         
         <CardContent className="pt-0 space-y-4">
+          {/* Status Indicators */}
+          <div className="flex items-center justify-between p-2 bg-white/5 rounded">
+            <div className="flex items-center gap-4">
+              <StatusIndicator 
+                isActive={hasFollowingTrades} 
+                label="Following Trades"
+                size="sm"
+              />
+              <StatusIndicator 
+                isActive={hasActiveBots} 
+                label="AI Bots"
+                size="sm"
+              />
+            </div>
+            <Badge className="bg-purple-500/20 text-purple-400 text-xs">
+              Live
+            </Badge>
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="text-white/60 text-sm">Balance</p>
@@ -450,21 +473,33 @@ export const AccountManager = () => {
             </div>
           </div>
 
-          {/* Live Performance Chart */}
+          {/* Enhanced Live Performance Chart */}
           <div className="h-24 bg-white/5 rounded p-2">
-            <div className="text-xs text-white/60 mb-1">24h Performance</div>
-            <div className="h-16 flex items-end justify-between">
-              {[...Array(12)].map((_, i) => (
-                <div
-                  key={i}
-                  className="bg-blue-400 w-1 rounded-t"
-                  style={{ height: `${Math.random() * 100}%` }}
-                />
-              ))}
+            <div className="flex items-center justify-between mb-1">
+              <div className="text-xs text-white/60">24h Performance</div>
+              <div className="flex items-center gap-1">
+                <div className="w-1 h-1 bg-green-400 rounded-full animate-pulse"></div>
+                <span className="text-xs text-green-400">Live</span>
+              </div>
+            </div>
+            <div className="h-16 flex items-end justify-between gap-0.5">
+              {[...Array(24)].map((_, i) => {
+                const height = Math.random() * 100;
+                const isPositive = Math.random() > 0.5;
+                return (
+                  <div
+                    key={i}
+                    className={`w-1 rounded-t transition-all duration-300 ${
+                      isPositive ? 'bg-green-400' : 'bg-red-400'
+                    }`}
+                    style={{ height: `${Math.max(height, 10)}%` }}
+                  />
+                );
+              })}
             </div>
           </div>
 
-          {/* Trading Stats */}
+          {/* Enhanced Trading Stats */}
           <div className="grid grid-cols-3 gap-2 text-xs">
             <div className="text-center p-2 bg-white/5 rounded">
               <div className="font-bold text-green-400">73.2%</div>
@@ -480,17 +515,26 @@ export const AccountManager = () => {
             </div>
           </div>
 
-          {/* Live Audit Status */}
+          {/* Enhanced Live Audit Status */}
           <div className="p-3 bg-white/5 rounded">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium">Live Audit</span>
-              <Badge className="bg-green-500/20 text-green-400">
-                <Activity className="w-3 h-3 mr-1" />
-                Active
-              </Badge>
+              <div className="flex items-center gap-2">
+                <StatusIndicator isActive={true} showLabel={false} size="sm" />
+                <Badge className="bg-green-500/20 text-green-400">
+                  <Activity className="w-3 h-3 mr-1" />
+                  Active
+                </Badge>
+              </div>
             </div>
-            <div className="text-xs text-white/60">
-              Last trade: BTC BUY $67,432 • 2m ago
+            <div className="text-xs text-white/60 space-y-1">
+              <div>Last trade: BTC BUY $67,432 • 2m ago</div>
+              {hasFollowingTrades && (
+                <div className="text-green-400">• Following 3 traders</div>
+              )}
+              {hasActiveBots && (
+                <div className="text-purple-400">• 2 AI bots active</div>
+              )}
             </div>
           </div>
 
