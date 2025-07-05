@@ -1,64 +1,100 @@
 
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, TrendingDown } from "lucide-react";
+import { TrendingUp, TrendingDown, DatabaseZap } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer } from "recharts";
+import { supabase } from "@/integrations/supabase/client";
 
-const mockCryptoData = [
-  {
-    symbol: "BTC",
-    name: "Bitcoin",
-    price: 67432.15,
-    change: 2.34,
-    changePercent: 3.6,
-    marketCap: "1.33T",
-    volume: "28.5B",
-    data: [65000, 66200, 67100, 66800, 67432]
-  },
-  {
-    symbol: "ETH",
-    name: "Ethereum",
-    price: 3678.92,
-    change: -45.67,
-    changePercent: -1.2,
-    marketCap: "442.1B",
-    volume: "15.2B",
-    data: [3720, 3680, 3650, 3690, 3678]
-  },
-  {
-    symbol: "BNB",
-    name: "BNB",
-    price: 634.21,
-    change: 12.45,
-    changePercent: 2.0,
-    marketCap: "92.4B",
-    volume: "1.8B",
-    data: [620, 625, 630, 632, 634]
-  },
-  {
-    symbol: "SOL",
-    name: "Solana",
-    price: 178.45,
-    change: 8.92,
-    changePercent: 5.3,
-    marketCap: "84.2B",
-    volume: "3.1B",
-    data: [170, 172, 175, 176, 178]
-  }
-];
+interface CryptoData {
+  symbol: string;
+  name: string;
+  price_usd: number;
+  change_24h: number;
+  change_percentage_24h: number;
+  market_cap_usd: number;
+  volume_24h_usd: number;
+  high_24h: number;
+  low_24h: number;
+}
 
 export const MarketOverview = () => {
+  const [cryptoData, setCryptoData] = useState<CryptoData[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchMarketData();
+    const interval = setInterval(fetchMarketData, 60000); // Update every minute
+    return () => clearInterval(interval);
+  }, []);
+
+  const fetchMarketData = async () => {
+    try {
+      // First try to get cached data
+      const { data: cachedData } = await supabase
+        .from('market_data_cache')
+        .select('*')
+        .order('market_cap_usd', { ascending: false })
+        .limit(8);
+
+      if (cachedData && cachedData.length > 0) {
+        setCryptoData(cachedData);
+      }
+
+      // Update data in background
+      const { data, error } = await supabase.functions.invoke('fetch-market-data');
+      if (error) {
+        console.error('Error fetching market data:', error);
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatCurrency = (value: number) => {
+    if (value >= 1e12) return `$${(value / 1e12).toFixed(2)}T`;
+    if (value >= 1e9) return `$${(value / 1e9).toFixed(2)}B`;
+    if (value >= 1e6) return `$${(value / 1e6).toFixed(2)}M`;
+    return `$${value.toLocaleString()}`;
+  };
+
+  if (loading) {
+    return (
+      <Card className="crypto-card-gradient text-white">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <DatabaseZap className="w-5 h-5 animate-pulse" />
+            Loading Market Data...
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="p-4 rounded-lg bg-white/5 animate-pulse">
+                <div className="h-16 bg-white/10 rounded mb-2"></div>
+                <div className="h-4 bg-white/10 rounded mb-2"></div>
+                <div className="h-4 bg-white/10 rounded"></div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="crypto-card-gradient text-white">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <TrendingUp className="w-5 h-5" />
-          Market Overview
+          Live Market Overview
         </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {mockCryptoData.map((crypto) => (
+          {cryptoData.map((crypto) => (
             <div key={crypto.symbol} className="p-4 rounded-lg bg-white/5 hover:bg-white/10 transition-colors">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
@@ -71,36 +107,42 @@ export const MarketOverview = () => {
                   </div>
                 </div>
                 <Badge
-                  variant={crypto.changePercent > 0 ? "default" : "destructive"}
+                  variant={crypto.change_percentage_24h > 0 ? "default" : "destructive"}
                   className={`${
-                    crypto.changePercent > 0
+                    crypto.change_percentage_24h > 0
                       ? "bg-green-500/20 text-green-400 border-green-500/30"
                       : "bg-red-500/20 text-red-400 border-red-500/30"
                   }`}
                 >
-                  {crypto.changePercent > 0 ? (
+                  {crypto.change_percentage_24h > 0 ? (
                     <TrendingUp className="w-3 h-3 mr-1" />
                   ) : (
                     <TrendingDown className="w-3 h-3 mr-1" />
                   )}
-                  {crypto.changePercent.toFixed(1)}%
+                  {crypto.change_percentage_24h.toFixed(1)}%
                 </Badge>
               </div>
               
               <div className="mb-3">
-                <div className="text-lg font-bold">${crypto.price.toLocaleString()}</div>
-                <div className={`text-sm ${crypto.change > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                  {crypto.change > 0 ? '+' : ''}${crypto.change.toFixed(2)}
+                <div className="text-lg font-bold">${crypto.price_usd.toLocaleString()}</div>
+                <div className={`text-sm ${crypto.change_24h > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                  {crypto.change_24h > 0 ? '+' : ''}${crypto.change_24h.toFixed(2)}
                 </div>
               </div>
 
               <div className="h-12 mb-2">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={crypto.data.map((value, index) => ({ value, index }))}>
+                  <LineChart data={[
+                    { value: crypto.low_24h, index: 0 },
+                    { value: crypto.price_usd * 0.99, index: 1 },
+                    { value: crypto.price_usd * 1.01, index: 2 },
+                    { value: crypto.high_24h, index: 3 },
+                    { value: crypto.price_usd, index: 4 }
+                  ]}>
                     <Line
                       type="monotone"
                       dataKey="value"
-                      stroke={crypto.changePercent > 0 ? "#10b981" : "#ef4444"}
+                      stroke={crypto.change_percentage_24h > 0 ? "#10b981" : "#ef4444"}
                       strokeWidth={2}
                       dot={false}
                     />
@@ -109,8 +151,8 @@ export const MarketOverview = () => {
               </div>
 
               <div className="text-xs text-white/60 space-y-1">
-                <div>Vol: {crypto.volume}</div>
-                <div>MCap: {crypto.marketCap}</div>
+                <div>Vol: {formatCurrency(crypto.volume_24h_usd)}</div>
+                <div>MCap: {formatCurrency(crypto.market_cap_usd)}</div>
               </div>
             </div>
           ))}

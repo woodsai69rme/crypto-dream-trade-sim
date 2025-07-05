@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,9 +33,30 @@ export const TradingPanel = () => {
 
   const selectedCoin = tradingPairs.find(pair => pair.symbol === selectedPair);
 
-  const handlePlaceOrder = () => {
-    console.log("Placing order:", { selectedPair, orderType, side, amount, price });
-    // Here you would integrate with a real trading API
+  const handlePlaceOrder = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('paper-trade', {
+        body: {
+          symbol: selectedPair.split('/')[0],
+          side,
+          amount: parseFloat(amount),
+          order_type: orderType,
+          price: orderType === 'limit' ? parseFloat(price) : undefined
+        }
+      });
+
+      if (error) {
+        console.error("Trade error:", error);
+        return;
+      }
+
+      console.log("Trade executed:", data);
+      // Reset form
+      setAmount("");
+      setPrice("");
+    } catch (error) {
+      console.error("Error placing order:", error);
+    }
   };
 
   return (
