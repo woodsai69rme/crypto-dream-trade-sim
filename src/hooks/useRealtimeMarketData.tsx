@@ -27,7 +27,7 @@ export const useRealtimeMarketData = (symbols: string[] = []) => {
     try {
       setConnectionStatus('connecting');
       
-      // Ultra-fast real-time simulation with 1-second updates
+      // Real-time updates every 30 seconds (more reasonable for free APIs)
       const interval = setInterval(async () => {
         try {
           const { data } = await supabase
@@ -39,12 +39,11 @@ export const useRealtimeMarketData = (symbols: string[] = []) => {
           if (data) {
             const newPrices: RealtimeData = {};
             data.forEach(item => {
-              // Add small random fluctuations for real-time feel
-              const priceFluctuation = 1 + (Math.random() - 0.5) * 0.001; // ±0.05% random movement
+              // Use real prices without artificial fluctuations
               newPrices[item.symbol] = {
                 symbol: item.symbol,
-                price: item.price_usd * priceFluctuation,
-                change24h: item.change_percentage_24h + (Math.random() - 0.5) * 0.1,
+                price: item.price_usd,
+                change24h: item.change_percentage_24h,
                 volume: item.volume_24h_usd,
                 timestamp: Date.now()
               };
@@ -52,12 +51,17 @@ export const useRealtimeMarketData = (symbols: string[] = []) => {
             setPrices(newPrices);
             setLastUpdate(new Date());
             setConnectionStatus('connected');
+
+            // Trigger market data refresh every 5 minutes
+            if (Date.now() % 300000 < 30000) { // Every 5 minutes
+              supabase.functions.invoke('fetch-market-data').catch(console.error);
+            }
           }
         } catch (error) {
           console.error('Error fetching realtime data:', error);
           setConnectionStatus('disconnected');
         }
-      }, 1000); // 1-second real-time updates
+      }, 30000); // 30-second real-time updates
 
       return () => clearInterval(interval);
     } catch (error) {
@@ -101,8 +105,8 @@ export const useRealtimeMarketData = (symbols: string[] = []) => {
       }
     };
 
-    // Monitor for alerts every second
-    const alertInterval = setInterval(checkAlert, 1000);
+    // Monitor for alerts every 30 seconds (matches price update frequency)
+    const alertInterval = setInterval(checkAlert, 30000);
     return () => clearInterval(alertInterval);
   };
 

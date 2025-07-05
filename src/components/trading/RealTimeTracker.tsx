@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useRealtimeMarketData } from '@/hooks/useRealtimeMarketData';
+import { marketDataService } from '@/services/marketDataService';
 import { Activity, TrendingUp, TrendingDown, Zap } from 'lucide-react';
 
 interface PriceAlert {

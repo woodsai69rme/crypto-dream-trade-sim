@@ -30,7 +30,16 @@ export const MarketOverview = () => {
 
   const fetchMarketData = async () => {
     try {
-      // First try to get cached data
+      // Fetch fresh market data from our edge function
+      const { data, error } = await supabase.functions.invoke('fetch-market-data');
+      
+      if (error) {
+        console.error('Error fetching market data:', error);
+      } else {
+        console.log('✅ Fresh market data updated');
+      }
+
+      // Get cached data (now with real prices)
       const { data: cachedData } = await supabase
         .from('market_data_cache')
         .select('*')
@@ -39,12 +48,6 @@ export const MarketOverview = () => {
 
       if (cachedData && cachedData.length > 0) {
         setCryptoData(cachedData);
-      }
-
-      // Update data in background
-      const { data, error } = await supabase.functions.invoke('fetch-market-data');
-      if (error) {
-        console.error('Error fetching market data:', error);
       }
     } catch (error) {
       console.error('Error:', error);
