@@ -15,6 +15,8 @@ import { TradeFollower } from "@/components/trading/TradeFollower";
 import { AITradingBot } from "@/components/ai/AITradingBot";
 import { AdvancedTradingInterface } from "@/components/AdvancedTradingInterface";
 import { RiskManagementDashboard } from "@/components/RiskManagementDashboard";
+import { AccountManager } from "@/components/AccountManager";
+import { AccountHistoryManager } from "@/components/AccountHistoryManager";
 
 const Index = () => {
   const { user, loading } = useAuth();
@@ -44,10 +46,17 @@ const Index = () => {
             </div>
           </div>
         );
+      case "accounts":
+        return <AccountManager />;
       case "traders":
         return <TopTraders />;
       case "settings":
-        return <PaperAccountSettings />;
+        return (
+          <div className="space-y-6">
+            <PaperAccountSettings />
+            <AccountHistoryManager />
+          </div>
+        );
       case "history":
         return <TradingHistory />;
       case "risk":

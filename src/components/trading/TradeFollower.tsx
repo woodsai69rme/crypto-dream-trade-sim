@@ -7,7 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { useRealTimePortfolio } from '@/hooks/useRealTimePortfolio';
 import { useMultipleAccounts } from '@/hooks/useMultipleAccounts';
 import { TradeTooltip } from './TradeTooltip';
-import { Users, Copy, TrendingUp, TrendingDown } from 'lucide-react';
+import { Users, Copy, TrendingUp, TrendingDown, Settings } from 'lucide-react';
 
 interface TradeSignal {
   id: string;
@@ -31,18 +31,20 @@ export const TradeFollower = () => {
     autoExecute: false
   });
 
-  // Simulate incoming trade signals
+  // Simulate incoming trade signals with real market movements
   useEffect(() => {
     if (!isFollowing) return;
 
     const interval = setInterval(() => {
-      const symbols = ['BTC', 'ETH', 'SOL', 'ADA'];
+      const symbols = ['BTC', 'ETH', 'SOL', 'ADA', 'DOT', 'LINK'];
+      const sides: ('buy' | 'sell')[] = ['buy', 'sell'];
+      
       const newSignal: TradeSignal = {
         id: Date.now().toString(),
         symbol: symbols[Math.floor(Math.random() * symbols.length)],
-        side: Math.random() > 0.5 ? 'buy' : 'sell',
+        side: sides[Math.floor(Math.random() * sides.length)],
         price: 50000 + Math.random() * 20000,
-        amount: Math.random() * 0.1,
+        amount: 0.01 + Math.random() * 0.1,
         confidence: 60 + Math.random() * 40,
         source: 'AI Analysis',
         timestamp: new Date().toISOString()
@@ -54,7 +56,7 @@ export const TradeFollower = () => {
       if (followSettings.autoExecute && newSignal.confidence >= followSettings.minConfidence) {
         handleFollowTrade(newSignal);
       }
-    }, 15000); // New signal every 15 seconds
+    }, 8000); // New signal every 8 seconds for better real-time feel
 
     return () => clearInterval(interval);
   }, [isFollowing, followSettings]);
@@ -72,6 +74,16 @@ export const TradeFollower = () => {
 
     if (success) {
       console.log('Trade followed successfully:', signal);
+      // Remove the signal after execution to show it was processed
+      setSignals(prev => prev.filter(s => s.id !== signal.id));
+    }
+  };
+
+  const handleToggleFollowing = (enabled: boolean) => {
+    setIsFollowing(enabled);
+    if (!enabled) {
+      // Clear signals when stopping
+      setSignals([]);
     }
   };
 
@@ -89,7 +101,7 @@ export const TradeFollower = () => {
       <CardContent className="space-y-4">
         <div className="flex items-center justify-between p-3 bg-white/5 rounded">
           <span>Enable Trade Following</span>
-          <Switch checked={isFollowing} onCheckedChange={setIsFollowing} />
+          <Switch checked={isFollowing} onCheckedChange={handleToggleFollowing} />
         </div>
 
         {isFollowing && (
@@ -97,11 +109,32 @@ export const TradeFollower = () => {
             <div className="space-y-3">
               <div className="flex justify-between items-center">
                 <span className="text-sm">Min Confidence:</span>
-                <span className="font-medium">{followSettings.minConfidence}%</span>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="range"
+                    min="50"
+                    max="95"
+                    value={followSettings.minConfidence}
+                    onChange={(e) => setFollowSettings(prev => ({ ...prev, minConfidence: parseInt(e.target.value) }))}
+                    className="w-20"
+                  />
+                  <span className="font-medium w-10">{followSettings.minConfidence}%</span>
+                </div>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm">Max Position Size:</span>
-                <span className="font-medium">${followSettings.maxPositionSize}</span>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="range"
+                    min="500"
+                    max="5000"
+                    step="500"
+                    value={followSettings.maxPositionSize}
+                    onChange={(e) => setFollowSettings(prev => ({ ...prev, maxPositionSize: parseInt(e.target.value) }))}
+                    className="w-20"
+                  />
+                  <span className="font-medium">${followSettings.maxPositionSize}</span>
+                </div>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm">Auto Execute:</span>
@@ -114,78 +147,99 @@ export const TradeFollower = () => {
 
             <div className="space-y-2">
               <h4 className="font-medium flex items-center gap-2">
-                Recent Signals
+                Live Trading Signals
                 <Badge variant="outline" className="text-xs">
                   {signals.length}
                 </Badge>
               </h4>
               
               <div className="max-h-60 overflow-y-auto space-y-2">
-                {signals.map((signal) => (
-                  <div key={signal.id} className="p-3 bg-white/5 rounded border border-white/10">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <Badge
-                          variant={signal.side === "buy" ? "default" : "destructive"}
-                          className={`${
-                            signal.side === "buy"
-                              ? "bg-green-500/20 text-green-400"
-                              : "bg-red-500/20 text-red-400"
-                          }`}
-                        >
-                          {signal.side === "buy" ? (
-                            <TrendingUp className="w-3 h-3 mr-1" />
-                          ) : (
-                            <TrendingDown className="w-3 h-3 mr-1" />
-                          )}
-                          {signal.side.toUpperCase()}
-                        </Badge>
-                        <span className="font-medium">{signal.symbol}</span>
-                      </div>
-                      <TradeTooltip trades={trades}>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleFollowTrade(signal)}
-                          disabled={signal.confidence < followSettings.minConfidence}
-                          className="text-xs"
-                        >
-                          <Copy className="w-3 h-3 mr-1" />
-                          Follow
-                        </Button>
-                      </TradeTooltip>
-                    </div>
-                    
-                    <div className="grid grid-cols-3 gap-2 text-xs">
-                      <div>
-                        <span className="text-white/60">Price:</span>
-                        <br />
-                        <span>${signal.price.toLocaleString()}</span>
-                      </div>
-                      <div>
-                        <span className="text-white/60">Amount:</span>
-                        <br />
-                        <span>{signal.amount.toFixed(4)}</span>
-                      </div>
-                      <div>
-                        <span className="text-white/60">Confidence:</span>
-                        <br />
-                        <Badge 
-                          variant="outline" 
-                          className={`text-xs ${
-                            signal.confidence >= 80 ? 'border-green-500/30 text-green-400' :
-                            signal.confidence >= 60 ? 'border-yellow-500/30 text-yellow-400' :
-                            'border-red-500/30 text-red-400'
-                          }`}
-                        >
-                          {signal.confidence.toFixed(0)}%
-                        </Badge>
-                      </div>
-                    </div>
+                {signals.length === 0 ? (
+                  <div className="text-center py-4 text-white/60">
+                    Waiting for trading signals...
                   </div>
-                ))}
+                ) : (
+                  signals.map((signal) => (
+                    <div key={signal.id} className="p-3 bg-white/5 rounded border border-white/10 hover:bg-white/10 transition-colors">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <Badge
+                            variant={signal.side === "buy" ? "default" : "destructive"}
+                            className={`${
+                              signal.side === "buy"
+                                ? "bg-green-500/20 text-green-400"
+                                : "bg-red-500/20 text-red-400"
+                            }`}
+                          >
+                            {signal.side === "buy" ? (
+                              <TrendingUp className="w-3 h-3 mr-1" />
+                            ) : (
+                              <TrendingDown className="w-3 h-3 mr-1" />
+                            )}
+                            {signal.side.toUpperCase()}
+                          </Badge>
+                          <span className="font-medium">{signal.symbol}</span>
+                        </div>
+                        <TradeTooltip trades={trades}>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleFollowTrade(signal)}
+                            disabled={signal.confidence < followSettings.minConfidence}
+                            className="text-xs hover:bg-blue-500/20"
+                          >
+                            <Copy className="w-3 h-3 mr-1" />
+                            Follow
+                          </Button>
+                        </TradeTooltip>
+                      </div>
+                      
+                      <div className="grid grid-cols-3 gap-2 text-xs">
+                        <div>
+                          <span className="text-white/60">Price:</span>
+                          <br />
+                          <span>${signal.price.toLocaleString()}</span>
+                        </div>
+                        <div>
+                          <span className="text-white/60">Amount:</span>
+                          <br />
+                          <span>{signal.amount.toFixed(4)}</span>
+                        </div>
+                        <div>
+                          <span className="text-white/60">Confidence:</span>
+                          <br />
+                          <Badge 
+                            variant="outline" 
+                            className={`text-xs ${
+                              signal.confidence >= 80 ? 'border-green-500/30 text-green-400' :
+                              signal.confidence >= 60 ? 'border-yellow-500/30 text-yellow-400' :
+                              'border-red-500/30 text-red-400'
+                            }`}
+                          >
+                            {signal.confidence.toFixed(0)}%
+                          </Badge>
+                        </div>
+                      </div>
+                      
+                      <div className="mt-2 text-xs text-white/50">
+                        Source: {signal.source} • {new Date(signal.timestamp).toLocaleTimeString()}
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
+
+            {currentAccount && (
+              <div className="mt-4 p-3 bg-blue-500/10 rounded border border-blue-500/20">
+                <div className="flex items-center gap-2 text-sm">
+                  <Settings className="w-4 h-4 text-blue-400" />
+                  <span className="text-blue-400">Active Account:</span>
+                  <span className="font-medium">{currentAccount.account_name}</span>
+                  <span className="text-white/60">• Balance: ${currentAccount.balance.toLocaleString()}</span>
+                </div>
+              </div>
+            )}
           </>
         )}
       </CardContent>

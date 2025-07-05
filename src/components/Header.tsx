@@ -1,8 +1,21 @@
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
-import { TrendingUp, User, Settings, BarChart3, Users, Clock } from "lucide-react";
+import { useMultipleAccounts } from "@/hooks/useMultipleAccounts";
+import { supabase } from "@/integrations/supabase/client";
+import { 
+  LayoutDashboard, 
+  TrendingUp, 
+  Users, 
+  Settings, 
+  History, 
+  Shield,
+  UserPlus,
+  LogOut,
+  Bell
+} from "lucide-react";
 
 interface HeaderProps {
   activeTab: string;
@@ -10,66 +23,143 @@ interface HeaderProps {
 }
 
 export const Header = ({ activeTab, setActiveTab }: HeaderProps) => {
-  const { user, signOut } = useAuth();
-  
-  const tabs = [
-    { id: "dashboard", label: "Dashboard", icon: BarChart3 },
+  const { user } = useAuth();
+  const { currentAccount, accounts, notifications } = useMultipleAccounts();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const handleSignOut = async () => {
+    setIsLoggingOut(true);
+    try {
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.error('Error signing out:', error);
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
+
+  const navItems = [
+    { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     { id: "trading", label: "Trading", icon: TrendingUp },
-    { id: "history", label: "History", icon: Clock },
+    { id: "accounts", label: "Accounts", icon: UserPlus },
     { id: "traders", label: "Top Traders", icon: Users },
+    { id: "history", label: "History", icon: History },
+    { id: "risk", label: "Risk", icon: Shield },
     { id: "settings", label: "Settings", icon: Settings },
   ];
 
   return (
-    <header className="border-b border-white/10 bg-black/20 backdrop-blur-lg">
+    <header className="border-b border-white/10 bg-black/20 backdrop-blur-sm">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
-              <TrendingUp className="w-5 h-5 text-white" />
+          <div className="flex items-center space-x-8">
+            <div className="flex items-center space-x-2">
+              <TrendingUp className="w-8 h-8 text-blue-400" />
+              <h1 className="text-2xl font-bold text-white">CryptoTrader Pro</h1>
             </div>
-            <h1 className="text-2xl font-bold text-white">CryptoTrader Pro</h1>
-            <Badge variant="secondary" className="bg-green-500/20 text-green-400 border-green-500/30">
-              Paper Trading
-            </Badge>
-            <div className="text-white/60 text-sm ml-4">
-              Welcome, {user?.email}
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-4">
-            <nav className="flex space-x-1">
-              {tabs.map((tab) => {
-                const Icon = tab.icon;
+            
+            <nav className="hidden md:flex items-center space-x-1">
+              {navItems.map((item) => {
+                const Icon = item.icon;
                 return (
                   <Button
-                    key={tab.id}
-                    variant={activeTab === tab.id ? "default" : "ghost"}
+                    key={item.id}
+                    variant={activeTab === item.id ? "secondary" : "ghost"}
                     size="sm"
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`${
-                      activeTab === tab.id
-                        ? "bg-white/20 text-white"
+                    onClick={() => setActiveTab(item.id)}
+                    className={`flex items-center space-x-2 ${
+                      activeTab === item.id 
+                        ? "bg-white/20 text-white" 
                         : "text-white/70 hover:text-white hover:bg-white/10"
                     }`}
                   >
-                    <Icon className="w-4 h-4 mr-2" />
-                    {tab.label}
+                    <Icon className="w-4 h-4" />
+                    <span>{item.label}</span>
+                    {item.id === "accounts" && accounts.length > 1 && (
+                      <Badge variant="secondary" className="ml-1 text-xs">
+                        {accounts.length}
+                      </Badge>
+                    )}
                   </Button>
                 );
               })}
             </nav>
-            
-            <Button
-              onClick={signOut}
-              variant="outline"
-              size="sm"
-              className="border-white/20 text-white hover:bg-white/10"
-            >
-              Sign Out
-            </Button>
+          </div>
+
+          <div className="flex items-center space-x-4">
+            {/* Current Account Display */}
+            {currentAccount && (
+              <div className="hidden sm:flex items-center space-x-2 px-3 py-1 bg-white/10 rounded-lg">
+                <div className="w-2 h-2 rounded-full bg-green-400"></div>
+                <span className="text-sm text-white font-medium">
+                  {currentAccount.account_name}
+                </span>
+                <Badge variant="outline" className="text-xs border-white/30 text-white/70">
+                  ${currentAccount.balance.toLocaleString()}
+                </Badge>
+              </div>
+            )}
+
+            {/* Notifications */}
+            {notifications.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="relative text-white/70 hover:text-white"
+              >
+                <Bell className="w-4 h-4" />
+                <Badge 
+                  variant="destructive" 
+                  className="absolute -top-1 -right-1 w-5 h-5 text-xs flex items-center justify-center p-0"
+                >
+                  {notifications.length}
+                </Badge>
+              </Button>
+            )}
+
+            {/* User Menu */}
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-white/70 hidden sm:block">
+                {user?.email}
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleSignOut}
+                disabled={isLoggingOut}
+                className="text-white/70 hover:text-white"
+              >
+                <LogOut className="w-4 h-4" />
+                <span className="ml-2 hidden sm:block">
+                  {isLoggingOut ? "Signing out..." : "Sign Out"}
+                </span>
+              </Button>
+            </div>
           </div>
         </div>
+
+        {/* Mobile Navigation */}
+        <nav className="md:hidden mt-4 flex overflow-x-auto space-x-1 pb-2">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <Button
+                key={item.id}
+                variant={activeTab === item.id ? "secondary" : "ghost"}
+                size="sm"
+                onClick={() => setActiveTab(item.id)}
+                className={`flex items-center space-x-1 whitespace-nowrap ${
+                  activeTab === item.id 
+                    ? "bg-white/20 text-white" 
+                    : "text-white/70 hover:text-white hover:bg-white/10"
+                }`}
+              >
+                <Icon className="w-4 h-4" />
+                <span className="text-xs">{item.label}</span>
+              </Button>
+            );
+          })}
+        </nav>
       </div>
     </header>
   );
