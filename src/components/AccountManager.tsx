@@ -6,15 +6,24 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Switch } from "@/components/ui/switch";
+import { Progress } from "@/components/ui/progress";
 import { useMultipleAccounts, type PaperAccount } from "@/hooks/useMultipleAccounts";
+import { useRealTimePortfolio } from "@/hooks/useRealTimePortfolio";
 import { AccountTemplateSelector } from "./AccountTemplateSelector";
 import { AccountComparison } from "./AccountComparison";
 import { AccountSharing } from "./AccountSharing";
 import { CreateCustomAccountForm } from "./CreateCustomAccountForm";
+import { PerformanceMetrics } from "./analytics/PerformanceMetrics";
+import { NotificationCenter } from "./notifications/NotificationCenter";
+import { PortfolioChart } from "./portfolio/PortfolioChart";
 import { 
   Plus, Settings, Eye, TrendingUp, TrendingDown, DollarSign, 
   Users, Bell, Star, Copy, Share2, MoreHorizontal, AlertTriangle,
-  Zap, Shield, BarChart3, BookOpen, Bitcoin, Bot, Trophy, Target
+  Zap, Shield, BarChart3, BookOpen, Bitcoin, Bot, Trophy, Target,
+  ExternalLink, Maximize2, Activity, PieChart, LineChart, Monitor,
+  Play, Pause, StopCircle, RefreshCw, Download, Upload, Calendar,
+  Wallet, History, ChevronUp, ChevronDown, Minimize2
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
@@ -40,6 +49,98 @@ const RISK_LEVEL_COLORS = {
   extreme: 'bg-purple-500/20 text-purple-400 border-purple-500/30'
 };
 
+const MarketTicker = ({ symbol, price, change }: { symbol: string; price: number; change: number }) => (
+  <div className="flex items-center gap-2 px-3 py-1 bg-white/5 rounded">
+    <span className="font-mono text-sm">{symbol}</span>
+    <span className="font-bold">${price.toLocaleString()}</span>
+    <span className={`text-xs ${change >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+      {change >= 0 ? '+' : ''}{change.toFixed(2)}%
+    </span>
+  </div>
+);
+
+const LiveAuditPanel = ({ account }: { account: PaperAccount }) => {
+  const { trades } = useRealTimePortfolio();
+  const [isFollowing, setIsFollowing] = useState(false);
+  
+  const recentTrades = trades.slice(0, 5);
+  
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h4 className="font-medium">Live Trading Audit</h4>
+        <div className="flex items-center gap-2">
+          <Badge className={isFollowing ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'}>
+            {isFollowing ? 'Following' : 'Paused'}
+          </Badge>
+          <Switch checked={isFollowing} onCheckedChange={setIsFollowing} />
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-3 gap-4">
+        <div className="text-center p-3 bg-white/5 rounded">
+          <div className="text-lg font-bold text-green-400">{recentTrades.length}</div>
+          <div className="text-xs text-white/60">Recent Trades</div>
+        </div>
+        <div className="text-center p-3 bg-white/5 rounded">
+          <div className="text-lg font-bold text-blue-400">73.2%</div>
+          <div className="text-xs text-white/60">Success Rate</div>
+        </div>
+        <div className="text-center p-3 bg-white/5 rounded">
+          <div className="text-lg font-bold text-purple-400">+2.4%</div>
+          <div className="text-xs text-white/60">Daily Return</div>
+        </div>
+      </div>
+      
+      <div className="space-y-2">
+        <h5 className="text-sm text-white/70">Recent Activity</h5>
+        <ScrollArea className="h-32">
+          {recentTrades.map((trade, index) => (
+            <div key={index} className="flex items-center justify-between p-2 bg-white/5 rounded mb-1">
+              <div className="flex items-center gap-2">
+                <Activity className="w-3 h-3 text-blue-400" />
+                <span className="text-sm">{trade.symbol}</span>
+                <Badge className={trade.side === 'buy' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}>
+                  {trade.side.toUpperCase()}
+                </Badge>
+              </div>
+              <span className="text-xs text-white/60">
+                {formatDistanceToNow(new Date(trade.created_at))} ago
+              </span>
+            </div>
+          ))}
+        </ScrollArea>
+      </div>
+    </div>
+  );
+};
+
+const PopOutDashboard = ({ account, onClose }: { account: PaperAccount; onClose: () => void }) => (
+  <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+    <div className="bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 rounded-lg w-full max-w-6xl max-h-[90vh] overflow-hidden">
+      <div className="flex items-center justify-between p-4 border-b border-white/10">
+        <h2 className="text-xl font-bold text-white">Dashboard - {account.account_name}</h2>
+        <Button onClick={onClose} variant="ghost" size="sm">
+          <Minimize2 className="w-4 h-4" />
+        </Button>
+      </div>
+      
+      <div className="p-6 overflow-y-auto max-h-[calc(90vh-80px)]">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-6">
+            <PortfolioChart />
+            <PerformanceMetrics accountId={account.id} />
+          </div>
+          <div className="space-y-6">
+            <LiveAuditPanel account={account} />
+            <NotificationCenter />
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
 export const AccountManager = () => {
   const {
     accounts,
@@ -59,6 +160,24 @@ export const AccountManager = () => {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showComparisonDialog, setShowComparisonDialog] = useState(false);
   const [showSharingDialog, setShowSharingDialog] = useState(false);
+  const [popOutAccount, setPopOutAccount] = useState<PaperAccount | null>(null);
+  const [showTopTicker, setShowTopTicker] = useState(true);
+  const [showBottomTicker, setShowBottomTicker] = useState(true);
+
+  // Mock market data for tickers
+  const topTickers = [
+    { symbol: 'BTC', price: 67432, change: 2.4 },
+    { symbol: 'ETH', price: 3678, change: -1.2 },
+    { symbol: 'SOL', price: 156, change: 5.7 },
+    { symbol: 'ADA', price: 0.52, change: 3.1 },
+  ];
+
+  const bottomTickers = [
+    { symbol: 'DOT', price: 8.43, change: -0.8 },
+    { symbol: 'LINK', price: 18.76, change: 4.2 },
+    { symbol: 'UNI', price: 7.89, change: 1.9 },
+    { symbol: 'AVAX', price: 42.1, change: -2.3 },
+  ];
 
   const handleAccountClick = async (accountId: string) => {
     if (currentAccount?.id !== accountId) {
@@ -117,25 +236,29 @@ export const AccountManager = () => {
                 size="sm"
                 onClick={(e) => {
                   e.stopPropagation();
+                  setPopOutAccount(account);
+                }}
+                className="hover:bg-white/10"
+              >
+                <ExternalLink className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="ghost" 
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
                   handleAccountSelect(account.id);
                 }}
                 className={`${isSelected ? 'bg-purple-500/20' : ''}`}
               >
                 <Eye className="w-4 h-4" />
               </Button>
-              <Button
-                variant="ghost" 
-                size="sm"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <MoreHorizontal className="w-4 h-4" />
-              </Button>
             </div>
           </div>
         </CardHeader>
         
-        <CardContent className="pt-0">
-          <div className="grid grid-cols-2 gap-4 mb-4">
+        <CardContent className="pt-0 space-y-4">
+          <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="text-white/60 text-sm">Balance</p>
               <p className="text-xl font-bold">${account.balance.toLocaleString()}</p>
@@ -150,6 +273,50 @@ export const AccountManager = () => {
                   ({account.total_pnl_percentage >= 0 ? '+' : ''}{account.total_pnl_percentage.toFixed(2)}%)
                 </span>
               </p>
+            </div>
+          </div>
+
+          {/* Live Performance Chart */}
+          <div className="h-24 bg-white/5 rounded p-2">
+            <div className="text-xs text-white/60 mb-1">24h Performance</div>
+            <div className="h-16 flex items-end justify-between">
+              {[...Array(12)].map((_, i) => (
+                <div
+                  key={i}
+                  className="bg-blue-400 w-1 rounded-t"
+                  style={{ height: `${Math.random() * 100}%` }}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Trading Stats */}
+          <div className="grid grid-cols-3 gap-2 text-xs">
+            <div className="text-center p-2 bg-white/5 rounded">
+              <div className="font-bold text-green-400">73.2%</div>
+              <div className="text-white/60">Win Rate</div>
+            </div>
+            <div className="text-center p-2 bg-white/5 rounded">
+              <div className="font-bold">156</div>
+              <div className="text-white/60">Trades</div>
+            </div>
+            <div className="text-center p-2 bg-white/5 rounded">
+              <div className="font-bold text-blue-400">+2.4%</div>
+              <div className="text-white/60">Daily</div>
+            </div>
+          </div>
+
+          {/* Live Audit Status */}
+          <div className="p-3 bg-white/5 rounded">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium">Live Audit</span>
+              <Badge className="bg-green-500/20 text-green-400">
+                <Activity className="w-3 h-3 mr-1" />
+                Active
+              </Badge>
+            </div>
+            <div className="text-xs text-white/60">
+              Last trade: BTC BUY $67,432 • 2m ago
             </div>
           </div>
 
@@ -169,7 +336,7 @@ export const AccountManager = () => {
           </div>
 
           {account.tags && account.tags.length > 0 && (
-            <div className="flex flex-wrap gap-1 mt-3">
+            <div className="flex flex-wrap gap-1">
               {account.tags.slice(0, 3).map(tag => (
                 <Badge key={tag} variant="outline" className="text-xs">
                   {tag}
@@ -207,16 +374,50 @@ export const AccountManager = () => {
 
   return (
     <div className="space-y-6">
+      {/* Top Market Ticker */}
+      {showTopTicker && (
+        <Card className="crypto-card-gradient text-white">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-medium">Market Overview</h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowTopTicker(false)}
+              >
+                <ChevronUp className="w-4 h-4" />
+              </Button>
+            </div>
+            <div className="flex items-center gap-4 overflow-x-auto">
+              {topTickers.map((ticker, index) => (
+                <MarketTicker key={index} {...ticker} />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Header with Actions */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold text-white">Account Manager</h2>
           <p className="text-white/60 mt-1">
-            Manage your {accounts.length} paper trading accounts
+            Manage your {accounts.length} paper trading accounts with live audit & following
           </p>
         </div>
         
         <div className="flex items-center gap-3">
+          {!showTopTicker && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowTopTicker(true)}
+              className="text-white/60"
+            >
+              Show Market Data
+            </Button>
+          )}
+          
           {selectedAccounts.length > 0 && (
             <>
               <Button
@@ -372,6 +573,13 @@ export const AccountManager = () => {
                           <span className="text-sm text-white/60">
                             {account.trading_strategy.replace('_', ' ')}
                           </span>
+                          <Badge className="bg-green-500/20 text-green-400">
+                            <Activity className="w-3 h-3 mr-1" />
+                            Following
+                          </Badge>
+                        </div>
+                        <div className="text-xs text-white/60 mt-1">
+                          Last trade: BTC BUY $67,432 • Win: 73.2% • 156 trades
                         </div>
                       </div>
                     </div>
@@ -398,6 +606,16 @@ export const AccountManager = () => {
                           size="sm"
                           onClick={(e) => {
                             e.stopPropagation();
+                            setPopOutAccount(account);
+                          }}
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
                             handleAccountSelect(account.id);
                           }}
                         >
@@ -412,6 +630,29 @@ export const AccountManager = () => {
           </div>
         )}
       </div>
+
+      {/* Bottom Market Ticker */}
+      {showBottomTicker && (
+        <Card className="crypto-card-gradient text-white">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-medium">Additional Markets</h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowBottomTicker(false)}
+              >
+                <ChevronDown className="w-4 h-4" />
+              </Button>
+            </div>
+            <div className="flex items-center gap-4 overflow-x-auto">
+              {bottomTickers.map((ticker, index) => (
+                <MarketTicker key={index} {...ticker} />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Comparison Dialog */}
       <Dialog open={showComparisonDialog} onOpenChange={setShowComparisonDialog}>
@@ -446,6 +687,14 @@ export const AccountManager = () => {
           />
         </DialogContent>
       </Dialog>
+
+      {/* Pop-out Dashboard */}
+      {popOutAccount && (
+        <PopOutDashboard 
+          account={popOutAccount} 
+          onClose={() => setPopOutAccount(null)} 
+        />
+      )}
     </div>
   );
 };
