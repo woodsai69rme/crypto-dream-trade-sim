@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { useMultipleAccounts } from "@/hooks/useMultipleAccounts";
+import { NotificationCenter } from "@/components/notifications/NotificationCenter";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   LayoutDashboard, 
@@ -13,8 +14,7 @@ import {
   History, 
   Shield,
   UserPlus,
-  LogOut,
-  Bell
+  LogOut
 } from "lucide-react";
 
 interface HeaderProps {
@@ -101,21 +101,7 @@ export const Header = ({ activeTab, setActiveTab }: HeaderProps) => {
             )}
 
             {/* Notifications */}
-            {notifications.length > 0 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="relative text-white/70 hover:text-white"
-              >
-                <Bell className="w-4 h-4" />
-                <Badge 
-                  variant="destructive" 
-                  className="absolute -top-1 -right-1 w-5 h-5 text-xs flex items-center justify-center p-0"
-                >
-                  {notifications.length}
-                </Badge>
-              </Button>
-            )}
+            <NotificationCenter />
 
             {/* User Menu */}
             <div className="flex items-center space-x-2">
