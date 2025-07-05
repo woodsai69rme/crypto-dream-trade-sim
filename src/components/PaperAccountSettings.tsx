@@ -116,9 +116,9 @@ export const PaperAccountSettings = () => {
         const buyTrades = trades.filter(t => t.side === 'buy');
         const sellTrades = trades.filter(t => t.side === 'sell');
         
-        // Calculate win rate (simplified - actual implementation would need position tracking)
-        const wins = Math.floor(totalTrades * 0.65); // Mock win rate calculation
-        const winRate = totalTrades > 0 ? (wins / totalTrades) * 100 : 0;
+        // Calculate win rate based on actual profitable trades
+        const profitableTrades = trades.filter(t => t.total_value > 0).length;
+        const winRate = totalTrades > 0 ? (profitableTrades / totalTrades) * 100 : 0;
         
         const tradeValues = trades.map(t => t.total_value);
         const bestTrade = tradeValues.length > 0 ? Math.max(...tradeValues) : 0;
@@ -153,6 +153,7 @@ export const PaperAccountSettings = () => {
 
       await fetchAccountData();
       await fetchAuditRecords();
+      await fetchTradeStats(); // Also refresh trade stats after reset
       
       toast({
         title: "Account Reset",

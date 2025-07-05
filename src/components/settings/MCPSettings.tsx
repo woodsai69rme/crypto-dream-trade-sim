@@ -51,20 +51,25 @@ export const MCPSettings = () => {
     }
   ]);
 
-  const [newMCP, setNewMCP] = useState({
+  const [newMCP, setNewMCP] = useState<{
+    name: string;
+    protocol: 'stdio' | 'sse' | 'websocket';
+    endpoint: string;
+    capabilities: string[];
+  }>({
     name: '',
-    protocol: 'websocket' as const,
+    protocol: 'websocket',
     endpoint: '',
-    capabilities: [] as string[]
+    capabilities: []
   });
 
   const handleToggleMCP = (id: string) => {
-    const updated = mcpConfigs.map(config => 
+    const updated: MCPConfig[] = mcpConfigs.map(config => 
       config.id === id 
         ? { 
             ...config, 
             isEnabled: !config.isEnabled,
-            status: !config.isEnabled ? 'connected' : 'disconnected' as const
+            status: (!config.isEnabled ? 'connected' : 'disconnected') as MCPConfig['status']
           }
         : config
     );
@@ -221,8 +226,8 @@ export const MCPSettings = () => {
               <Label htmlFor="mcp-protocol">Protocol</Label>
               <Select
                 value={newMCP.protocol}
-                onValueChange={(value: 'stdio' | 'sse' | 'websocket') => 
-                  setNewMCP({ ...newMCP, protocol: value })
+                onValueChange={(value) => 
+                  setNewMCP({ ...newMCP, protocol: value as 'stdio' | 'sse' | 'websocket' })
                 }
               >
                 <SelectTrigger className="bg-white/5 border-white/20">
