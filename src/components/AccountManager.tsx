@@ -115,31 +115,58 @@ const LiveAuditPanel = ({ account }: { account: PaperAccount }) => {
   );
 };
 
-const PopOutDashboard = ({ account, onClose }: { account: PaperAccount; onClose: () => void }) => (
-  <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
-    <div className="bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 rounded-lg w-full max-w-6xl max-h-[90vh] overflow-hidden">
-      <div className="flex items-center justify-between p-4 border-b border-white/10">
-        <h2 className="text-xl font-bold text-white">Dashboard - {account.account_name}</h2>
-        <Button onClick={onClose} variant="ghost" size="sm">
-          <Minimize2 className="w-4 h-4" />
-        </Button>
-      </div>
-      
-      <div className="p-6 overflow-y-auto max-h-[calc(90vh-80px)]">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-6">
-            <PortfolioChart />
-            <PerformanceMetrics accountId={account.id} />
-          </div>
-          <div className="space-y-6">
-            <LiveAuditPanel account={account} />
-            <NotificationCenter />
+const PopOutDashboard = ({ account, onClose }: { account: PaperAccount; onClose: () => void }) => {
+  // Mock data for portfolio chart
+  const portfolioData = [
+    { name: 'BTC', value: 45, percentage: 45, color: '#f7931a' },
+    { name: 'ETH', value: 30, percentage: 30, color: '#627eea' },
+    { name: 'SOL', value: 15, percentage: 15, color: '#9945ff' },
+    { name: 'Others', value: 10, percentage: 10, color: '#64748b' },
+  ];
+
+  // Mock performance data
+  const performanceData = [
+    { date: '2024-01-01', value: 10000, return: 0 },
+    { date: '2024-01-02', value: 10500, return: 5 },
+    { date: '2024-01-03', value: 11200, return: 12 },
+    { date: '2024-01-04', value: 10800, return: 8 },
+    { date: '2024-01-05', value: 12000, return: 20 },
+  ];
+
+  const performanceMetrics = {
+    totalReturn: 15.4,
+    sharpeRatio: 1.8,
+    maxDrawdown: 8.2,
+    winRate: 73.5,
+    volatility: 12.1
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+      <div className="bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 rounded-lg w-full max-w-6xl max-h-[90vh] overflow-hidden">
+        <div className="flex items-center justify-between p-4 border-b border-white/10">
+          <h2 className="text-xl font-bold text-white">Dashboard - {account.account_name}</h2>
+          <Button onClick={onClose} variant="ghost" size="sm">
+            <Minimize2 className="w-4 h-4" />
+          </Button>
+        </div>
+        
+        <div className="p-6 overflow-y-auto max-h-[calc(90vh-80px)]">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 space-y-6">
+              <PortfolioChart data={portfolioData} />
+              <PerformanceMetrics data={performanceData} metrics={performanceMetrics} />
+            </div>
+            <div className="space-y-6">
+              <LiveAuditPanel account={account} />
+              <NotificationCenter />
+            </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 export const AccountManager = () => {
   const {

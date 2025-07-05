@@ -1,7 +1,7 @@
+
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { TrendingUp, TrendingDown, Copy } from "lucide-react";
-import { TradeTooltip } from './TradeTooltip';
 
 export interface TradeSignal {
   id: string;
@@ -43,18 +43,16 @@ export const TradeSignalCard = ({ signal, trades, onFollow, minConfidence }: Tra
           </Badge>
           <span className="font-medium">{signal.symbol}</span>
         </div>
-        <TradeTooltip trades={trades}>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => onFollow(signal)}
-            disabled={signal.confidence < minConfidence}
-            className="text-xs hover:bg-blue-500/20"
-          >
-            <Copy className="w-3 h-3 mr-1" />
-            Follow
-          </Button>
-        </TradeTooltip>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => onFollow(signal)}
+          disabled={signal.confidence < minConfidence}
+          className="text-xs hover:bg-blue-500/20"
+        >
+          <Copy className="w-3 h-3 mr-1" />
+          Follow
+        </Button>
       </div>
       
       <div className="grid grid-cols-3 gap-2 text-xs">
