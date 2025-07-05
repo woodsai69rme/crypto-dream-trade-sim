@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
@@ -244,8 +245,8 @@ export const useMultipleAccounts = () => {
         initial_balance: accountData.initial_balance || 100000,
         total_pnl: 0, // Ensure new accounts start with zero P&L
         total_pnl_percentage: 0, // Ensure new accounts start with zero P&L percentage
-        account_type: (accountData.account_type as any) || 'balanced',
-        risk_level: (accountData.risk_level as any) || 'medium',
+        account_type: (accountData.account_type as 'balanced') || 'balanced',
+        risk_level: (accountData.risk_level as 'medium') || 'medium',
         description: accountData.description,
         color_theme: accountData.color_theme || '#3b82f6',
         icon: accountData.icon || 'TrendingUp',
@@ -257,7 +258,7 @@ export const useMultipleAccounts = () => {
         max_drawdown_limit: accountData.max_drawdown_limit || 20,
         currency: accountData.currency || 'USD',
         timezone: accountData.timezone || 'UTC',
-        status: 'active',
+        status: 'active' as 'active',
         is_active: true,
         is_default: false
       };
@@ -458,7 +459,7 @@ export const useMultipleAccounts = () => {
           amount: trade.amount,
           price: trade.price,
           total_value: totalValue,
-          fees: fee,
+          fee: fee,
           trade_type: trade.type,
           status: 'completed'
         });
