@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,7 +22,7 @@ interface AIBot {
   };
   confidence: number;
   lastAction: string;
-  account_id?: string;
+  paper_account_id?: string;
 }
 
 export const AITradingBot = () => {
@@ -79,7 +78,7 @@ export const AITradingBot = () => {
           performance: performanceData,
           confidence: 50 + Math.random() * 40, // Dynamic confidence between 50-90%
           lastAction: `Analyzing ${bot.target_symbols?.[0] || 'market'}...`,
-          account_id: bot.account_id
+          paper_account_id: bot.paper_account_id
         };
       }) || [];
 
@@ -325,9 +324,9 @@ export const AITradingBot = () => {
                   <div>
                     <h4 className="font-medium">{bot.name}</h4>
                     <p className="text-xs text-white/60">{bot.strategy}</p>
-                    {bot.account_id && (
+                    {bot.paper_account_id && (
                       <p className="text-xs text-blue-400">
-                        Account: {accounts.find(a => a.id === bot.account_id)?.account_name || 'Unknown'}
+                        Account: {accounts.find(a => a.id === bot.paper_account_id)?.account_name || 'Unknown'}
                       </p>
                     )}
                   </div>

@@ -9,7 +9,7 @@ export const useAccountReset = () => {
   const { toast } = useToast();
   const [resetting, setResetting] = useState(false);
 
-  const resetAccount = async (accountId: string, resetToBalance?: number) => {
+  const resetAccount = async (accountId: string, resetToBalance?: number): Promise<boolean> => {
     if (!user) return false;
 
     setResetting(true);
@@ -33,11 +33,11 @@ export const useAccountReset = () => {
       console.log('Resetting account to balance:', newBalance);
 
       // Start transaction-like operations
-      const promises = [];
+      const operations = [];
 
       // 1. Delete all trades for this account
       console.log('Deleting trades for account:', accountId);
-      promises.push(
+      operations.push(
         supabase
           .from('paper_trades')
           .delete()
@@ -47,7 +47,7 @@ export const useAccountReset = () => {
 
       // 2. Delete all analytics for this account
       console.log('Deleting analytics for account:', accountId);
-      promises.push(
+      operations.push(
         supabase
           .from('account_analytics')
           .delete()
@@ -57,7 +57,7 @@ export const useAccountReset = () => {
 
       // 3. Delete all notifications for this account
       console.log('Deleting notifications for account:', accountId);
-      promises.push(
+      operations.push(
         supabase
           .from('account_notifications')
           .delete()
@@ -67,19 +67,19 @@ export const useAccountReset = () => {
 
       // 4. Stop all bots associated with this account
       console.log('Stopping bots for account:', accountId);
-      promises.push(
+      operations.push(
         supabase
           .from('ai_trading_bots')
           .update({ 
             status: 'paused',
             updated_at: new Date().toISOString()
           })
-          .eq('account_id', accountId)
+          .eq('paper_account_id', accountId)
           .eq('user_id', user.id)
       );
 
-      // Execute all deletions
-      const results = await Promise.allSettled(promises);
+      // Execute all operations
+      const results = await Promise.allSettled(operations);
       
       // Log any errors but don't fail the reset
       results.forEach((result, index) => {
@@ -143,7 +143,7 @@ export const useAccountReset = () => {
     }
   };
 
-  const resetAllAccounts = async () => {
+  const resetAllAccounts = async (): Promise<boolean> => {
     if (!user) return false;
 
     setResetting(true);
