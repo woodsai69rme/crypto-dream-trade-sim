@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
@@ -439,51 +440,52 @@ export const useMultipleAccounts = () => {
     console.log('Executing trade:', trade, 'for account:', currentAccount.account_name);
 
     try {
-      // Call the database function directly for better reliability
-      const { data, error } = await supabase.rpc('execute_paper_trade', {
-        p_user_id: user.id,
-        p_account_id: currentAccount.id,
-        p_symbol: trade.symbol.toUpperCase(),
-        p_side: trade.side,
-        p_amount: trade.amount,
-        p_price: trade.price,
-        p_trade_type: trade.type,
-        p_order_type: trade.type
+      // Call the edge function instead of database function directly
+      const { data, error } = await supabase.functions.invoke('paper-trade', {
+        body: {
+          symbol: trade.symbol.toUpperCase(),
+          side: trade.side,
+          amount: trade.amount,
+          order_type: trade.type,
+          price: trade.price,
+          account_id: currentAccount.id
+        }
       });
 
       if (error) {
-        console.error('Database function error:', error);
+        console.error('Edge function error:', error);
         throw error;
       }
 
-      if (!data.success) {
-        console.error('Trade execution failed:', data.error);
-        throw new Error(data.error || 'Trade execution failed');
+      if (!data?.success) {
+        console.error('Trade execution failed:', data?.error);
+        throw new Error(data?.error || 'Trade execution failed');
       }
 
       console.log('Trade executed successfully:', data);
 
       // Update current account balance immediately
+      const newBalance = typeof data.new_balance === 'number' ? data.new_balance : currentAccount.balance;
       setCurrentAccount(prev => prev ? {
         ...prev,
-        balance: data.new_balance,
-        total_pnl: data.new_balance - prev.initial_balance,
-        total_pnl_percentage: ((data.new_balance - prev.initial_balance) / prev.initial_balance) * 100
+        balance: newBalance,
+        total_pnl: newBalance - prev.initial_balance,
+        total_pnl_percentage: ((newBalance - prev.initial_balance) / prev.initial_balance) * 100
       } : null);
 
       // Update accounts list
       setAccounts(prev => prev.map(acc => 
         acc.id === currentAccount.id ? {
           ...acc,
-          balance: data.new_balance,
-          total_pnl: data.new_balance - acc.initial_balance,
-          total_pnl_percentage: ((data.new_balance - acc.initial_balance) / acc.initial_balance) * 100
+          balance: newBalance,
+          total_pnl: newBalance - acc.initial_balance,
+          total_pnl_percentage: ((newBalance - acc.initial_balance) / acc.initial_balance) * 100
         } : acc
       ));
 
       toast({
         title: "Trade Executed",
-        description: `${trade.side.toUpperCase()} ${trade.amount} ${trade.symbol} at $${trade.price.toLocaleString()} - New Balance: $${data.new_balance.toLocaleString()}`,
+        description: `${trade.side.toUpperCase()} ${trade.amount} ${trade.symbol} at $${trade.price.toLocaleString()} - New Balance: $${newBalance.toLocaleString()}`,
       });
 
       return true;

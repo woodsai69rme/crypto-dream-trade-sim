@@ -66,16 +66,16 @@ export const TradingPanel = () => {
 
     console.log('Executing paper trade:', tradeData);
 
-    // Use the database function for proper trade execution
-    const { data, error } = await supabase.rpc('execute_paper_trade', {
-      p_user_id: user.id,
-      p_account_id: currentAccount.id,
-      p_symbol: tradeData.symbol,
-      p_side: tradeData.side,
-      p_amount: tradeData.amount,
-      p_price: tradeData.price,
-      p_trade_type: tradeData.type,
-      p_order_type: tradeData.type
+    // Call the edge function instead of database function directly
+    const { data, error } = await supabase.functions.invoke('paper-trade', {
+      body: {
+        symbol: tradeData.symbol.toUpperCase(),
+        side: tradeData.side,
+        amount: tradeData.amount,
+        order_type: tradeData.type,
+        price: tradeData.price,
+        account_id: currentAccount.id
+      }
     });
 
     if (error) {
@@ -83,8 +83,9 @@ export const TradingPanel = () => {
       throw error;
     }
 
-    if (!data.success) {
-      throw new Error(data.error || 'Trade execution failed');
+    if (!data?.success) {
+      console.error('Trade execution failed:', data?.error);
+      throw new Error(data?.error || 'Trade execution failed');
     }
 
     console.log('Trade executed successfully:', data);
@@ -149,7 +150,7 @@ export const TradingPanel = () => {
 
       toast({
         title: "Paper Trade Executed",
-        description: `${side.toUpperCase()} ${orderAmount} ${symbol} at $${orderPrice.toLocaleString()} - New Balance: $${result.new_balance.toLocaleString()}`,
+        description: `${side.toUpperCase()} ${orderAmount} ${symbol} at $${orderPrice.toLocaleString()} - New Balance: $${result.new_balance?.toLocaleString() || 'Unknown'}`,
       });
 
       console.log('Trade completed successfully');
