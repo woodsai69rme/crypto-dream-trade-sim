@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,11 +19,11 @@ import { useRealTimePortfolio } from "@/hooks/useRealTimePortfolio";
 import { useRealtimeMarketData } from "@/hooks/useRealtimeMarketData";
 import { TradingPanel } from "@/components/TradingPanel";
 import { AccountManager } from "@/components/AccountManager";
-import { BotManagement } from "@/components/ai/BotManagement";
+import { BotManagement } from "@/components/settings/BotManagement";
 import { TradeFollowingSettings } from "@/components/trading/TradeFollowingSettings";
 import { APISettings } from "@/components/settings/APISettings";
 import { MCPSettings } from "@/components/settings/MCPSettings";
-import { AccountHistoryManager } from "@/components/settings/AccountHistoryManager";
+import { AccountHistoryManager } from "@/components/AccountHistoryManager";
 import { ComprehensiveTestingSuite } from "@/components/settings/ComprehensiveTestingSuite";
 import {
   Settings,
@@ -38,11 +39,24 @@ import {
 } from "lucide-react";
 
 const IndexPage = () => {
-  const { user, isLoading } = useAuth();
+  const { user, loading } = useAuth();
   const { currentAccount } = useMultipleAccounts();
-  const { portfolioValue } = useRealTimePortfolio();
-  const { btcPrice, ethPrice, dogePrice } = useRealtimeMarketData();
+  const { portfolio, paperAccount } = useRealTimePortfolio();
+  const { getPrice } = useRealtimeMarketData();
   const [chartData, setChartData] = useState([]);
+  const [tradeFollowingSettings, setTradeFollowingSettings] = useState({
+    minConfidence: 70,
+    maxPositionSize: 1000,
+    autoExecute: false
+  });
+
+  // Get current prices using the correct method
+  const btcPrice = getPrice('BTC');
+  const ethPrice = getPrice('ETH');
+  const dogePrice = getPrice('DOGE');
+
+  // Calculate portfolio value from available data
+  const portfolioValue = paperAccount?.balance || portfolio?.total_value || 100000;
 
   useEffect(() => {
     // Mock chart data for demonstration
@@ -62,7 +76,7 @@ const IndexPage = () => {
     generateMockData();
   }, []);
 
-  if (isLoading) {
+  if (loading) {
     return <div>Loading...</div>;
   }
 
@@ -93,15 +107,15 @@ const IndexPage = () => {
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span>Bitcoin (BTC):</span>
-                <span>${btcPrice}</span>
+                <span>${btcPrice.toLocaleString()}</span>
               </div>
               <div className="flex justify-between">
                 <span>Ethereum (ETH):</span>
-                <span>${ethPrice}</span>
+                <span>${ethPrice.toLocaleString()}</span>
               </div>
               <div className="flex justify-between">
                 <span>Dogecoin (DOGE):</span>
-                <span>${dogePrice}</span>
+                <span>${dogePrice.toFixed(4)}</span>
               </div>
             </div>
             <p className="text-sm text-white/60 mt-4">Real-time cryptocurrency prices</p>
@@ -116,9 +130,9 @@ const IndexPage = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-xl font-bold">{currentAccount?.account_name}</div>
+            <div className="text-xl font-bold">{currentAccount?.account_name || 'No Account'}</div>
             <p className="text-sm text-white/60">
-              {currentAccount?.account_type} • {currentAccount?.risk_level} risk
+              {currentAccount?.account_type || 'Paper'} • {currentAccount?.risk_level || 'Medium'} risk
             </p>
           </CardContent>
         </Card>
@@ -211,7 +225,10 @@ const IndexPage = () => {
         <TabsContent value="settings" className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <BotManagement />
-            <TradeFollowingSettings />
+            <TradeFollowingSettings 
+              settings={tradeFollowingSettings}
+              onSettingsChange={setTradeFollowingSettings}
+            />
           </div>
           <APISettings />
           <MCPSettings />
