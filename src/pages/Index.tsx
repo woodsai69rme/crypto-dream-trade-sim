@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,14 +18,12 @@ import { useRealTimePortfolio } from "@/hooks/useRealTimePortfolio";
 import { useRealtimeMarketData } from "@/hooks/useRealtimeMarketData";
 import { TradingPanel } from "@/components/TradingPanel";
 import { AccountManager } from "@/components/AccountManager";
-import { BotManagement } from "@/components/settings/BotManagement";
+import { BotManagement } from "@/components/ai/BotManagement";
 import { TradeFollowingSettings } from "@/components/trading/TradeFollowingSettings";
 import { APISettings } from "@/components/settings/APISettings";
 import { MCPSettings } from "@/components/settings/MCPSettings";
-import { AccountHistoryManager } from "@/components/AccountHistoryManager";
+import { AccountHistoryManager } from "@/components/settings/AccountHistoryManager";
 import { ComprehensiveTestingSuite } from "@/components/settings/ComprehensiveTestingSuite";
-import { AdvancedTradingInterface } from "@/components/AdvancedTradingInterface";
-import { TradeFollower } from "@/components/trading/TradeFollower";
 import {
   Settings,
   BarChart,
@@ -38,30 +35,14 @@ import {
   Bot,
   TrendingUp,
   AlertTriangle,
-  Activity,
-  Target,
-  Zap,
 } from "lucide-react";
 
 const IndexPage = () => {
-  const { user, loading } = useAuth();
+  const { user, isLoading } = useAuth();
   const { currentAccount } = useMultipleAccounts();
-  const { portfolio, paperAccount } = useRealTimePortfolio();
-  const { getPrice } = useRealtimeMarketData();
+  const { portfolioValue } = useRealTimePortfolio();
+  const { btcPrice, ethPrice, dogePrice } = useRealtimeMarketData();
   const [chartData, setChartData] = useState([]);
-  const [tradeFollowingSettings, setTradeFollowingSettings] = useState({
-    minConfidence: 70,
-    maxPositionSize: 1000,
-    autoExecute: false
-  });
-
-  // Get current prices using the correct method
-  const btcPrice = getPrice('BTC');
-  const ethPrice = getPrice('ETH');
-  const dogePrice = getPrice('DOGE');
-
-  // Calculate portfolio value from available data
-  const portfolioValue = paperAccount?.balance || portfolio?.total_value || 100000;
 
   useEffect(() => {
     // Mock chart data for demonstration
@@ -81,7 +62,7 @@ const IndexPage = () => {
     generateMockData();
   }, []);
 
-  if (loading) {
+  if (isLoading) {
     return <div>Loading...</div>;
   }
 
@@ -112,15 +93,15 @@ const IndexPage = () => {
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span>Bitcoin (BTC):</span>
-                <span>${btcPrice.toLocaleString()}</span>
+                <span>${btcPrice}</span>
               </div>
               <div className="flex justify-between">
                 <span>Ethereum (ETH):</span>
-                <span>${ethPrice.toLocaleString()}</span>
+                <span>${ethPrice}</span>
               </div>
               <div className="flex justify-between">
                 <span>Dogecoin (DOGE):</span>
-                <span>${dogePrice.toFixed(4)}</span>
+                <span>${dogePrice}</span>
               </div>
             </div>
             <p className="text-sm text-white/60 mt-4">Real-time cryptocurrency prices</p>
@@ -135,16 +116,16 @@ const IndexPage = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-xl font-bold">{currentAccount?.account_name || 'No Account'}</div>
+            <div className="text-xl font-bold">{currentAccount?.account_name}</div>
             <p className="text-sm text-white/60">
-              {currentAccount?.account_type || 'Paper'} • {currentAccount?.risk_level || 'Medium'} risk
+              {currentAccount?.account_type} • {currentAccount?.risk_level} risk
             </p>
           </CardContent>
         </Card>
       </div>
 
       <Tabs defaultValue="dashboard" className="w-full">
-        <TabsList className="grid grid-cols-4 lg:grid-cols-9">
+        <TabsList className="grid grid-cols-4 lg:grid-cols-8">
           <TabsTrigger value="dashboard">
             <BarChart className="w-4 h-4 mr-2" />
             Dashboard
@@ -152,10 +133,6 @@ const IndexPage = () => {
           <TabsTrigger value="trading">
             <TrendingUp className="w-4 h-4 mr-2" />
             Trading
-          </TabsTrigger>
-          <TabsTrigger value="advanced">
-            <Zap className="w-4 h-4 mr-2" />
-            Advanced
           </TabsTrigger>
           <TabsTrigger value="accounts">
             <Users className="w-4 h-4 mr-2" />
@@ -167,7 +144,7 @@ const IndexPage = () => {
           </TabsTrigger>
           <TabsTrigger value="social">
             <Users className="w-4 h-4 mr-2" />
-            Social
+            Social Trading
           </TabsTrigger>
           <TabsTrigger value="history">
             <FileText className="w-4 h-4 mr-2" />
@@ -182,7 +159,6 @@ const IndexPage = () => {
             Settings
           </TabsTrigger>
         </TabsList>
-
         <TabsContent value="dashboard" className="space-y-4">
           <Card className="crypto-card-gradient text-white">
             <CardHeader>
@@ -212,10 +188,6 @@ const IndexPage = () => {
           <TradingPanel />
         </TabsContent>
 
-        <TabsContent value="advanced" className="space-y-4">
-          <AdvancedTradingInterface />
-        </TabsContent>
-
         <TabsContent value="accounts" className="space-y-4">
           <AccountManager />
         </TabsContent>
@@ -225,122 +197,21 @@ const IndexPage = () => {
         </TabsContent>
 
         <TabsContent value="social" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <TradeFollower />
-            <Card className="crypto-card-gradient text-white">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Activity className="w-5 h-5" />
-                  Social Trading Activity
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-3 bg-white/5 rounded">
-                    <div>
-                      <span className="font-medium">@CryptoMaster</span>
-                      <p className="text-sm text-white/60">Bought 0.5 BTC at $67,432</p>
-                    </div>
-                    <Button size="sm" variant="outline">Follow</Button>
-                  </div>
-                  <div className="flex items-center justify-between p-3 bg-white/5 rounded">
-                    <div>
-                      <span className="font-medium">@ETHTrader</span>
-                      <p className="text-sm text-white/60">Sold 10 ETH at $4,126</p>
-                    </div>
-                    <Button size="sm" variant="outline">Follow</Button>
-                  </div>
-                  <div className="flex items-center justify-between p-3 bg-white/5 rounded">
-                    <div>
-                      <span className="font-medium">@AIBot</span>
-                      <p className="text-sm text-white/60">Signal: BUY SOL (95% confidence)</p>
-                    </div>
-                    <Button size="sm" variant="outline">Copy</Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          <div>Social Trading Content</div>
         </TabsContent>
 
         <TabsContent value="history" className="space-y-4">
-          <Card className="crypto-card-gradient text-white">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="w-5 h-5" />
-                Trading History & Analytics
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <div className="text-center p-4 bg-white/5 rounded">
-                  <div className="text-2xl font-bold text-green-400">73.2%</div>
-                  <div className="text-sm text-white/60">Win Rate</div>
-                </div>
-                <div className="text-center p-4 bg-white/5 rounded">
-                  <div className="text-2xl font-bold text-blue-400">2.4:1</div>
-                  <div className="text-sm text-white/60">Risk/Reward</div>
-                </div>
-                <div className="text-center p-4 bg-white/5 rounded">
-                  <div className="text-2xl font-bold text-purple-400">$12,456</div>
-                  <div className="text-sm text-white/60">Total P&L</div>
-                </div>
-              </div>
-              <p className="text-white/60">Detailed trading history and performance analytics coming soon...</p>
-            </CardContent>
-          </Card>
+          <div>Trading History Content</div>
         </TabsContent>
 
         <TabsContent value="risk" className="space-y-4">
-          <Card className="crypto-card-gradient text-white">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="w-5 h-5" />
-                Risk Management Dashboard
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span>Portfolio Risk Score</span>
-                    <span className="text-yellow-400 font-bold">Medium (6/10)</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Max Drawdown</span>
-                    <span className="text-red-400 font-bold">-8.5%</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Position Concentration</span>
-                    <span className="text-green-400 font-bold">Well Diversified</span>
-                  </div>
-                </div>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span>Daily Risk Limit</span>
-                    <span className="text-blue-400 font-bold">$1,000 (Used: 15%)</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Stop Loss Coverage</span>
-                    <span className="text-green-400 font-bold">85%</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Volatility Score</span>
-                    <span className="text-yellow-400 font-bold">Moderate</span>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <div>Risk Management Content</div>
         </TabsContent>
 
         <TabsContent value="settings" className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <BotManagement />
-            <TradeFollowingSettings 
-              settings={tradeFollowingSettings}
-              onSettingsChange={setTradeFollowingSettings}
-            />
+            <TradeFollowingSettings />
           </div>
           <APISettings />
           <MCPSettings />
