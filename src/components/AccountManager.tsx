@@ -32,9 +32,9 @@ export const AccountManager = () => {
     try {
       const { data: settings, error } = await supabase
         .from('user_settings')
-        .select('setting_key, setting_value')
+        .select('setting_name, setting_value')
         .eq('user_id', user.id)
-        .in('setting_key', accounts.flatMap(acc => [
+        .in('setting_name', accounts.flatMap(acc => [
           `ai_bots_${acc.id}`,
           `trade_following_${acc.id}`
         ]));
@@ -45,11 +45,11 @@ export const AccountManager = () => {
       const tradeFollowing: Record<string, boolean> = {};
 
       settings?.forEach(setting => {
-        if (setting.setting_key.startsWith('ai_bots_')) {
-          const accountId = setting.setting_key.replace('ai_bots_', '');
+        if (setting.setting_name.startsWith('ai_bots_')) {
+          const accountId = setting.setting_name.replace('ai_bots_', '');
           aiBots[accountId] = Boolean(setting.setting_value);
-        } else if (setting.setting_key.startsWith('trade_following_')) {
-          const accountId = setting.setting_key.replace('trade_following_', '');
+        } else if (setting.setting_name.startsWith('trade_following_')) {
+          const accountId = setting.setting_name.replace('trade_following_', '');
           tradeFollowing[accountId] = Boolean(setting.setting_value);
         }
       });
@@ -70,7 +70,7 @@ export const AccountManager = () => {
         .from('user_settings')
         .upsert({
           user_id: user.id,
-          setting_key: `ai_bots_${accountId}`,
+          setting_name: `ai_bots_${accountId}`,
           setting_value: enabled,
           updated_at: new Date().toISOString()
         });
@@ -104,7 +104,7 @@ export const AccountManager = () => {
         .from('user_settings')
         .upsert({
           user_id: user.id,
-          setting_key: `trade_following_${accountId}`,
+          setting_name: `trade_following_${accountId}`,
           setting_value: enabled,
           updated_at: new Date().toISOString()
         });

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -189,9 +188,9 @@ export const APISettings = () => {
       
       const { data, error } = await supabase
         .from('user_settings')
-        .select('setting_key, setting_value')
+        .select('setting_name, setting_value')
         .eq('user_id', user.id)
-        .like('setting_key', 'api_%');
+        .like('setting_name', 'api_%');
 
       if (error) {
         console.error('Error loading API settings:', error);
@@ -218,7 +217,7 @@ export const APISettings = () => {
 
       // Override with saved settings
       data?.forEach(setting => {
-        const providerKey = setting.setting_key.replace('api_', '');
+        const providerKey = setting.setting_name.replace('api_', '');
         if (configs[providerKey] && setting.setting_value) {
           const settingValue = typeof setting.setting_value === 'string' 
             ? JSON.parse(setting.setting_value) 
@@ -255,7 +254,7 @@ export const APISettings = () => {
         .from('user_settings')
         .upsert({
           user_id: user.id,
-          setting_key: `api_${providerKey}`,
+          setting_name: `api_${providerKey}`,
           setting_value: config as any,
           updated_at: new Date().toISOString()
         });
@@ -381,6 +380,7 @@ export const APISettings = () => {
 
               return (
                 <TabsContent key={provider.key} value={provider.key} className="space-y-6">
+                  
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Basic Settings */}
                     <Card className="bg-white/5">
