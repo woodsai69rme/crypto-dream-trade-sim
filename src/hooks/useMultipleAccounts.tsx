@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
@@ -424,7 +423,7 @@ export const useMultipleAccounts = () => {
     }
   }, [user, currentAccount, accounts, switchAccount, toast]);
 
-  // Execute trade method
+  // Enhanced execute trade method with proper error handling
   const executeTrade = useCallback(async (trade: {
     symbol: string;
     side: 'buy' | 'sell';
@@ -432,62 +431,82 @@ export const useMultipleAccounts = () => {
     price: number;
     type: 'market' | 'limit';
   }) => {
-    if (!user || !currentAccount) return false;
+    if (!user || !currentAccount) {
+      console.error('No user or current account found');
+      return false;
+    }
+
+    console.log('Executing trade:', trade, 'for account:', currentAccount.account_name);
 
     try {
-      const totalValue = trade.amount * trade.price;
-      const fee = totalValue * 0.001; // 0.1% fee
-      
-      // For buy orders, check if sufficient balance
-      if (trade.side === 'buy' && (totalValue + fee) > currentAccount.balance) {
-        toast({
-          title: "Insufficient Balance",
-          description: "Not enough funds to execute this trade",
-          variant: "destructive",
-        });
-        return false;
+      // Call the database function directly for better reliability
+      const { data, error } = await supabase.rpc('execute_paper_trade', {
+        p_user_id: user.id,
+        p_account_id: currentAccount.id,
+        p_symbol: trade.symbol.toUpperCase(),
+        p_side: trade.side,
+        p_amount: trade.amount,
+        p_price: trade.price,
+        p_trade_type: trade.type,
+        p_order_type: trade.type
+      });
+
+      if (error) {
+        console.error('Database function error:', error);
+        throw error;
       }
 
-      // Insert trade record
-      const { error } = await supabase
-        .from('paper_trades')
-        .insert({
-          user_id: user.id,
-          account_id: currentAccount.id,
-          symbol: trade.symbol,
-          side: trade.side,
-          amount: trade.amount,
-          price: trade.price,
-          total_value: totalValue,
-          fee: fee,
-          trade_type: trade.type,
-          status: 'completed'
-        });
+      if (!data.success) {
+        console.error('Trade execution failed:', data.error);
+        throw new Error(data.error || 'Trade execution failed');
+      }
 
-      if (error) throw error;
+      console.log('Trade executed successfully:', data);
 
-      // Update account balance
-      const balanceChange = trade.side === 'buy' ? -(totalValue + fee) : (totalValue - fee);
-      await updateAccount(currentAccount.id, {
-        balance: currentAccount.balance + balanceChange
-      });
+      // Update current account balance immediately
+      setCurrentAccount(prev => prev ? {
+        ...prev,
+        balance: data.new_balance,
+        total_pnl: data.new_balance - prev.initial_balance,
+        total_pnl_percentage: ((data.new_balance - prev.initial_balance) / prev.initial_balance) * 100
+      } : null);
+
+      // Update accounts list
+      setAccounts(prev => prev.map(acc => 
+        acc.id === currentAccount.id ? {
+          ...acc,
+          balance: data.new_balance,
+          total_pnl: data.new_balance - acc.initial_balance,
+          total_pnl_percentage: ((data.new_balance - acc.initial_balance) / acc.initial_balance) * 100
+        } : acc
+      ));
 
       toast({
         title: "Trade Executed",
-        description: `${trade.side.toUpperCase()} ${trade.amount} ${trade.symbol} at $${trade.price}`,
+        description: `${trade.side.toUpperCase()} ${trade.amount} ${trade.symbol} at $${trade.price.toLocaleString()} - New Balance: $${data.new_balance.toLocaleString()}`,
       });
 
       return true;
     } catch (error: any) {
       console.error('Trade execution error:', error);
+      
+      let errorMessage = 'Failed to execute trade';
+      if (error.message.includes('Insufficient balance')) {
+        errorMessage = 'Insufficient balance for this trade';
+      } else if (error.message.includes('Account not found')) {
+        errorMessage = 'Trading account not found';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
       toast({
         title: "Trade Failed",
-        description: error.message || "Failed to execute trade",
+        description: errorMessage,
         variant: "destructive",
       });
       return false;
     }
-  }, [user, currentAccount, updateAccount, toast]);
+  }, [user, currentAccount, toast]);
 
   // Mark notification as read
   const markNotificationRead = useCallback(async (notificationId: string) => {

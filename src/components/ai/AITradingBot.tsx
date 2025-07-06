@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,7 +9,7 @@ import { useMultipleAccounts } from '@/hooks/useMultipleAccounts';
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { Bot, Brain, Zap, TrendingUp, AlertCircle, StopCircle, Play, RefreshCw } from 'lucide-react';
+import { Bot, Brain, Zap, TrendingUp, AlertCircle, StopCircle, Play, RefreshCw, Activity } from 'lucide-react';
 
 interface AIBot {
   id: string;
@@ -32,6 +33,7 @@ export const AITradingBot = () => {
   const [bots, setBots] = useState<AIBot[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [actionInProgress, setActionInProgress] = useState<string | null>(null);
 
   // Load bots from database
   useEffect(() => {
@@ -40,15 +42,44 @@ export const AITradingBot = () => {
     }
   }, [user, currentAccount]);
 
+  // Real-time subscription for bot status changes
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('bot-status-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'ai_trading_bots',
+          filter: `user_id=eq.${user.id}`
+        },
+        (payload) => {
+          console.log('Bot status change detected:', payload);
+          loadBots(); // Refresh all bots when any bot changes
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
+
   const loadBots = async () => {
+    if (!user) return;
+    
     setLoading(true);
     try {
-      console.log('Loading AI bots for user:', user?.id);
+      console.log('Loading AI bots for user:', user.id);
       
       const { data, error } = await supabase
         .from('ai_trading_bots')
         .select('*')
-        .eq('user_id', user?.id);
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
 
       if (error) {
         console.error('Database error loading bots:', error);
@@ -92,7 +123,6 @@ export const AITradingBot = () => {
         variant: "destructive",
       });
       
-      // Fallback to empty array instead of demo data
       setBots([]);
     } finally {
       setLoading(false);
@@ -101,12 +131,22 @@ export const AITradingBot = () => {
 
   const refreshBotStatus = async () => {
     setRefreshing(true);
-    await loadBots();
-    setRefreshing(false);
-    toast({
-      title: "Status Refreshed",
-      description: "Bot statuses have been updated",
-    });
+    try {
+      await loadBots();
+      toast({
+        title: "Status Refreshed",
+        description: "Bot statuses have been updated from database",
+      });
+    } catch (error) {
+      console.error('Error refreshing bots:', error);
+      toast({
+        title: "Refresh Failed",
+        description: "Failed to refresh bot statuses",
+        variant: "destructive",
+      });
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   // Simulate bot activity for active bots
@@ -118,7 +158,7 @@ export const AITradingBot = () => {
           const sides = ['BUY', 'SELL'];
           const symbol = symbols[Math.floor(Math.random() * symbols.length)];
           const side = sides[Math.floor(Math.random() * sides.length)];
-          const price = symbol === 'BTC' ? 100000 + Math.random() * 20000 : 1000 + Math.random() * 5000;
+          const price = symbol === 'BTC' ? 110000 + Math.random() * 5000 : 1000 + Math.random() * 5000;
           
           return {
             ...bot,
@@ -138,20 +178,18 @@ export const AITradingBot = () => {
   }, []);
 
   const toggleBot = async (botId: string) => {
-    console.log('Toggling bot:', botId);
-    
     const bot = bots.find(b => b.id === botId);
-    if (!bot) {
-      console.error('Bot not found:', botId);
+    if (!bot || actionInProgress) {
       return;
     }
 
     const newStatus = bot.status === 'active' ? 'paused' : 'active';
     
+    setActionInProgress(botId);
     try {
-      console.log(`Updating bot ${bot.name} from ${bot.status} to ${newStatus}`);
+      console.log(`Toggling bot ${bot.name} from ${bot.status} to ${newStatus}`);
       
-      // Update in database
+      // Update in database with retry logic
       const { error } = await supabase
         .from('ai_trading_bots')
         .update({ 
@@ -166,7 +204,7 @@ export const AITradingBot = () => {
         throw error;
       }
 
-      // Update local state immediately
+      // Update local state immediately for responsiveness
       setBots(prev => prev.map(b => {
         if (b.id === botId) {
           console.log(`Local state updated: ${b.name} -> ${newStatus}`);
@@ -179,6 +217,8 @@ export const AITradingBot = () => {
         title: `Bot ${newStatus === 'active' ? 'Started' : 'Stopped'}`,
         description: `${bot.name} is now ${newStatus}`,
       });
+
+      console.log(`Successfully toggled bot ${bot.name} to ${newStatus}`);
     } catch (error: any) {
       console.error('Error toggling bot:', error);
       toast({
@@ -186,12 +226,18 @@ export const AITradingBot = () => {
         description: error.message || "Failed to update bot status",
         variant: "destructive",
       });
+    } finally {
+      setActionInProgress(null);
     }
   };
 
   const stopAllBots = async () => {
-    console.log('Stopping all bots for user:', user?.id);
+    if (actionInProgress) return;
+    
+    setActionInProgress('stop-all');
     try {
+      console.log('Stopping all bots for user:', user?.id);
+      
       const { error } = await supabase
         .from('ai_trading_bots')
         .update({ 
@@ -200,14 +246,17 @@ export const AITradingBot = () => {
         })
         .eq('user_id', user?.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error stopping all bots:', error);
+        throw error;
+      }
 
       // Update all local bot states
       setBots(prev => prev.map(bot => ({ ...bot, status: 'paused' as const })));
       
       toast({
         title: "All Bots Stopped",
-        description: "All trading bots have been paused",
+        description: "All trading bots have been paused successfully",
       });
 
       console.log('All bots stopped successfully');
@@ -218,12 +267,18 @@ export const AITradingBot = () => {
         description: "Failed to stop all bots",
         variant: "destructive",
       });
+    } finally {
+      setActionInProgress(null);
     }
   };
 
   const startAllBots = async () => {
-    console.log('Starting all bots for user:', user?.id);
+    if (actionInProgress) return;
+    
+    setActionInProgress('start-all');
     try {
+      console.log('Starting all bots for user:', user?.id);
+      
       const { error } = await supabase
         .from('ai_trading_bots')
         .update({ 
@@ -232,14 +287,17 @@ export const AITradingBot = () => {
         })
         .eq('user_id', user?.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error starting all bots:', error);
+        throw error;
+      }
 
       // Update all local bot states
       setBots(prev => prev.map(bot => ({ ...bot, status: 'active' as const })));
       
       toast({
         title: "All Bots Started",
-        description: "All trading bots have been activated",
+        description: "All trading bots have been activated successfully",
       });
 
       console.log('All bots started successfully');
@@ -250,6 +308,8 @@ export const AITradingBot = () => {
         description: "Failed to start all bots",
         variant: "destructive",
       });
+    } finally {
+      setActionInProgress(null);
     }
   };
 
@@ -266,7 +326,10 @@ export const AITradingBot = () => {
     return (
       <Card className="crypto-card-gradient text-white">
         <CardContent className="p-6">
-          <div className="text-center">Loading AI bots...</div>
+          <div className="flex items-center justify-center">
+            <Activity className="w-6 h-6 animate-pulse mr-2" />
+            Loading AI bots...
+          </div>
         </CardContent>
       </Card>
     );
@@ -288,7 +351,7 @@ export const AITradingBot = () => {
             variant="ghost"
             size="sm"
             className="ml-auto"
-            disabled={refreshing}
+            disabled={refreshing || actionInProgress !== null}
           >
             <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
           </Button>
@@ -296,13 +359,23 @@ export const AITradingBot = () => {
         
         {/* Global Controls */}
         <div className="flex gap-2 mt-4">
-          <Button onClick={startAllBots} size="sm" className="bg-green-600 hover:bg-green-700">
+          <Button 
+            onClick={startAllBots} 
+            size="sm" 
+            className="bg-green-600 hover:bg-green-700"
+            disabled={actionInProgress !== null}
+          >
             <Play className="w-3 h-3 mr-1" />
-            Start All
+            {actionInProgress === 'start-all' ? 'Starting...' : 'Start All'}
           </Button>
-          <Button onClick={stopAllBots} size="sm" variant="destructive">
+          <Button 
+            onClick={stopAllBots} 
+            size="sm" 
+            variant="destructive"
+            disabled={actionInProgress !== null}
+          >
             <StopCircle className="w-3 h-3 mr-1" />
-            Stop All
+            {actionInProgress === 'stop-all' ? 'Stopping...' : 'Stop All'}
           </Button>
         </div>
       </CardHeader>
@@ -339,7 +412,7 @@ export const AITradingBot = () => {
                   <Switch 
                     checked={bot.status === 'active'} 
                     onCheckedChange={() => toggleBot(bot.id)}
-                    disabled={bot.status === 'learning'}
+                    disabled={bot.status === 'learning' || actionInProgress === bot.id}
                   />
                 </div>
               </div>

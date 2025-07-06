@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
@@ -12,6 +13,7 @@ interface TradeRequest {
   amount: number;
   order_type: 'market' | 'limit';
   price?: number;
+  account_id?: string;
 }
 
 serve(async (req) => {
@@ -46,116 +48,95 @@ serve(async (req) => {
     }
 
     const tradeData: TradeRequest = await req.json();
-    const { symbol, side, amount, order_type, price } = tradeData;
+    const { symbol, side, amount, order_type, price, account_id } = tradeData;
 
-    // Get current market price
-    const { data: marketData } = await supabase
-      .from('market_data_cache')
-      .select('price_usd')
-      .eq('symbol', symbol.toUpperCase())
-      .single();
+    console.log('Processing paper trade:', tradeData);
 
-    if (!marketData) {
-      throw new Error(`Market data not found for ${symbol}`);
+    // Get current market price if not provided
+    let currentPrice = price;
+    if (!currentPrice || order_type === 'market') {
+      const { data: marketData } = await supabase
+        .from('market_data_cache')
+        .select('price_usd')
+        .eq('symbol', symbol.toUpperCase())
+        .single();
+
+      currentPrice = marketData?.price_usd || price || 0;
     }
 
-    const currentPrice = price || marketData.price_usd;
-    const totalValue = amount * currentPrice;
-    const fee = totalValue * 0.001; // 0.1% fee
+    if (!currentPrice || currentPrice <= 0) {
+      throw new Error(`Invalid price for ${symbol}`);
+    }
 
-    // Get user's paper account
-    const { data: account } = await supabase
+    // Get user's paper account (use provided account_id or default)
+    let accountQuery = supabase
       .from('paper_trading_accounts')
       .select('*')
-      .eq('user_id', user.id)
-      .single();
+      .eq('user_id', user.id);
 
-    if (!account) {
+    if (account_id) {
+      accountQuery = accountQuery.eq('id', account_id);
+    } else {
+      accountQuery = accountQuery.eq('is_default', true);
+    }
+
+    const { data: account, error: accountError } = await accountQuery.single();
+
+    if (accountError || !account) {
+      console.error('Account error:', accountError);
       throw new Error('Paper trading account not found');
     }
 
-    // Check if user has sufficient balance for buy orders
-    if (side === 'buy' && account.balance < totalValue + fee) {
-      throw new Error('Insufficient balance');
-    }
+    console.log('Using account:', account.account_name, 'Balance:', account.balance);
 
-    // Execute the paper trade
-    const { data: trade, error: tradeError } = await supabase
-      .from('paper_trades')
-      .insert({
-        user_id: user.id,
-        bot_id: null, // Manual trade
-        symbol: symbol.toUpperCase(),
-        side,
-        amount,
-        price: currentPrice,
-        total_value: totalValue,
-        fee,
-        status: 'completed',
-        reasoning: `Manual ${side} order via trading panel`
-      })
-      .select()
-      .single();
+    // Execute trade using database function
+    const { data: result, error: tradeError } = await supabase.rpc('execute_paper_trade', {
+      p_user_id: user.id,
+      p_account_id: account.id,
+      p_symbol: symbol.toUpperCase(),
+      p_side: side,
+      p_amount: amount,
+      p_price: currentPrice,
+      p_trade_type: order_type,
+      p_order_type: order_type
+    });
 
     if (tradeError) {
-      throw new Error(`Failed to create trade: ${tradeError.message}`);
+      console.error('Trade execution error:', tradeError);
+      throw new Error(`Failed to execute trade: ${tradeError.message}`);
     }
 
-    // Update account balance
-    const balanceChange = side === 'buy' ? -(totalValue + fee) : (totalValue - fee);
-    const newBalance = account.balance + balanceChange;
-
-    await supabase
-      .from('paper_trading_accounts')
-      .update({ 
-        balance: newBalance,
-        total_pnl: newBalance - account.initial_balance,
-        total_pnl_percentage: ((newBalance - account.initial_balance) / account.initial_balance) * 100,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', account.id);
-
-    // Update portfolio
-    const { data: portfolio } = await supabase
-      .from('portfolios')
-      .select('*')
-      .eq('user_id', user.id)
-      .eq('is_default', true)
-      .single();
-
-    if (portfolio) {
-      await supabase
-        .from('portfolios')
-        .update({
-          current_balance: newBalance,
-          total_value: newBalance,
-          total_pnl: newBalance - portfolio.initial_balance,
-          total_pnl_percentage: ((newBalance - portfolio.initial_balance) / portfolio.initial_balance) * 100,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', portfolio.id);
+    if (!result.success) {
+      console.error('Trade failed:', result.error);
+      throw new Error(result.error || 'Trade execution failed');
     }
 
-    console.log(`Paper trade executed: ${side} ${amount} ${symbol} at ${currentPrice}`);
+    console.log('Trade executed successfully:', result);
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        trade,
-        new_balance: newBalance
-      }), 
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      JSON.stringify({
+        success: true,
+        trade_id: result.trade_id,
+        new_balance: result.new_balance,
+        trade_value: result.trade_value,
+        fee: result.fee,
+        message: `${side.toUpperCase()} ${amount} ${symbol} at $${currentPrice.toLocaleString()}`
+      }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error executing paper trade:', error);
     return new Response(
-      JSON.stringify({ error: error.message }), 
-      { 
-        status: 500, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      JSON.stringify({
+        success: false,
+        error: error.message
+      }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
   }
