@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { useSettings } from "@/hooks/useSettings";
 import { Bot, Settings, Zap, Brain, MessageSquare, Code } from "lucide-react";
 
 interface MCPConfig {
@@ -21,35 +22,48 @@ interface MCPConfig {
 
 export const MCPSettings = () => {
   const { toast } = useToast();
-  const [mcpConfigs, setMcpConfigs] = useState<MCPConfig[]>([
-    {
-      id: 'claude-desktop',
-      name: 'Claude Desktop Integration',
-      protocol: 'stdio',
-      endpoint: 'claude-desktop://mcp',
-      isEnabled: true,
-      capabilities: ['reasoning', 'analysis', 'coding'],
-      status: 'connected'
-    },
-    {
-      id: 'trading-assistant',
-      name: 'Trading Assistant MCP',
-      protocol: 'websocket',
-      endpoint: 'ws://localhost:8080/mcp',
-      isEnabled: false,
-      capabilities: ['market-data', 'trading', 'analysis'],
-      status: 'disconnected'
-    },
-    {
-      id: 'portfolio-manager',
-      name: 'Portfolio Manager MCP',
-      protocol: 'sse',
-      endpoint: 'http://localhost:3001/mcp/events',
-      isEnabled: false,
-      capabilities: ['portfolio', 'risk-management', 'reporting'],
-      status: 'disconnected'
+  const { settings, updateSetting, isLoading } = useSettings();
+  const [mcpConfigs, setMcpConfigs] = useState<MCPConfig[]>([]);
+
+  // Load settings on mount
+  useEffect(() => {
+    if (!isLoading && settings.mcpConfigs) {
+      setMcpConfigs(settings.mcpConfigs);
+    } else if (!isLoading && !settings.mcpConfigs) {
+      // Set defaults if no saved settings
+      const defaultConfigs = [
+        {
+          id: 'claude-desktop',
+          name: 'Claude Desktop Integration',
+          protocol: 'stdio' as const,
+          endpoint: 'claude-desktop://mcp',
+          isEnabled: true,
+          capabilities: ['reasoning', 'analysis', 'coding'],
+          status: 'connected' as const
+        },
+        {
+          id: 'trading-assistant',
+          name: 'Trading Assistant MCP',
+          protocol: 'websocket' as const,
+          endpoint: 'ws://localhost:8080/mcp',
+          isEnabled: false,
+          capabilities: ['market-data', 'trading', 'analysis'],
+          status: 'disconnected' as const
+        },
+        {
+          id: 'portfolio-manager',
+          name: 'Portfolio Manager MCP',
+          protocol: 'sse' as const,
+          endpoint: 'http://localhost:3001/mcp/events',
+          isEnabled: false,
+          capabilities: ['portfolio', 'risk-management', 'reporting'],
+          status: 'disconnected' as const
+        }
+      ];
+      setMcpConfigs(defaultConfigs);
+      updateSetting('mcpConfigs', defaultConfigs);
     }
-  ]);
+  }, [isLoading, settings.mcpConfigs]);
 
   const [newMCP, setNewMCP] = useState<{
     name: string;
@@ -63,7 +77,7 @@ export const MCPSettings = () => {
     capabilities: []
   });
 
-  const handleToggleMCP = (id: string) => {
+  const handleToggleMCP = async (id: string) => {
     const updated: MCPConfig[] = mcpConfigs.map(config => 
       config.id === id 
         ? { 
@@ -74,6 +88,7 @@ export const MCPSettings = () => {
         : config
     );
     setMcpConfigs(updated);
+    await updateSetting('mcpConfigs', updated);
     
     const config = updated.find(c => c.id === id);
     toast({
@@ -82,7 +97,7 @@ export const MCPSettings = () => {
     });
   };
 
-  const addNewMCP = () => {
+  const addNewMCP = async () => {
     if (!newMCP.name || !newMCP.endpoint) {
       toast({
         title: "Missing Information",
@@ -102,7 +117,9 @@ export const MCPSettings = () => {
       status: 'disconnected'
     };
 
-    setMcpConfigs([...mcpConfigs, mcpConfig]);
+    const updated = [...mcpConfigs, mcpConfig];
+    setMcpConfigs(updated);
+    await updateSetting('mcpConfigs', updated);
     setNewMCP({ name: '', protocol: 'websocket', endpoint: '', capabilities: [] });
     
     toast({
@@ -116,6 +133,7 @@ export const MCPSettings = () => {
       config.id === id ? { ...config, status: 'connected' as const } : config
     );
     setMcpConfigs(updated);
+    await updateSetting('mcpConfigs', updated);
     
     const config = updated.find(c => c.id === id);
     toast({

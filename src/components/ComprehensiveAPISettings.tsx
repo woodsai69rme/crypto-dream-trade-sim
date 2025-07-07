@@ -12,6 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { useSettings } from '@/hooks/useSettings';
 import { 
   Settings, Key, Zap, Shield, CheckCircle, XCircle, 
   AlertTriangle, Globe, Database, Bot, TrendingUp,
@@ -47,113 +48,142 @@ interface ExchangeConnection {
 export const ComprehensiveAPISettings = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { settings, updateSetting, isLoading: settingsLoading } = useSettings();
   const [loading, setLoading] = useState(false);
   const [showSecrets, setShowSecrets] = useState<Record<string, boolean>>({});
   
   // AI APIs
-  const [aiApis, setAiApis] = useState<APIConfiguration[]>([
-    {
-      id: '1',
-      name: 'OpenAI GPT-4',
-      provider: 'OpenAI',
-      apiKey: '',
-      endpoint: 'https://api.openai.com/v1',
-      isActive: false,
-      status: 'untested',
-      features: ['Trading Analysis', 'Market Insights', 'Risk Assessment'],
-      rateLimit: 3500,
-      description: 'Advanced AI for trading analysis and strategy generation'
-    },
-    {
-      id: '2',
-      name: 'Anthropic Claude',
-      provider: 'Anthropic',
-      apiKey: '',
-      endpoint: 'https://api.anthropic.com/v1',
-      isActive: false,
-      status: 'untested',
-      features: ['Risk Analysis', 'News Sentiment', 'Strategy Validation'],
-      rateLimit: 1000,
-      description: 'Constitutional AI for safe trading recommendations'
-    },
-    {
-      id: '3',
-      name: 'Google Gemini',
-      provider: 'Google',
-      apiKey: '',
-      endpoint: 'https://generativelanguage.googleapis.com/v1',
-      isActive: false,
-      status: 'untested',
-      features: ['Market Research', 'Technical Analysis', 'News Processing'],
-      rateLimit: 2000,
-      description: 'Multimodal AI for comprehensive market analysis'
-    }
-  ]);
+  const [aiApis, setAiApis] = useState<APIConfiguration[]>([]);
+  const [marketApis, setMarketApis] = useState<APIConfiguration[]>([]);
+  const [exchanges, setExchanges] = useState<ExchangeConnection[]>([]);
 
-  // Market Data APIs
-  const [marketApis, setMarketApis] = useState<APIConfiguration[]>([
-    {
-      id: '4',
-      name: 'CoinGecko API',
-      provider: 'CoinGecko',
-      apiKey: '',
-      endpoint: 'https://api.coingecko.com/api/v3',
-      isActive: true,
-      status: 'connected',
-      features: ['Price Data', 'Market Stats', 'Historical Data'],
-      rateLimit: 50,
-      description: 'Free cryptocurrency market data'
-    },
-    {
-      id: '5',
-      name: 'Alpha Vantage',
-      provider: 'Alpha Vantage',
-      apiKey: '',
-      endpoint: 'https://www.alphavantage.co/query',
-      isActive: false,
-      status: 'untested',
-      features: ['Stock Data', 'Forex', 'Technical Indicators'],
-      rateLimit: 5,
-      description: 'Real-time and historical financial market data'
-    },
-    {
-      id: '6',
-      name: 'Binance API',
-      provider: 'Binance',
-      apiKey: '',
-      endpoint: 'https://api.binance.com/api/v3',
-      isActive: false,
-      status: 'untested',
-      features: ['Live Prices', 'Order Book', 'Trading History'],
-      rateLimit: 1200,
-      description: 'Binance exchange data and trading'
-    }
-  ]);
+  // Load settings on mount
+  useEffect(() => {
+    if (!settingsLoading) {
+      // Load saved settings or set defaults
+      if (settings.aiApis) {
+        setAiApis(settings.aiApis);
+      } else {
+        const defaultAiApis = [
+          {
+            id: '1',
+            name: 'OpenAI GPT-4',
+            provider: 'OpenAI',
+            apiKey: '',
+            endpoint: 'https://api.openai.com/v1',
+            isActive: false,
+            status: 'untested' as const,
+            features: ['Trading Analysis', 'Market Insights', 'Risk Assessment'],
+            rateLimit: 3500,
+            description: 'Advanced AI for trading analysis and strategy generation'
+          },
+          {
+            id: '2',
+            name: 'Anthropic Claude',
+            provider: 'Anthropic',
+            apiKey: '',
+            endpoint: 'https://api.anthropic.com/v1',
+            isActive: false,
+            status: 'untested' as const,
+            features: ['Risk Analysis', 'News Sentiment', 'Strategy Validation'],
+            rateLimit: 1000,
+            description: 'Constitutional AI for safe trading recommendations'
+          },
+          {
+            id: '3',
+            name: 'Google Gemini',
+            provider: 'Google',
+            apiKey: '',
+            endpoint: 'https://generativelanguage.googleapis.com/v1',
+            isActive: false,
+            status: 'untested' as const,
+            features: ['Market Research', 'Technical Analysis', 'News Processing'],
+            rateLimit: 2000,
+            description: 'Multimodal AI for comprehensive market analysis'
+          }
+        ];
+        setAiApis(defaultAiApis);
+        updateSetting('aiApis', defaultAiApis);
+      }
 
-  // Exchange Connections
-  const [exchanges, setExchanges] = useState<ExchangeConnection[]>([
-    {
-      id: '1',
-      name: 'Binance',
-      apiKey: '',
-      apiSecret: '',
-      sandbox: true,
-      isActive: false,
-      permissions: ['read', 'trade'],
-      status: 'untested'
-    },
-    {
-      id: '2',
-      name: 'Coinbase Pro',
-      apiKey: '',
-      apiSecret: '',
-      passphrase: '',
-      sandbox: true,
-      isActive: false,
-      permissions: ['read', 'trade'],
-      status: 'untested'
+      // Load market APIs
+      if (settings.marketApis) {
+        setMarketApis(settings.marketApis);
+      } else {
+        const defaultMarketApis = [
+          {
+            id: '4',
+            name: 'CoinGecko API',
+            provider: 'CoinGecko',
+            apiKey: '',
+            endpoint: 'https://api.coingecko.com/api/v3',
+            isActive: true,
+            status: 'connected' as const,
+            features: ['Price Data', 'Market Stats', 'Historical Data'],
+            rateLimit: 50,
+            description: 'Free cryptocurrency market data'
+          },
+          {
+            id: '5',
+            name: 'Alpha Vantage',
+            provider: 'Alpha Vantage',
+            apiKey: '',
+            endpoint: 'https://www.alphavantage.co/query',
+            isActive: false,
+            status: 'untested' as const,
+            features: ['Stock Data', 'Forex', 'Technical Indicators'],
+            rateLimit: 5,
+            description: 'Real-time and historical financial market data'
+          },
+          {
+            id: '6',
+            name: 'Binance API',
+            provider: 'Binance',
+            apiKey: '',
+            endpoint: 'https://api.binance.com/api/v3',
+            isActive: false,
+            status: 'untested' as const,
+            features: ['Live Prices', 'Order Book', 'Trading History'],
+            rateLimit: 1200,
+            description: 'Binance exchange data and trading'
+          }
+        ];
+        setMarketApis(defaultMarketApis);
+        updateSetting('marketApis', defaultMarketApis);
+      }
+
+      // Load exchanges
+      if (settings.exchanges) {
+        setExchanges(settings.exchanges);
+      } else {
+        const defaultExchanges = [
+          {
+            id: '1',
+            name: 'Binance',
+            apiKey: '',
+            apiSecret: '',
+            sandbox: true,
+            isActive: false,
+            permissions: ['read', 'trade'],
+            status: 'untested' as const
+          },
+          {
+            id: '2',
+            name: 'Coinbase Pro',
+            apiKey: '',
+            apiSecret: '',
+            passphrase: '',
+            sandbox: true,
+            isActive: false,
+            permissions: ['read', 'trade'],
+            status: 'untested' as const
+          }
+        ];
+        setExchanges(defaultExchanges);
+        updateSetting('exchanges', defaultExchanges);
+      }
     }
-  ]);
+  }, [settingsLoading, settings]);
 
   const testApiConnection = async (api: APIConfiguration) => {
     if (!api.apiKey.trim()) {
@@ -247,8 +277,9 @@ export const ComprehensiveAPISettings = () => {
   const saveAllSettings = async () => {
     setLoading(true);
     try {
-      // Here you would save to Supabase
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await updateSetting('aiApis', aiApis);
+      await updateSetting('marketApis', marketApis);
+      await updateSetting('exchanges', exchanges);
       
       toast({
         title: "Settings Saved",

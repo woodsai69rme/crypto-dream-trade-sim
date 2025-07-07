@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { useSettings } from "@/hooks/useSettings";
 import { Download, Upload, StopCircle, Play, Settings, Bot, Plus } from "lucide-react";
 
 interface BotConfig {
@@ -19,31 +20,53 @@ interface BotConfig {
 
 export const BotManagement = () => {
   const { toast } = useToast();
+  const { settings, updateSetting, isLoading } = useSettings();
   const [bots, setBots] = useState<BotConfig[]>([]);
   const [importing, setImporting] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [monitoringSettings, setMonitoringSettings] = useState({
+    apiCheckDaily: 'enabled',
+    newsSources: 'all',
+    resourceUrls: ''
+  });
 
-  const stopAllBots = () => {
+  // Load bot settings on mount
+  useEffect(() => {
+    if (!isLoading && settings.botConfigs) {
+      setBots(settings.botConfigs);
+    }
+    if (!isLoading && settings.monitoringSettings) {
+      setMonitoringSettings(settings.monitoringSettings);
+    }
+  }, [isLoading, settings]);
+
+  const stopAllBots = async () => {
     console.log('STOPPING ALL BOTS');
-    setBots(prev => prev.map(bot => ({ ...bot, status: 'stopped' as const })));
+    const updated = bots.map(bot => ({ ...bot, status: 'stopped' as const }));
+    setBots(updated);
+    await updateSetting('botConfigs', updated);
     toast({
       title: "All Bots Stopped",
       description: "All trading bots have been stopped successfully",
     });
   };
 
-  const startAllBots = () => {
+  const startAllBots = async () => {
     console.log('STARTING ALL BOTS');
-    setBots(prev => prev.map(bot => ({ ...bot, status: 'active' as const })));
+    const updated = bots.map(bot => ({ ...bot, status: 'active' as const }));
+    setBots(updated);
+    await updateSetting('botConfigs', updated);
     toast({
       title: "All Bots Started",
       description: "All trading bots have been activated",
     });
   };
 
-  const pauseAllBots = () => {
+  const pauseAllBots = async () => {
     console.log('PAUSING ALL BOTS');
-    setBots(prev => prev.map(bot => ({ ...bot, status: 'paused' as const })));
+    const updated = bots.map(bot => ({ ...bot, status: 'paused' as const }));
+    setBots(updated);
+    await updateSetting('botConfigs', updated);
     toast({
       title: "All Bots Paused",
       description: "All trading bots have been paused",
@@ -95,7 +118,9 @@ export const BotManagement = () => {
       try {
         const importData = JSON.parse(e.target?.result as string);
         if (importData.bots && Array.isArray(importData.bots)) {
-          setBots(prev => [...prev, ...importData.bots]);
+          const updated = [...bots, ...importData.bots];
+          setBots(updated);
+          updateSetting('botConfigs', updated);
           toast({
             title: "Bots Imported",
             description: `Successfully imported ${importData.bots.length} bot configurations`,
@@ -116,6 +141,14 @@ export const BotManagement = () => {
     };
     
     reader.readAsText(file);
+  };
+
+  const saveMonitoringSettings = async () => {
+    await updateSetting('monitoringSettings', monitoringSettings);
+    toast({
+      title: "Monitoring Settings Saved",
+      description: "Daily resource monitoring settings have been updated",
+    });
   };
 
   return (
@@ -218,7 +251,10 @@ export const BotManagement = () => {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>Check APIs Daily</Label>
-                <Select defaultValue="enabled">
+                <Select 
+                  value={monitoringSettings.apiCheckDaily}
+                  onValueChange={(value) => setMonitoringSettings(prev => ({ ...prev, apiCheckDaily: value }))}
+                >
                   <SelectTrigger className="bg-white/10 border-white/20">
                     <SelectValue />
                   </SelectTrigger>
@@ -230,7 +266,10 @@ export const BotManagement = () => {
               </div>
               <div>
                 <Label>News Sources</Label>
-                <Select defaultValue="all">
+                <Select 
+                  value={monitoringSettings.newsSources}
+                  onValueChange={(value) => setMonitoringSettings(prev => ({ ...prev, newsSources: value }))}
+                >
                   <SelectTrigger className="bg-white/10 border-white/20">
                     <SelectValue />
                   </SelectTrigger>
@@ -245,11 +284,13 @@ export const BotManagement = () => {
             <div>
               <Label>Resource URLs (one per line)</Label>
               <Textarea 
+                value={monitoringSettings.resourceUrls}
+                onChange={(e) => setMonitoringSettings(prev => ({ ...prev, resourceUrls: e.target.value }))}
                 placeholder="Enter URLs to monitor daily...&#10;https://api.example.com/crypto&#10;https://news.example.com/feed"
                 className="bg-white/10 border-white/20 min-h-20"
               />
             </div>
-            <Button className="w-full">
+            <Button onClick={saveMonitoringSettings} className="w-full">
               Save Monitoring Settings
             </Button>
           </CardContent>
