@@ -11,6 +11,10 @@ import { RiskManagementDashboard } from "@/components/RiskManagementDashboard";
 import { SettingsPanel } from "@/components/settings/SettingsPanel";
 import { CryptoNewsResearch } from "@/components/ai/CryptoNewsResearch";
 import { N8NWorkflowIntegration } from "@/components/ai/N8NWorkflowIntegration";
+import { AdvancedAnalyticsDashboard } from "@/components/analytics/AdvancedAnalyticsDashboard";
+import { RealTimeMarketIntegration } from "@/components/realtime/RealTimeMarketIntegration";
+import { EnhancedAITradingBots } from "@/components/ai/EnhancedAITradingBots";
+import { EnhancedSocialTradingSystem } from "@/components/social/EnhancedSocialTradingSystem";
 
 const IndexPage = () => {
   const { user, loading } = useAuth();
@@ -39,7 +43,17 @@ const IndexPage = () => {
       case "accounts":
         return <EnhancedAccountManager />;
       case "traders":
-        return <TopTraders />;
+        return <EnhancedSocialTradingSystem />;
+      case "news":
+        return <CryptoNewsResearch />;
+      case "workflows":
+        return <N8NWorkflowIntegration />;
+      case "history":
+        return <TradingHistoryDashboard />;
+      case "risk":
+        return <RiskManagementDashboard />;
+      case "settings":
+        return <SettingsPanel />;
       case "history":
         return <TradingHistoryDashboard />;
       case "risk":
