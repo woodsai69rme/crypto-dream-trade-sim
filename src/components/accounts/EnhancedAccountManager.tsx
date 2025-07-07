@@ -3,10 +3,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MyAccounts } from "./MyAccounts";
 import { FollowingTab } from "./FollowingTab";
 import { AnalyticsTab } from "./AnalyticsTab";
-import { Users, BarChart, UserCheck } from "lucide-react";
+import { AccountCryptoHoldings } from "./AccountCryptoHoldings";
+import { useMultipleAccounts } from "@/hooks/useMultipleAccounts";
+import { Users, BarChart, UserCheck, Wallet } from "lucide-react";
 
 export const EnhancedAccountManager = () => {
   const [activeTab, setActiveTab] = useState("accounts");
+  const { accounts } = useMultipleAccounts();
 
   return (
     <div className="space-y-6">
@@ -15,10 +18,14 @@ export const EnhancedAccountManager = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 bg-card/50 backdrop-blur-sm">
+        <TabsList className="grid w-full grid-cols-4 bg-card/50 backdrop-blur-sm">
           <TabsTrigger value="accounts" className="flex items-center gap-2">
             <Users className="w-4 h-4" />
             My Accounts
+          </TabsTrigger>
+          <TabsTrigger value="holdings" className="flex items-center gap-2">
+            <Wallet className="w-4 h-4" />
+            Holdings
           </TabsTrigger>
           <TabsTrigger value="following" className="flex items-center gap-2">
             <UserCheck className="w-4 h-4" />
@@ -32,6 +39,18 @@ export const EnhancedAccountManager = () => {
 
         <TabsContent value="accounts">
           <MyAccounts />
+        </TabsContent>
+
+        <TabsContent value="holdings">
+          <div className="space-y-6">
+            {accounts.map((account) => (
+              <AccountCryptoHoldings 
+                key={account.id}
+                accountId={account.id}
+                accountName={account.account_name}
+              />
+            ))}
+          </div>
         </TabsContent>
 
         <TabsContent value="following">

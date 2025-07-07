@@ -3,6 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Header } from "@/components/Header";
 import { Dashboard } from "@/components/dashboard/Dashboard";
 import { TradingPanel } from "@/components/TradingPanel";
+import { MultiAccountTradingPanel } from "@/components/trading/MultiAccountTradingPanel";
 import { EnhancedAccountManager } from "@/components/accounts/EnhancedAccountManager";
 import { TopTraders } from "@/components/TopTraders";
 import { TradingHistoryDashboard } from "@/components/TradingHistoryDashboard";
@@ -27,7 +28,12 @@ const IndexPage = () => {
       case "dashboard":
         return <Dashboard />;
       case "trading":
-        return <TradingPanel />;
+        return (
+          <div className="space-y-6">
+            <TradingPanel />
+            <MultiAccountTradingPanel />
+          </div>
+        );
       case "accounts":
         return <EnhancedAccountManager />;
       case "traders":
