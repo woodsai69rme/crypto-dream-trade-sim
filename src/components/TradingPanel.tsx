@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -6,10 +7,13 @@ import { MarketOverviewDashboard } from "@/components/enhanced/MarketOverviewDas
 import { AITradingBot } from "@/components/ai/AITradingBot";
 import { TradeFollower } from "@/components/trading/TradeFollower";
 import { TradingHistoryDashboard } from "@/components/TradingHistoryDashboard";
-import { BarChart3, Bot, Users, History, TrendingUp } from "lucide-react";
+import { BarChart3, Bot, Users, History, TrendingUp, Activity } from "lucide-react";
 import { AIChatAssistant } from "@/components/ai/AIChatAssistant";
 import { TradingViewChart } from "@/components/charts/TradingViewChart";
 import { PortfolioRebalancer } from "@/components/portfolio/PortfolioRebalancer";
+import { RiskManagementDashboard } from "@/components/risk/RiskManagementDashboard";
+import { LiveMonitoringDashboard } from "@/components/dashboard/LiveMonitoringDashboard";
+import { RealTimeAuditLog } from "@/components/RealTimeAuditLog";
 
 export const TradingPanel = () => {
   return (
@@ -17,10 +21,13 @@ export const TradingPanel = () => {
       <div className="flex items-center gap-2 mb-6">
         <TrendingUp className="w-6 h-6" />
         <h1 className="text-3xl font-bold text-primary-foreground">Advanced Trading Hub</h1>
+        <div className="ml-auto">
+          <LiveMonitoringDashboard />
+        </div>
       </div>
 
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-6 bg-card/50 backdrop-blur-sm">
+        <TabsList className="grid w-full grid-cols-7 bg-card/50 backdrop-blur-sm">
           <TabsTrigger value="overview" className="flex items-center gap-2">
             <BarChart3 className="w-4 h-4" />
             Market
@@ -41,6 +48,10 @@ export const TradingPanel = () => {
             <Users className="w-4 h-4" />
             Following
           </TabsTrigger>
+          <TabsTrigger value="risk" className="flex items-center gap-2">
+            <Activity className="w-4 h-4" />
+            Risk
+          </TabsTrigger>
           <TabsTrigger value="history" className="flex items-center gap-2">
             <History className="w-4 h-4" />
             History
@@ -48,7 +59,10 @@ export const TradingPanel = () => {
         </TabsList>
 
         <TabsContent value="overview">
-          <MarketOverviewDashboard />
+          <div className="space-y-6">
+            <MarketOverviewDashboard />
+            <RealTimeAuditLog />
+          </div>
         </TabsContent>
 
         <TabsContent value="quick-trade">
@@ -85,6 +99,10 @@ export const TradingPanel = () => {
 
         <TabsContent value="following">
           <TradeFollower />
+        </TabsContent>
+
+        <TabsContent value="risk">
+          <RiskManagementDashboard />
         </TabsContent>
 
         <TabsContent value="history">
