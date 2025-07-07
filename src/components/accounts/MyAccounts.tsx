@@ -5,13 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useMultipleAccounts } from '@/hooks/useMultipleAccounts';
 import { useToast } from '@/hooks/use-toast';
-import { AccountCard } from './AccountCard';
+import { EnhancedAccountCard } from './EnhancedAccountCard';
 import { 
   Wallet,
   Star,
   Shield,
   BarChart3,
-  Activity
+  Activity,
+  Plus
 } from 'lucide-react';
 
 export const MyAccounts = () => {
@@ -26,10 +27,10 @@ export const MyAccounts = () => {
     });
   };
 
-  const handleResetAccount = (accountId: string) => {
+  const handleBulkActions = () => {
     toast({
-      title: "Reset Account",
-      description: "Account reset functionality coming soon",
+      title: "Bulk Actions",
+      description: "Bulk operations functionality coming soon",
     });
   };
 
@@ -37,9 +38,9 @@ export const MyAccounts = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <h2 className="text-2xl font-bold text-primary-foreground">My Trading Accounts</h2>
-          <Badge variant="secondary" className="text-sm">
-            {accounts.length} total account{accounts.length !== 1 ? 's' : ''}
+          <h2 className="text-2xl font-bold text-primary-foreground">My Accounts</h2>
+          <Badge variant="secondary" className="text-sm bg-blue-500/20 text-blue-400">
+            {accounts.length} Active
           </Badge>
         </div>
         
@@ -66,13 +67,13 @@ export const MyAccounts = () => {
           
           {/* Action Buttons */}
           <Button variant="outline" onClick={handleCreateAccount}>
-            <Star className="w-4 h-4 mr-2" />
+            <Plus className="w-4 h-4 mr-2" />
             Create Account
           </Button>
           
-          <Button variant="outline" onClick={() => handleResetAccount(currentAccount?.id || '')}>
-            <Shield className="w-4 h-4 mr-2" />
-            Reset Account
+          <Button variant="secondary" onClick={handleBulkActions}>
+            <Settings className="w-4 h-4 mr-2" />
+            Bulk Actions
           </Button>
         </div>
       </div>
@@ -85,16 +86,19 @@ export const MyAccounts = () => {
             <p className="text-muted-foreground mb-4">
               Create your first paper trading account to get started
             </p>
-            <Button>Create Account</Button>
+            <Button onClick={handleCreateAccount}>
+              <Plus className="w-4 h-4 mr-2" />
+              Create Account
+            </Button>
           </CardContent>
         </Card>
       ) : (
         <div className={viewMode === 'grid' 
-          ? "grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6" 
+          ? "grid grid-cols-1 lg:grid-cols-2 gap-6" 
           : "space-y-4"
         }>
           {accounts.map((account) => (
-            <AccountCard
+            <EnhancedAccountCard
               key={account.id}
               account={account}
               onSwitchAccount={switchAccount}
