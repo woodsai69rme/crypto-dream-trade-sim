@@ -1,4 +1,5 @@
 
+import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Auth } from "./Auth";
 import { Header } from "@/components/Header";
@@ -13,6 +14,7 @@ import { Wallet, Users, Settings, BarChart3, Activity, TrendingUp } from "lucide
 
 const Index = () => {
   const { user, loading } = useAuth();
+  const [activeTab, setActiveTab] = useState("portfolio");
 
   if (loading) {
     return (
@@ -28,13 +30,13 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-      <Header />
+      <Header activeTab={activeTab} setActiveTab={setActiveTab} />
       <main className="container mx-auto px-4 py-8">
         <div className="mb-6">
           <SystemStatus />
         </div>
         
-        <Tabs defaultValue="portfolio" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-6 bg-card/50 backdrop-blur-sm">
             <TabsTrigger value="portfolio" className="flex items-center gap-2">
               <BarChart3 className="w-4 h-4" />
