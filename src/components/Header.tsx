@@ -7,26 +7,13 @@ import { useMultipleAccounts } from "@/hooks/useMultipleAccounts";
 import { NotificationCenter } from "@/components/notifications/NotificationCenter";
 import { supabase } from "@/integrations/supabase/client";
 import { 
-  LayoutDashboard, 
   TrendingUp, 
-  Users, 
-  Settings, 
-  History, 
-  Shield,
-  UserPlus,
-  LogOut,
-  Newspaper,
-  Workflow
+  LogOut
 } from "lucide-react";
 
-interface HeaderProps {
-  activeTab: string;
-  setActiveTab: (tab: string) => void;
-}
-
-export const Header = ({ activeTab, setActiveTab }: HeaderProps) => {
+export const Header = () => {
   const { user } = useAuth();
-  const { currentAccount, accounts, notifications } = useMultipleAccounts();
+  const { currentAccount, accounts } = useMultipleAccounts();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const handleSignOut = async () => {
@@ -40,18 +27,6 @@ export const Header = ({ activeTab, setActiveTab }: HeaderProps) => {
     }
   };
 
-  const navItems = [
-    { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { id: "trading", label: "Trading", icon: TrendingUp },
-    { id: "accounts", label: "Accounts", icon: UserPlus },
-    { id: "traders", label: "Top Traders", icon: Users },
-    { id: "news", label: "News AI", icon: Newspaper },
-    { id: "workflows", label: "Workflows", icon: Workflow },
-    { id: "history", label: "History", icon: History },
-    { id: "risk", label: "Risk", icon: Shield },
-    { id: "settings", label: "Settings", icon: Settings },
-  ];
-
   return (
     <header className="border-b border-white/10 bg-black/20 backdrop-blur-sm">
       <div className="container mx-auto px-4 py-4">
@@ -61,33 +36,6 @@ export const Header = ({ activeTab, setActiveTab }: HeaderProps) => {
               <TrendingUp className="w-8 h-8 text-blue-400" />
               <h1 className="text-2xl font-bold text-white">CryptoTrader Pro</h1>
             </div>
-            
-            <nav className="hidden md:flex items-center space-x-1">
-              {navItems.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <Button
-                    key={item.id}
-                    variant={activeTab === item.id ? "secondary" : "ghost"}
-                    size="sm"
-                    onClick={() => setActiveTab(item.id)}
-                    className={`flex items-center space-x-2 ${
-                      activeTab === item.id 
-                        ? "bg-white/20 text-white" 
-                        : "text-white/70 hover:text-white hover:bg-white/10"
-                    }`}
-                  >
-                    <Icon className="w-4 h-4" />
-                    <span>{item.label}</span>
-                    {item.id === "accounts" && accounts.length > 1 && (
-                      <Badge variant="secondary" className="ml-1 text-xs">
-                        {accounts.length}
-                      </Badge>
-                    )}
-                  </Button>
-                );
-              })}
-            </nav>
           </div>
 
           <div className="flex items-center space-x-4">
@@ -127,29 +75,6 @@ export const Header = ({ activeTab, setActiveTab }: HeaderProps) => {
             </div>
           </div>
         </div>
-
-        {/* Mobile Navigation */}
-        <nav className="md:hidden mt-4 flex overflow-x-auto space-x-1 pb-2">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <Button
-                key={item.id}
-                variant={activeTab === item.id ? "secondary" : "ghost"}
-                size="sm"
-                onClick={() => setActiveTab(item.id)}
-                className={`flex items-center space-x-1 whitespace-nowrap ${
-                  activeTab === item.id 
-                    ? "bg-white/20 text-white" 
-                    : "text-white/70 hover:text-white hover:bg-white/10"
-                }`}
-              >
-                <Icon className="w-4 h-4" />
-                <span className="text-xs">{item.label}</span>
-              </Button>
-            );
-          })}
-        </nav>
       </div>
     </header>
   );
