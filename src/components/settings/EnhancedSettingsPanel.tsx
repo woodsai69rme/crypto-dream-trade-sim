@@ -9,7 +9,7 @@ import { ComprehensiveTopTraders } from "../enhanced/ComprehensiveTopTraders";
 import { AIModelManager } from "../enhanced/AIModelManager";
 import { TradingWorkflowManager } from "../enhanced/TradingWorkflowManager";
 import { TradingAssistant } from "../ai/TradingAssistant";
-import { Settings, Bot, Key, TestTube, Users, Globe, Cog, Star, Cpu, Workflow, MessageSquare } from "lucide-react";
+import { Settings, Bot, Key, TestTube, Users, Globe, Cog, Star, Cpu, Workflow, MessageSquare, Wallet, Bell } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useSettings } from "@/hooks/useSettings";
 import { N8NLocalConnection } from "../integrations/N8NLocalConnection";
@@ -17,6 +17,11 @@ import { APIManagement } from "../integrations/APIManagement";
 import { TradingResearch } from "../research/TradingResearch";
 import { ComprehensiveAudit } from "../audit/ComprehensiveAudit";
 import { MultiAccountBotManager } from "../bots/MultiAccountBotManager";
+import { EnhancedMultiAccountBotManager } from "../bots/EnhancedMultiAccountBotManager";
+import { LiveTradingHub } from "../enhanced/LiveTradingHub";
+import { ComprehensiveAuditDashboard } from "../enhanced/ComprehensiveAuditDashboard";
+import { SocialSentimentMonitor } from "../SocialSentimentMonitor";
+import { PriceAlertsManager } from "../PriceAlertsManager";
 
 export const EnhancedSettingsPanel = () => {
   const { settings, updateSetting, isLoading } = useSettings();
@@ -55,6 +60,18 @@ export const EnhancedSettingsPanel = () => {
             <Globe className="w-3 h-3" />
             Global
           </TabsTrigger>
+          <TabsTrigger value="live-trading" className="flex items-center gap-1">
+            <Wallet className="w-3 h-3" />
+            Live Trading
+          </TabsTrigger>
+          <TabsTrigger value="social" className="flex items-center gap-1">
+            <MessageSquare className="w-3 h-3" />
+            Social
+          </TabsTrigger>
+          <TabsTrigger value="alerts" className="flex items-center gap-1">
+            <Bell className="w-3 h-3" />
+            Alerts
+          </TabsTrigger>
           <TabsTrigger value="audit" className="flex items-center gap-1">
             <Settings className="w-3 h-3" />
             Audit
@@ -83,21 +100,9 @@ export const EnhancedSettingsPanel = () => {
             <Star className="w-3 h-3" />
             Traders
           </TabsTrigger>
-          <TabsTrigger value="ai-models" className="flex items-center gap-1">
-            <Cpu className="w-3 h-3" />
-            Models
-          </TabsTrigger>
-          <TabsTrigger value="workflows" className="flex items-center gap-1">
-            <Workflow className="w-3 h-3" />
-            Workflows
-          </TabsTrigger>
           <TabsTrigger value="bots" className="flex items-center gap-1">
             <Bot className="w-3 h-3" />
             Bots
-          </TabsTrigger>
-          <TabsTrigger value="testing" className="flex items-center gap-1">
-            <TestTube className="w-3 h-3" />
-            Testing
           </TabsTrigger>
         </TabsList>
 
@@ -105,12 +110,24 @@ export const EnhancedSettingsPanel = () => {
           <GlobalAccountSettings />
         </TabsContent>
 
+        <TabsContent value="live-trading">
+          <LiveTradingHub />
+        </TabsContent>
+
+        <TabsContent value="social">
+          <SocialSentimentMonitor />
+        </TabsContent>
+
+        <TabsContent value="alerts">
+          <PriceAlertsManager />
+        </TabsContent>
+
         <TabsContent value="audit">
-          <ComprehensiveAudit />
+          <ComprehensiveAuditDashboard />
         </TabsContent>
 
         <TabsContent value="multi-bots">
-          <MultiAccountBotManager />
+          <EnhancedMultiAccountBotManager />
         </TabsContent>
 
         <TabsContent value="research">
@@ -152,35 +169,8 @@ export const EnhancedSettingsPanel = () => {
           <ComprehensiveTopTraders />
         </TabsContent>
 
-        <TabsContent value="ai-models">
-          <AIModelManager />
-        </TabsContent>
-
-        <TabsContent value="workflows">
-          <TradingWorkflowManager />
-        </TabsContent>
-
         <TabsContent value="bots">
           <BotManagement />
-        </TabsContent>
-
-        <TabsContent value="following">
-          <TradeFollowingSettings 
-            settings={tradeFollowingSettings}
-            onSettingsChange={handleTradeFollowingChange}
-          />
-        </TabsContent>
-
-        <TabsContent value="api">
-          <ComprehensiveAPISettings />
-        </TabsContent>
-
-        <TabsContent value="mcp">
-          <MCPSettings />
-        </TabsContent>
-
-        <TabsContent value="testing">
-          <ComprehensiveTestingSuite />
         </TabsContent>
       </Tabs>
     </div>

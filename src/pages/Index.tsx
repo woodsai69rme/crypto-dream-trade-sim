@@ -10,6 +10,7 @@ import { EnhancedSettingsPanel } from "@/components/settings/EnhancedSettingsPan
 import { SystemStatus } from "@/components/enhanced/SystemStatus";
 import { TradingPanel } from "@/components/TradingPanel";
 import { SocialTradingSystem } from "@/components/SocialTradingSystem";
+import { SocialSentimentMonitor } from "@/components/SocialSentimentMonitor";
 import { Wallet, Users, Settings, BarChart3, Activity, TrendingUp } from "lucide-react";
 
 const Index = () => {
@@ -77,7 +78,10 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="social">
-            <SocialTradingSystem />
+            <div className="space-y-6">
+              <SocialTradingSystem />
+              <SocialSentimentMonitor />
+            </div>
           </TabsContent>
 
           <TabsContent value="system">

@@ -10,7 +10,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useRealtimeMarketData } from '@/hooks/useRealtimeMarketData';
-import { TrendingUp, TrendingDown, Settings, Eye, EyeOff, Volume2, Activity, BarChart3 } from 'lucide-react';
+import { useSocialSentiment } from '@/hooks/useSocialSentiment';
+import { TrendingUp, TrendingDown, Settings, Eye, EyeOff, Volume2, Activity, BarChart3, MessageSquare, Bell } from 'lucide-react';
 
 interface TickerSettings {
   refreshRate: number;
@@ -27,6 +28,7 @@ interface TickerSettings {
 
 export const AdvancedTickerSystem = () => {
   const { prices, isConnected } = useRealtimeMarketData(['BTC', 'ETH', 'SOL', 'ADA', 'DOT', 'LINK', 'UNI', 'AVAX']);
+  const { summaries } = useSocialSentiment(['BTC', 'ETH', 'SOL', 'ADA', 'DOT', 'LINK', 'UNI', 'AVAX']);
   
   const [settings, setSettings] = useState<TickerSettings>({
     refreshRate: 1000,
@@ -61,15 +63,20 @@ export const AdvancedTickerSystem = () => {
   };
 
   const getFilteredAndSortedData = () => {
-    let data = Object.entries(prices).map(([symbol, data]) => ({
-      symbol,
-      ...data,
-      change24h: data.change24h || (Math.random() - 0.5) * 10,
-      volume: data.volume || Math.random() * 1000000000,
-      marketCap: data.price * Math.random() * 1000000000,
-      high24h: data.price * (1 + Math.random() * 0.1),
-      low24h: data.price * (1 - Math.random() * 0.1)
-    }));
+    let data = Object.entries(prices).map(([symbol, data]) => {
+      const sentiment = summaries.find(s => s.symbol === symbol);
+      return {
+        symbol,
+        ...data,
+        change24h: data.change24h || (Math.random() - 0.5) * 10,
+        volume: data.volume || Math.random() * 1000000000,
+        marketCap: data.price * Math.random() * 1000000000,
+        high24h: data.price * (1 + Math.random() * 0.1),
+        low24h: data.price * (1 - Math.random() * 0.1),
+        sentiment: sentiment?.overall_sentiment || 0,
+        mentions: sentiment?.total_mentions || 0
+      };
+    });
 
     // Filter
     switch (settings.filterBy) {
@@ -126,8 +133,9 @@ export const AdvancedTickerSystem = () => {
       </div>
 
       <Tabs defaultValue="ticker" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="ticker">Live Ticker</TabsTrigger>
+          <TabsTrigger value="sentiment">Sentiment</TabsTrigger>
           <TabsTrigger value="settings">Settings</TabsTrigger>
           <TabsTrigger value="alerts">Price Alerts</TabsTrigger>
         </TabsList>
@@ -172,7 +180,7 @@ export const AdvancedTickerSystem = () => {
                   {visibleColumns.price && <div className="col-span-2 text-right">Price</div>}
                   {visibleColumns.change24h && <div className="col-span-2 text-right">24h Change</div>}
                   {visibleColumns.volume && <div className="col-span-2 text-right">Volume</div>}
-                  {visibleColumns.marketCap && <div className="col-span-2 text-right">Market Cap</div>}
+                  <div className="col-span-2 text-right">Sentiment</div>
                   <div className="col-span-2 text-right">Actions</div>
                 </div>
 
@@ -209,11 +217,17 @@ export const AdvancedTickerSystem = () => {
                       </div>
                     )}
                     
-                    {visibleColumns.marketCap && (
-                      <div className="col-span-2 text-right text-sm">
-                        ${formatNumber(item.marketCap)}
+                    <div className="col-span-2 text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <MessageSquare className="w-3 h-3 text-white/40" />
+                        <span className={`text-xs ${
+                          (item as any).sentiment > 0.1 ? 'text-green-400' : 
+                          (item as any).sentiment < -0.1 ? 'text-red-400' : 'text-yellow-400'
+                        }`}>
+                          {((item as any).sentiment || 0).toFixed(1)}
+                        </span>
                       </div>
-                    )}
+                    </div>
                     
                     <div className="col-span-2 flex items-center justify-end gap-2">
                       <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
@@ -222,6 +236,37 @@ export const AdvancedTickerSystem = () => {
                       <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
                         <Settings className="w-3 h-3" />
                       </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="sentiment">
+          <Card className="crypto-card-gradient text-white">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MessageSquare className="w-5 h-5" />
+                Social Sentiment Overview
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {tickerData.filter((item: any) => item.sentiment !== 0).map((item: any) => (
+                  <div key={item.symbol} className="p-4 bg-white/5 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-medium">{item.symbol}</h4>
+                      <div className={`text-sm ${
+                        item.sentiment > 0.1 ? 'text-green-400' : 
+                        item.sentiment < -0.1 ? 'text-red-400' : 'text-yellow-400'
+                      }`}>
+                        {item.sentiment > 0 ? '+' : ''}{item.sentiment.toFixed(2)}
+                      </div>
+                    </div>
+                    <div className="text-xs text-white/60">
+                      {item.mentions} mentions
                     </div>
                   </div>
                 ))}
