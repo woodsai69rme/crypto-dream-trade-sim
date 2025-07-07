@@ -27,8 +27,8 @@ interface Trade {
   price: number;
   total_value: number;
   fee: number;
-  status: 'completed' | 'pending' | 'cancelled';
-  trade_type: 'market' | 'limit' | 'stop';
+  status: string;
+  trade_type: string;
   created_at: string;
   executed_at?: string;
   account_id: string;
