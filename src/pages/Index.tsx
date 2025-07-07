@@ -1,63 +1,96 @@
 
-import { ComprehensiveAccountManager } from "@/components/accounts/ComprehensiveAccountManager";
-import { TradingPanel } from "@/components/TradingPanel";
-import { PortfolioDashboard } from "@/components/PortfolioDashboard";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { Card, CardContent } from "@/components/ui/card";
-import { TrendingUp, Users, Bot, BarChart3 } from "lucide-react";
+import { Auth } from "./Auth";
+import { Header } from "@/components/Header";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PortfolioDashboard } from "@/components/PortfolioDashboard";
+import { EnhancedAccountManager } from "@/components/accounts/EnhancedAccountManager";
+import { EnhancedSettingsPanel } from "@/components/settings/EnhancedSettingsPanel";
+import { SystemStatus } from "@/components/enhanced/SystemStatus";
+import { TradingPanel } from "@/components/TradingPanel";
+import { SocialTradingSystem } from "@/components/SocialTradingSystem";
+import { Wallet, Users, Settings, BarChart3, Activity, TrendingUp } from "lucide-react";
 
 const Index = () => {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+  const [activeTab, setActiveTab] = useState("portfolio");
 
-  if (!user) {
+  if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-950 to-slate-950 flex items-center justify-center">
-        <Card className="w-full max-w-md bg-card/50 backdrop-blur-sm border border-purple-500/20">
-          <CardContent className="p-6 text-center">
-            <TrendingUp className="w-12 h-12 mx-auto mb-4 text-purple-400" />
-            <h1 className="text-2xl font-bold mb-2 text-primary-foreground">Welcome to CryptoTrader Pro</h1>
-            <p className="text-muted-foreground mb-4">
-              Please sign in to access your trading dashboard
-            </p>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-white"></div>
       </div>
     );
   }
 
+  if (!user) {
+    return <Auth />;
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-950/20 to-slate-950">
-      <div className="container mx-auto p-6">
-        <Tabs defaultValue="accounts" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 bg-card/50 backdrop-blur-sm mb-6 border border-purple-500/20">
-            <TabsTrigger value="accounts" className="flex items-center gap-2 text-primary-foreground">
-              <Users className="w-4 h-4" />
-              Account Manager
-            </TabsTrigger>
-            <TabsTrigger value="trading" className="flex items-center gap-2 text-primary-foreground">
-              <TrendingUp className="w-4 h-4" />
-              Trading Hub
-            </TabsTrigger>
-            <TabsTrigger value="portfolio" className="flex items-center gap-2 text-primary-foreground">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      <Header activeTab={activeTab} setActiveTab={setActiveTab} />
+      <main className="container mx-auto px-4 py-8">
+        <div className="mb-6">
+          <SystemStatus />
+        </div>
+        
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-6 bg-card/50 backdrop-blur-sm">
+            <TabsTrigger value="portfolio" className="flex items-center gap-2">
               <BarChart3 className="w-4 h-4" />
               Portfolio
             </TabsTrigger>
+            <TabsTrigger value="trading" className="flex items-center gap-2">
+              <TrendingUp className="w-4 h-4" />
+              Trading
+            </TabsTrigger>
+            <TabsTrigger value="accounts" className="flex items-center gap-2">
+              <Wallet className="w-4 h-4" />
+              Accounts
+            </TabsTrigger>
+            <TabsTrigger value="social" className="flex items-center gap-2">
+              <Users className="w-4 h-4" />
+              Social
+            </TabsTrigger>
+            <TabsTrigger value="system" className="flex items-center gap-2">
+              <Activity className="w-4 h-4" />
+              System
+            </TabsTrigger>
+            <TabsTrigger value="settings" className="flex items-center gap-2">
+              <Settings className="w-4 h-4" />
+              Settings
+            </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="accounts">
-            <ComprehensiveAccountManager />
+          <TabsContent value="portfolio">
+            <PortfolioDashboard />
           </TabsContent>
 
           <TabsContent value="trading">
             <TradingPanel />
           </TabsContent>
 
-          <TabsContent value="portfolio">
-            <PortfolioDashboard />
+          <TabsContent value="accounts">
+            <EnhancedAccountManager />
+          </TabsContent>
+
+          <TabsContent value="social">
+            <SocialTradingSystem />
+          </TabsContent>
+
+          <TabsContent value="system">
+            <div className="grid grid-cols-1 gap-6">
+              <SystemStatus />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="settings">
+            <EnhancedSettingsPanel />
           </TabsContent>
         </Tabs>
-      </div>
+      </main>
     </div>
   );
 };
