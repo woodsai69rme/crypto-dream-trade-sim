@@ -3707,8 +3707,12 @@ export type Database = {
       }
       trader_follows: {
         Row: {
+          allocation_percentage: number | null
+          copy_trading_enabled: boolean | null
           created_at: string
           followed_at: string
+          followed_id: string | null
+          follower_id: string | null
           id: string
           is_active: boolean
           trader_category: string
@@ -3717,8 +3721,12 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          allocation_percentage?: number | null
+          copy_trading_enabled?: boolean | null
           created_at?: string
           followed_at?: string
+          followed_id?: string | null
+          follower_id?: string | null
           id?: string
           is_active?: boolean
           trader_category?: string
@@ -3727,8 +3735,12 @@ export type Database = {
           user_id: string
         }
         Update: {
+          allocation_percentage?: number | null
+          copy_trading_enabled?: boolean | null
           created_at?: string
           followed_at?: string
+          followed_id?: string | null
+          follower_id?: string | null
           id?: string
           is_active?: boolean
           trader_category?: string
