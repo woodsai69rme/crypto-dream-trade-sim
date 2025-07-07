@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -21,27 +22,43 @@ export const useSettings = (settingNames: string[] = []): SettingsHook => {
 
   const loadSettings = async () => {
     try {
+      setIsLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        setIsLoading(false);
+        return;
+      }
 
       const { data, error } = await supabase
         .from('user_settings')
         .select('setting_name, setting_value')
         .eq('user_id', user.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Settings load error:', error);
+        throw error;
+      }
 
       const settingsMap: Record<string, any> = {};
       data?.forEach(setting => {
-        settingsMap[setting.setting_name] = setting.setting_value;
+        try {
+          // Handle both simple values and JSON values
+          settingsMap[setting.setting_name] = setting.setting_value;
+        } catch (parseError) {
+          console.warn('Failed to parse setting:', setting.setting_name, parseError);
+          settingsMap[setting.setting_name] = setting.setting_value;
+        }
       });
 
+      console.log('Loaded settings:', settingsMap);
       setSettings(settingsMap);
-    } catch (error) {
+      setError(null);
+    } catch (error: any) {
       console.error('Error loading settings:', error);
+      setError(error.message || 'Failed to load settings');
       toast({
         title: "Settings Load Error",
-        description: "Failed to load your settings",
+        description: "Failed to load your settings. Please refresh the page.",
         variant: "destructive",
       });
     } finally {
@@ -51,7 +68,7 @@ export const useSettings = (settingNames: string[] = []): SettingsHook => {
 
   const updateSetting = async (name: string, value: any): Promise<boolean> => {
     try {
-      console.log('Saving setting:', name, value);
+      console.log('Updating setting:', name, '=', value);
       setError(null);
       
       const { data: { user } } = await supabase.auth.getUser();
@@ -59,34 +76,34 @@ export const useSettings = (settingNames: string[] = []): SettingsHook => {
         throw new Error('User not authenticated');
       }
 
-      const { error } = await supabase
+      // First try to update, then insert if doesn't exist
+      const { error: upsertError } = await supabase
         .from('user_settings')
-        .upsert({
-          user_id: user.id,
-          setting_name: name,
-          setting_value: value,
-          updated_at: new Date().toISOString()
-        }, {
-          onConflict: 'user_id,setting_name'
-        });
+        .upsert(
+          {
+            user_id: user.id,
+            setting_name: name,
+            setting_value: value,
+            updated_at: new Date().toISOString()
+          },
+          { 
+            onConflict: 'user_id,setting_name',
+            ignoreDuplicates: false 
+          }
+        );
 
-      if (error) {
-        console.error('Database error:', error);
-        throw error;
+      if (upsertError) {
+        console.error('Upsert error:', upsertError);
+        throw upsertError;
       }
 
-      // Update local state immediately
+      // Update local state immediately for responsive UI
       setSettings(prev => ({
         ...prev,
         [name]: value
       }));
 
-      console.log('Setting saved successfully:', name);
-      toast({
-        title: "Settings Saved",
-        description: `${name} updated successfully`,
-      });
-      
+      console.log('Setting saved successfully:', name, '=', value);
       return true;
     } catch (error: any) {
       console.error('Error saving setting:', error);

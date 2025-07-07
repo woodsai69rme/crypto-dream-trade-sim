@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Header } from "@/components/Header";
@@ -8,7 +9,7 @@ import { EnhancedAccountManager } from "@/components/accounts/EnhancedAccountMan
 import { TopTraders } from "@/components/TopTraders";
 import { TradingHistoryDashboard } from "@/components/TradingHistoryDashboard";
 import { RiskManagementDashboard } from "@/components/RiskManagementDashboard";
-import { SettingsPanel } from "@/components/settings/SettingsPanel";
+import { EnhancedSettingsPanel } from "@/components/settings/EnhancedSettingsPanel";
 import { CryptoNewsResearch } from "@/components/ai/CryptoNewsResearch";
 import { N8NWorkflowIntegration } from "@/components/ai/N8NWorkflowIntegration";
 import { AdvancedAnalyticsDashboard } from "@/components/analytics/AdvancedAnalyticsDashboard";
@@ -53,17 +54,7 @@ const IndexPage = () => {
       case "risk":
         return <RiskManagementDashboard />;
       case "settings":
-        return <SettingsPanel />;
-      case "history":
-        return <TradingHistoryDashboard />;
-      case "risk":
-        return <RiskManagementDashboard />;
-      case "news":
-        return <CryptoNewsResearch />;
-      case "workflows":
-        return <N8NWorkflowIntegration />;
-      case "settings":
-        return <SettingsPanel />;
+        return <EnhancedSettingsPanel />;
       default:
         return <Dashboard />;
     }

@@ -1,38 +1,38 @@
-import { useState } from "react";
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MyAccounts } from "./MyAccounts";
 import { FollowingTab } from "./FollowingTab";
 import { AnalyticsTab } from "./AnalyticsTab";
-import { AccountCryptoHoldings } from "./AccountCryptoHoldings";
+import { AccountControlPanel } from "./AccountControlPanel";
 import { useMultipleAccounts } from "@/hooks/useMultipleAccounts";
-import { Users, BarChart, UserCheck, Wallet } from "lucide-react";
+import { Users, Activity, BarChart3, Settings } from "lucide-react";
 
 export const EnhancedAccountManager = () => {
-  const [activeTab, setActiveTab] = useState("accounts");
-  const { accounts } = useMultipleAccounts();
+  const { currentAccount } = useMultipleAccounts();
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-primary-foreground">Account Management</h1>
+      <div className="flex items-center gap-2 mb-6">
+        <Users className="w-6 h-6" />
+        <h1 className="text-3xl font-bold text-primary-foreground">Account Manager</h1>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <Tabs defaultValue="accounts" className="w-full">
         <TabsList className="grid w-full grid-cols-4 bg-card/50 backdrop-blur-sm">
           <TabsTrigger value="accounts" className="flex items-center gap-2">
             <Users className="w-4 h-4" />
             My Accounts
           </TabsTrigger>
-          <TabsTrigger value="holdings" className="flex items-center gap-2">
-            <Wallet className="w-4 h-4" />
-            Holdings
+          <TabsTrigger value="controls" className="flex items-center gap-2">
+            <Settings className="w-4 h-4" />
+            Controls
           </TabsTrigger>
           <TabsTrigger value="following" className="flex items-center gap-2">
-            <UserCheck className="w-4 h-4" />
+            <Activity className="w-4 h-4" />
             Following
           </TabsTrigger>
           <TabsTrigger value="analytics" className="flex items-center gap-2">
-            <BarChart className="w-4 h-4" />
+            <BarChart3 className="w-4 h-4" />
             Analytics
           </TabsTrigger>
         </TabsList>
@@ -41,16 +41,15 @@ export const EnhancedAccountManager = () => {
           <MyAccounts />
         </TabsContent>
 
-        <TabsContent value="holdings">
-          <div className="space-y-6">
-            {accounts.map((account) => (
-              <AccountCryptoHoldings 
-                key={account.id}
-                accountId={account.id}
-                accountName={account.account_name}
-              />
-            ))}
-          </div>
+        <TabsContent value="controls">
+          {currentAccount ? (
+            <AccountControlPanel account={currentAccount} />
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              <Settings className="w-12 h-12 mx-auto mb-4" />
+              <p>No account selected. Please select an account to manage.</p>
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="following">
