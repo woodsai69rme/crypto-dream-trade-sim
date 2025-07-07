@@ -18,11 +18,11 @@ import { useRealTimePortfolio } from "@/hooks/useRealTimePortfolio";
 import { useRealtimeMarketData } from "@/hooks/useRealtimeMarketData";
 import { TradingPanel } from "@/components/TradingPanel";
 import { AccountManager } from "@/components/AccountManager";
-import { BotManagement } from "@/components/ai/BotManagement";
+import { BotManagement } from "@/components/settings/BotManagement";
 import { TradeFollowingSettings } from "@/components/trading/TradeFollowingSettings";
 import { APISettings } from "@/components/settings/APISettings";
 import { MCPSettings } from "@/components/settings/MCPSettings";
-import { AccountHistoryManager } from "@/components/settings/AccountHistoryManager";
+import { AccountHistoryManager } from "@/components/AccountHistoryManager";
 import { ComprehensiveTestingSuite } from "@/components/settings/ComprehensiveTestingSuite";
 import {
   Settings,
@@ -38,11 +38,16 @@ import {
 } from "lucide-react";
 
 const IndexPage = () => {
-  const { user, isLoading } = useAuth();
+  const { user, loading } = useAuth();
   const { currentAccount } = useMultipleAccounts();
-  const { portfolioValue } = useRealTimePortfolio();
-  const { btcPrice, ethPrice, dogePrice } = useRealtimeMarketData();
+  const { paperAccount, loading: portfolioLoading } = useRealTimePortfolio();
+  const { getPrice } = useRealtimeMarketData(['BTC', 'ETH', 'DOGE']);
   const [chartData, setChartData] = useState([]);
+  const [tradeFollowingSettings, setTradeFollowingSettings] = useState({
+    minConfidence: 75,
+    maxPositionSize: 2500,
+    autoExecute: false,
+  });
 
   useEffect(() => {
     // Mock chart data for demonstration
@@ -62,7 +67,7 @@ const IndexPage = () => {
     generateMockData();
   }, []);
 
-  if (isLoading) {
+  if (loading || portfolioLoading) {
     return <div>Loading...</div>;
   }
 
@@ -77,7 +82,7 @@ const IndexPage = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">${portfolioValue.toLocaleString()}</div>
+            <div className="text-3xl font-bold">${(paperAccount?.balance || 0).toLocaleString()}</div>
             <p className="text-sm text-white/60">Current value of your paper trading portfolio</p>
           </CardContent>
         </Card>
@@ -93,15 +98,15 @@ const IndexPage = () => {
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span>Bitcoin (BTC):</span>
-                <span>${btcPrice}</span>
+                <span>${getPrice('BTC').toLocaleString()}</span>
               </div>
               <div className="flex justify-between">
                 <span>Ethereum (ETH):</span>
-                <span>${ethPrice}</span>
+                <span>${getPrice('ETH').toLocaleString()}</span>
               </div>
               <div className="flex justify-between">
                 <span>Dogecoin (DOGE):</span>
-                <span>${dogePrice}</span>
+                <span>${getPrice('DOGE').toFixed(4)}</span>
               </div>
             </div>
             <p className="text-sm text-white/60 mt-4">Real-time cryptocurrency prices</p>
@@ -211,7 +216,10 @@ const IndexPage = () => {
         <TabsContent value="settings" className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <BotManagement />
-            <TradeFollowingSettings />
+            <TradeFollowingSettings 
+              settings={tradeFollowingSettings}
+              onSettingsChange={setTradeFollowingSettings}
+            />
           </div>
           <APISettings />
           <MCPSettings />

@@ -2542,10 +2542,12 @@ export type Database = {
           bot_id: string | null
           confidence_level: number | null
           created_at: string
+          execution_price: number | null
           execution_time_ms: number | null
           fee: number
           id: string
           notes: string | null
+          order_type: string | null
           price: number
           reasoning: string | null
           risk_score: number | null
@@ -2558,6 +2560,7 @@ export type Database = {
           timestamp: string
           total_value: number
           trade_category: string | null
+          trade_type: string | null
           user_id: string
         }
         Insert: {
@@ -2566,10 +2569,12 @@ export type Database = {
           bot_id?: string | null
           confidence_level?: number | null
           created_at?: string
+          execution_price?: number | null
           execution_time_ms?: number | null
           fee?: number
           id?: string
           notes?: string | null
+          order_type?: string | null
           price?: number
           reasoning?: string | null
           risk_score?: number | null
@@ -2582,6 +2587,7 @@ export type Database = {
           timestamp?: string
           total_value?: number
           trade_category?: string | null
+          trade_type?: string | null
           user_id: string
         }
         Update: {
@@ -2590,10 +2596,12 @@ export type Database = {
           bot_id?: string | null
           confidence_level?: number | null
           created_at?: string
+          execution_price?: number | null
           execution_time_ms?: number | null
           fee?: number
           id?: string
           notes?: string | null
+          order_type?: string | null
           price?: number
           reasoning?: string | null
           risk_score?: number | null
@@ -2606,6 +2614,7 @@ export type Database = {
           timestamp?: string
           total_value?: number
           trade_category?: string | null
+          trade_type?: string | null
           user_id?: string
         }
         Relationships: [
@@ -4172,6 +4181,19 @@ export type Database = {
       create_initial_trading_bots: {
         Args: { user_id: string }
         Returns: undefined
+      }
+      execute_paper_trade: {
+        Args: {
+          p_user_id: string
+          p_account_id: string
+          p_symbol: string
+          p_side: string
+          p_amount: number
+          p_price: number
+          p_trade_type?: string
+          p_order_type?: string
+        }
+        Returns: Json
       }
       populate_dummy_snapshots: {
         Args: Record<PropertyKey, never>
