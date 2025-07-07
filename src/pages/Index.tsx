@@ -20,10 +20,13 @@ import { TradingPanel } from "@/components/TradingPanel";
 import { AccountManager } from "@/components/AccountManager";
 import { BotManagement } from "@/components/settings/BotManagement";
 import { TradeFollowingSettings } from "@/components/trading/TradeFollowingSettings";
-import { APISettings } from "@/components/settings/APISettings";
+import { ComprehensiveAPISettings } from "@/components/ComprehensiveAPISettings";
 import { MCPSettings } from "@/components/settings/MCPSettings";
 import { AccountHistoryManager } from "@/components/AccountHistoryManager";
 import { ComprehensiveTestingSuite } from "@/components/settings/ComprehensiveTestingSuite";
+import { SocialTradingSystem } from "@/components/SocialTradingSystem";
+import { TradingHistoryDashboard } from "@/components/TradingHistoryDashboard";
+import { RiskManagementDashboard } from "@/components/RiskManagementDashboard";
 import {
   Settings,
   BarChart,
@@ -202,15 +205,15 @@ const IndexPage = () => {
         </TabsContent>
 
         <TabsContent value="social" className="space-y-4">
-          <div>Social Trading Content</div>
+          <SocialTradingSystem />
         </TabsContent>
 
         <TabsContent value="history" className="space-y-4">
-          <div>Trading History Content</div>
+          <TradingHistoryDashboard />
         </TabsContent>
 
         <TabsContent value="risk" className="space-y-4">
-          <div>Risk Management Content</div>
+          <RiskManagementDashboard />
         </TabsContent>
 
         <TabsContent value="settings" className="space-y-6">
@@ -221,7 +224,7 @@ const IndexPage = () => {
               onSettingsChange={setTradeFollowingSettings}
             />
           </div>
-          <APISettings />
+          <ComprehensiveAPISettings />
           <MCPSettings />
           <ComprehensiveTestingSuite />
           <AccountHistoryManager />
