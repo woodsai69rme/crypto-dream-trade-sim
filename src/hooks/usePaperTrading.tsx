@@ -59,7 +59,7 @@ export const usePaperTrading = () => {
       if (error) throw error;
 
       // Type guard to check if data is a TradeResponse object
-      const tradeResponse = data as TradeResponse;
+      const tradeResponse = data as unknown as TradeResponse;
       
       if (tradeResponse && typeof tradeResponse === 'object' && tradeResponse.success) {
         // Add additional trade details if provided
