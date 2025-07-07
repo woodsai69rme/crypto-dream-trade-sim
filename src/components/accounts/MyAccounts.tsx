@@ -28,9 +28,10 @@ interface AccountCardProps {
   account: any;
   onSwitchAccount: (accountId: string) => void;
   isActive: boolean;
+  viewMode?: 'grid' | 'list';
 }
 
-const AccountCard = ({ account, onSwitchAccount, isActive }: AccountCardProps) => {
+const AccountCard = ({ account, onSwitchAccount, isActive, viewMode = 'grid' }: AccountCardProps) => {
   const [aiBotsEnabled, setAiBotsEnabled] = useState(false);
   const [followingEnabled, setFollowingEnabled] = useState(false);
   const { user } = useAuth();
@@ -115,12 +116,23 @@ const AccountCard = ({ account, onSwitchAccount, isActive }: AccountCardProps) =
             <div>
               <div className="flex items-center gap-2">
                 <CardTitle className="text-lg">{account.account_name}</CardTitle>
-                {isActive && <Badge variant="secondary" className="text-xs">Active</Badge>}
-                <Badge variant="outline" className="text-xs border-crypto-info/30 text-crypto-info">
+                {isActive && <Badge variant="secondary" className="text-xs bg-crypto-success/20 text-crypto-success">Active</Badge>}
+                <Badge className="text-xs bg-crypto-info/20 text-crypto-info border-crypto-info/30">
+                  Live
+                </Badge>
+                <Badge variant="outline" className="text-xs border-crypto-warning/30 text-crypto-warning">
                   {account.risk_level}
                 </Badge>
               </div>
-              <p className="text-sm text-muted-foreground">{account.account_type}</p>
+              <div className="flex items-center gap-2">
+                <p className="text-sm text-muted-foreground">{account.account_type}</p>
+                <Badge className="text-xs bg-purple-500/20 text-purple-400">
+                  Day Trading
+                </Badge>
+                <Badge className="text-xs bg-red-500/20 text-red-400">
+                  aggressive
+                </Badge>
+              </div>
             </div>
           </div>
           
@@ -233,11 +245,31 @@ const AccountCard = ({ account, onSwitchAccount, isActive }: AccountCardProps) =
           </div>
         </div>
 
+        {/* Performance Metrics */}
+        <div className="grid grid-cols-3 gap-3 p-3 bg-card/20 rounded-lg">
+          <div className="text-center">
+            <div className="text-sm font-bold text-crypto-success">68%</div>
+            <div className="text-xs text-muted-foreground">Win Rate</div>
+          </div>
+          <div className="text-center">
+            <div className="text-sm font-bold">247</div>
+            <div className="text-xs text-muted-foreground">Trades</div>
+          </div>
+          <div className="text-center">
+            <div className="text-sm font-bold text-crypto-success">+2.4%</div>
+            <div className="text-xs text-muted-foreground">Daily</div>
+          </div>
+        </div>
+
         {/* Live Audit */}
         <div className="border-t border-white/10 pt-3">
           <div className="flex items-center justify-between text-xs text-muted-foreground">
             <span>Last trade: 2 hours ago</span>
-            <span>Win rate: 68%</span>
+            <span>Max daily loss: $1,000</span>
+          </div>
+          <div className="flex items-center justify-between text-xs text-muted-foreground mt-1">
+            <span>Last active: 5 minutes ago</span>
+            <span>Strategy: Manual</span>
           </div>
         </div>
 
@@ -258,14 +290,65 @@ const AccountCard = ({ account, onSwitchAccount, isActive }: AccountCardProps) =
 
 export const MyAccounts = () => {
   const { accounts, currentAccount, switchAccount } = useMultipleAccounts();
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const { toast } = useToast();
+
+  const handleCreateAccount = () => {
+    toast({
+      title: "Create Account",
+      description: "Account creation functionality coming soon",
+    });
+  };
+
+  const handleResetAccount = (accountId: string) => {
+    toast({
+      title: "Reset Account",
+      description: "Account reset functionality coming soon",
+    });
+  };
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-primary-foreground">My Trading Accounts</h2>
-        <Badge variant="secondary" className="text-sm">
-          {accounts.length} Account{accounts.length !== 1 ? 's' : ''}
-        </Badge>
+        <div className="flex items-center gap-4">
+          <h2 className="text-2xl font-bold text-primary-foreground">My Trading Accounts</h2>
+          <Badge variant="secondary" className="text-sm">
+            {accounts.length} total account{accounts.length !== 1 ? 's' : ''}
+          </Badge>
+        </div>
+        
+        <div className="flex items-center gap-3">
+          {/* View Toggle */}
+          <div className="flex items-center bg-card/20 rounded-lg p-1">
+            <Button
+              variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('grid')}
+              className="px-3 py-1"
+            >
+              <BarChart3 className="w-4 h-4" />
+            </Button>
+            <Button
+              variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('list')}
+              className="px-3 py-1"
+            >
+              <Activity className="w-4 h-4" />
+            </Button>
+          </div>
+          
+          {/* Action Buttons */}
+          <Button variant="outline" onClick={handleCreateAccount}>
+            <Star className="w-4 h-4 mr-2" />
+            Create Account
+          </Button>
+          
+          <Button variant="outline" onClick={() => handleResetAccount(currentAccount?.id || '')}>
+            <Shield className="w-4 h-4 mr-2" />
+            Reset Account
+          </Button>
+        </div>
       </div>
 
       {accounts.length === 0 ? (
@@ -280,13 +363,17 @@ export const MyAccounts = () => {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div className={viewMode === 'grid' 
+          ? "grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6" 
+          : "space-y-4"
+        }>
           {accounts.map((account) => (
             <AccountCard
               key={account.id}
               account={account}
               onSwitchAccount={switchAccount}
               isActive={currentAccount?.id === account.id}
+              viewMode={viewMode}
             />
           ))}
         </div>
