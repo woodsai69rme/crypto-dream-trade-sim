@@ -1,73 +1,96 @@
 
-import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { Auth } from "./Auth";
 import { Header } from "@/components/Header";
-import { Dashboard } from "@/components/dashboard/Dashboard";
-import { TradingPanel } from "@/components/TradingPanel";
-import { MultiAccountTradingPanel } from "@/components/trading/MultiAccountTradingPanel";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PortfolioDashboard } from "@/components/PortfolioDashboard";
 import { EnhancedAccountManager } from "@/components/accounts/EnhancedAccountManager";
-import { TopTraders } from "@/components/TopTraders";
-import { TradingHistoryDashboard } from "@/components/TradingHistoryDashboard";
-import { RiskManagementDashboard } from "@/components/RiskManagementDashboard";
 import { EnhancedSettingsPanel } from "@/components/settings/EnhancedSettingsPanel";
-import { CryptoNewsResearch } from "@/components/ai/CryptoNewsResearch";
-import { N8NWorkflowIntegration } from "@/components/ai/N8NWorkflowIntegration";
-import { AdvancedAnalyticsDashboard } from "@/components/analytics/AdvancedAnalyticsDashboard";
-import { RealTimeMarketIntegration } from "@/components/realtime/RealTimeMarketIntegration";
-import { EnhancedAITradingBots } from "@/components/ai/EnhancedAITradingBots";
-import { EnhancedSocialTradingSystem } from "@/components/social/EnhancedSocialTradingSystem";
+import { SystemStatus } from "@/components/enhanced/SystemStatus";
+import { TradingPanel } from "@/components/TradingPanel";
+import { SocialTradingSystem } from "@/components/SocialTradingSystem";
+import { Wallet, Users, Settings, BarChart3, Activity, TrendingUp } from "lucide-react";
 
-const IndexPage = () => {
+const Index = () => {
   const { user, loading } = useAuth();
-  const [activeTab, setActiveTab] = useState("dashboard");
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-white"></div>
+      </div>
+    );
   }
 
   if (!user) {
-    window.location.href = '/auth';
-    return null;
+    return <Auth />;
   }
 
-  const renderContent = () => {
-    switch (activeTab) {
-      case "dashboard":
-        return <Dashboard />;
-      case "trading":
-        return (
-          <div className="space-y-6">
-            <TradingPanel />
-            <MultiAccountTradingPanel />
-          </div>
-        );
-      case "accounts":
-        return <EnhancedAccountManager />;
-      case "traders":
-        return <EnhancedSocialTradingSystem />;
-      case "news":
-        return <CryptoNewsResearch />;
-      case "workflows":
-        return <N8NWorkflowIntegration />;
-      case "history":
-        return <TradingHistoryDashboard />;
-      case "risk":
-        return <RiskManagementDashboard />;
-      case "settings":
-        return <EnhancedSettingsPanel />;
-      default:
-        return <Dashboard />;
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted">
-      <Header activeTab={activeTab} setActiveTab={setActiveTab} />
-      <main className="container mx-auto p-6">
-        {renderContent()}
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      <Header />
+      <main className="container mx-auto px-4 py-8">
+        <div className="mb-6">
+          <SystemStatus />
+        </div>
+        
+        <Tabs defaultValue="portfolio" className="w-full">
+          <TabsList className="grid w-full grid-cols-6 bg-card/50 backdrop-blur-sm">
+            <TabsTrigger value="portfolio" className="flex items-center gap-2">
+              <BarChart3 className="w-4 h-4" />
+              Portfolio
+            </TabsTrigger>
+            <TabsTrigger value="trading" className="flex items-center gap-2">
+              <TrendingUp className="w-4 h-4" />
+              Trading
+            </TabsTrigger>
+            <TabsTrigger value="accounts" className="flex items-center gap-2">
+              <Wallet className="w-4 h-4" />
+              Accounts
+            </TabsTrigger>
+            <TabsTrigger value="social" className="flex items-center gap-2">
+              <Users className="w-4 h-4" />
+              Social
+            </TabsTrigger>
+            <TabsTrigger value="system" className="flex items-center gap-2">
+              <Activity className="w-4 h-4" />
+              System
+            </TabsTrigger>
+            <TabsTrigger value="settings" className="flex items-center gap-2">
+              <Settings className="w-4 h-4" />
+              Settings
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="portfolio">
+            <PortfolioDashboard />
+          </TabsContent>
+
+          <TabsContent value="trading">
+            <TradingPanel />
+          </TabsContent>
+
+          <TabsContent value="accounts">
+            <EnhancedAccountManager />
+          </TabsContent>
+
+          <TabsContent value="social">
+            <SocialTradingSystem />
+          </TabsContent>
+
+          <TabsContent value="system">
+            <div className="grid grid-cols-1 gap-6">
+              <SystemStatus />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="settings">
+            <EnhancedSettingsPanel />
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );
 };
 
-export default IndexPage;
+export default Index;
