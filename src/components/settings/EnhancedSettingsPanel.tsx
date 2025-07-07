@@ -1,4 +1,3 @@
-
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BotManagement } from "./BotManagement";
 import { ComprehensiveAPISettings } from "../ComprehensiveAPISettings";
@@ -13,6 +12,11 @@ import { TradingAssistant } from "../ai/TradingAssistant";
 import { Settings, Bot, Key, TestTube, Users, Globe, Cog, Star, Cpu, Workflow, MessageSquare } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useSettings } from "@/hooks/useSettings";
+import { N8NLocalConnection } from "../integrations/N8NLocalConnection";
+import { APIManagement } from "../integrations/APIManagement";
+import { TradingResearch } from "../research/TradingResearch";
+import { ComprehensiveAudit } from "../audit/ComprehensiveAudit";
+import { MultiAccountBotManager } from "../bots/MultiAccountBotManager";
 
 export const EnhancedSettingsPanel = () => {
   const { settings, updateSetting, isLoading } = useSettings();
@@ -46,51 +50,79 @@ export const EnhancedSettingsPanel = () => {
       </div>
 
       <Tabs defaultValue="global" className="w-full">
-        <TabsList className="grid w-full grid-cols-10 bg-card/50 backdrop-blur-sm">
-          <TabsTrigger value="global" className="flex items-center gap-2">
-            <Globe className="w-4 h-4" />
+        <TabsList className="grid w-full grid-cols-12 bg-card/50 backdrop-blur-sm text-xs">
+          <TabsTrigger value="global" className="flex items-center gap-1">
+            <Globe className="w-3 h-3" />
             Global
           </TabsTrigger>
-          <TabsTrigger value="assistant" className="flex items-center gap-2">
-            <MessageSquare className="w-4 h-4" />
-            AI Chat
+          <TabsTrigger value="audit" className="flex items-center gap-1">
+            <Settings className="w-3 h-3" />
+            Audit
           </TabsTrigger>
-          <TabsTrigger value="traders" className="flex items-center gap-2">
-            <Star className="w-4 h-4" />
-            Top Traders
+          <TabsTrigger value="multi-bots" className="flex items-center gap-1">
+            <Bot className="w-3 h-3" />
+            Multi-Bots
           </TabsTrigger>
-          <TabsTrigger value="ai-models" className="flex items-center gap-2">
-            <Cpu className="w-4 h-4" />
-            AI Models
+          <TabsTrigger value="research" className="flex items-center gap-1">
+            <Star className="w-3 h-3" />
+            Research
           </TabsTrigger>
-          <TabsTrigger value="workflows" className="flex items-center gap-2">
-            <Workflow className="w-4 h-4" />
-            Workflows
+          <TabsTrigger value="n8n" className="flex items-center gap-1">
+            <Workflow className="w-3 h-3" />
+            N8N
           </TabsTrigger>
-          <TabsTrigger value="bots" className="flex items-center gap-2">
-            <Bot className="w-4 h-4" />
-            AI Bots
-          </TabsTrigger>
-          <TabsTrigger value="following" className="flex items-center gap-2">
-            <Users className="w-4 h-4" />
-            Following
-          </TabsTrigger>
-          <TabsTrigger value="api" className="flex items-center gap-2">
-            <Key className="w-4 h-4" />
+          <TabsTrigger value="api-mgmt" className="flex items-center gap-1">
+            <Key className="w-3 h-3" />
             APIs
           </TabsTrigger>
-          <TabsTrigger value="mcp" className="flex items-center gap-2">
-            <Cog className="w-4 h-4" />
-            MCP
+          <TabsTrigger value="assistant" className="flex items-center gap-1">
+            <MessageSquare className="w-3 h-3" />
+            AI Chat
           </TabsTrigger>
-          <TabsTrigger value="testing" className="flex items-center gap-2">
-            <TestTube className="w-4 h-4" />
+          <TabsTrigger value="traders" className="flex items-center gap-1">
+            <Star className="w-3 h-3" />
+            Traders
+          </TabsTrigger>
+          <TabsTrigger value="ai-models" className="flex items-center gap-1">
+            <Cpu className="w-3 h-3" />
+            Models
+          </TabsTrigger>
+          <TabsTrigger value="workflows" className="flex items-center gap-1">
+            <Workflow className="w-3 h-3" />
+            Workflows
+          </TabsTrigger>
+          <TabsTrigger value="bots" className="flex items-center gap-1">
+            <Bot className="w-3 h-3" />
+            Bots
+          </TabsTrigger>
+          <TabsTrigger value="testing" className="flex items-center gap-1">
+            <TestTube className="w-3 h-3" />
             Testing
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="global">
           <GlobalAccountSettings />
+        </TabsContent>
+
+        <TabsContent value="audit">
+          <ComprehensiveAudit />
+        </TabsContent>
+
+        <TabsContent value="multi-bots">
+          <MultiAccountBotManager />
+        </TabsContent>
+
+        <TabsContent value="research">
+          <TradingResearch />
+        </TabsContent>
+
+        <TabsContent value="n8n">
+          <N8NLocalConnection />
+        </TabsContent>
+
+        <TabsContent value="api-mgmt">
+          <APIManagement />
         </TabsContent>
 
         <TabsContent value="assistant">
