@@ -7,6 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { useMultipleAccounts } from '@/hooks/useMultipleAccounts';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { useCryptoHoldings } from '@/hooks/useCryptoHoldings';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   TrendingUp, 
@@ -18,17 +19,10 @@ import {
   Wallet,
   Shield,
   Star,
-  BarChart3
+  BarChart3,
+  RefreshCw
 } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area } from 'recharts';
-
-interface CryptoHolding {
-  symbol: string;
-  name: string;
-  amount: number;
-  value: number;
-  change24h: number;
-}
 
 interface AccountCardProps {
   account: any;
@@ -41,13 +35,7 @@ const AccountCard = ({ account, onSwitchAccount, isActive }: AccountCardProps) =
   const [followingEnabled, setFollowingEnabled] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
-
-  // Mock crypto holdings for each account
-  const holdings: CryptoHolding[] = [
-    { symbol: 'BTC', name: 'Bitcoin', amount: 0.025, value: 1250, change24h: 2.4 },
-    { symbol: 'ETH', name: 'Ethereum', amount: 0.75, value: 1800, change24h: -1.2 },
-    { symbol: 'SOL', name: 'Solana', amount: 15, value: 900, change24h: 5.8 },
-  ];
+  const { holdings, loading: holdingsLoading, refreshHoldings } = useCryptoHoldings(account.id);
 
   // Mock performance data for mini chart
   const performanceData = Array.from({ length: 7 }, (_, i) => ({
@@ -172,20 +160,37 @@ const AccountCard = ({ account, onSwitchAccount, isActive }: AccountCardProps) =
 
         {/* Crypto Holdings */}
         <div className="space-y-2">
-          <h4 className="text-sm font-medium text-muted-foreground">Holdings</h4>
-          <div className="grid grid-cols-3 gap-2">
-            {holdings.map((holding) => (
-              <div key={holding.symbol} className="bg-card/30 rounded-lg p-2">
-                <div className="text-xs font-medium">{holding.symbol}</div>
-                <div className="text-sm font-bold">${holding.value}</div>
-                <div className={`text-xs ${
-                  holding.change24h >= 0 ? 'text-crypto-success' : 'text-crypto-danger'
-                }`}>
-                  {holding.change24h >= 0 ? '+' : ''}{holding.change24h}%
-                </div>
-              </div>
-            ))}
+          <div className="flex items-center justify-between">
+            <h4 className="text-sm font-medium text-muted-foreground">Holdings</h4>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={refreshHoldings}
+              disabled={holdingsLoading}
+              className="h-6 w-6 p-0"
+            >
+              <RefreshCw className={`w-3 h-3 ${holdingsLoading ? 'animate-spin' : ''}`} />
+            </Button>
           </div>
+          {holdings.length > 0 ? (
+            <div className="grid grid-cols-3 gap-2">
+              {holdings.slice(0, 3).map((holding) => (
+                <div key={holding.symbol} className="bg-card/30 rounded-lg p-2">
+                  <div className="text-xs font-medium">{holding.symbol}</div>
+                  <div className="text-sm font-bold">${holding.value.toFixed(0)}</div>
+                  <div className={`text-xs ${
+                    holding.pnlPercentage >= 0 ? 'text-crypto-success' : 'text-crypto-danger'
+                  }`}>
+                    {holding.pnlPercentage >= 0 ? '+' : ''}{holding.pnlPercentage.toFixed(1)}%
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center text-xs text-muted-foreground py-2">
+              No holdings yet
+            </div>
+          )}
         </div>
 
         {/* Controls */}

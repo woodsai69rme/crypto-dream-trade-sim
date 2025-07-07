@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useMultipleAccounts } from "@/hooks/useMultipleAccounts";
+import { CryptoHoldingsCard } from "@/components/analytics/CryptoHoldingsCard";
 import { 
   BarChart, 
   LineChart, 
@@ -127,8 +128,12 @@ export const AnalyticsTab = () => {
         </Card>
       </div>
 
-      {/* Performance Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Performance Charts & Holdings */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Crypto Holdings */}
+        {currentAccount && (
+          <CryptoHoldingsCard accountId={currentAccount.id} />
+        )}
         <Card className="crypto-card-gradient text-primary-foreground">
           <CardHeader>
             <CardTitle>Portfolio vs Benchmark</CardTitle>
