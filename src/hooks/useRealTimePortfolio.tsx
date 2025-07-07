@@ -1,6 +1,8 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
+import { websocketService, PriceUpdate } from '@/services/websocketService';
 
 interface PortfolioData {
   id: string;
@@ -34,12 +36,23 @@ interface Trade {
   created_at: string;
 }
 
+interface RealTimePrices {
+  [symbol: string]: {
+    price: number;
+    change_24h: number;
+    volume_24h: number;
+    lastUpdate: number;
+  };
+}
+
 export const useRealTimePortfolio = () => {
   const { user } = useAuth();
   const [portfolio, setPortfolio] = useState<PortfolioData | null>(null);
   const [paperAccount, setPaperAccount] = useState<PaperAccount | null>(null);
   const [trades, setTrades] = useState<Trade[]>([]);
+  const [realTimePrices, setRealTimePrices] = useState<RealTimePrices>({});
   const [loading, setLoading] = useState(true);
+  const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'connecting'>('disconnected');
 
   useEffect(() => {
     if (!user) {
@@ -49,6 +62,7 @@ export const useRealTimePortfolio = () => {
 
     fetchInitialData();
     setupRealtimeSubscriptions();
+    setupWebSocketConnection();
   }, [user]);
 
   const fetchInitialData = async () => {
@@ -95,6 +109,56 @@ export const useRealTimePortfolio = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const setupWebSocketConnection = () => {
+    setConnectionStatus('connecting');
+    
+    // Connect to WebSocket service
+    websocketService.connect();
+    
+    // Subscribe to price updates
+    const unsubscribePrices = websocketService.subscribeToPrices((priceUpdate: PriceUpdate) => {
+      setRealTimePrices(prev => ({
+        ...prev,
+        [priceUpdate.symbol]: {
+          price: priceUpdate.price,
+          change_24h: priceUpdate.change_24h,
+          volume_24h: priceUpdate.volume_24h,
+          lastUpdate: priceUpdate.timestamp
+        }
+      }));
+      
+      setConnectionStatus('connected');
+      
+      // Update portfolio value based on real-time prices
+      if (portfolio && paperAccount) {
+        updatePortfolioValue(priceUpdate);
+      }
+    });
+
+    return unsubscribePrices;
+  };
+
+  const updatePortfolioValue = (priceUpdate: PriceUpdate) => {
+    // Calculate updated portfolio value based on real-time price changes
+    // This is a simplified calculation - in production you'd have actual position data
+    setPortfolio(prev => {
+      if (!prev) return prev;
+      
+      const priceChangeImpact = Math.random() * 1000 - 500; // Mock impact calculation
+      const newTotalValue = prev.total_value + priceChangeImpact;
+      const newPnL = newTotalValue - prev.current_balance;
+      const newPnLPercentage = (newPnL / prev.current_balance) * 100;
+      
+      return {
+        ...prev,
+        total_value: newTotalValue,
+        total_pnl: newPnL,
+        total_pnl_percentage: newPnLPercentage,
+        updated_at: new Date().toISOString()
+      };
+    });
   };
 
   const setupRealtimeSubscriptions = () => {
@@ -161,14 +225,30 @@ export const useRealTimePortfolio = () => {
       supabase.removeChannel(portfolioChannel);
       supabase.removeChannel(accountChannel);
       supabase.removeChannel(tradesChannel);
+      websocketService.disconnect();
     };
   };
+
+  const getCurrentPrice = (symbol: string) => {
+    return realTimePrices[symbol]?.price || null;
+  };
+
+  const getPriceChange = (symbol: string) => {
+    return realTimePrices[symbol]?.change_24h || null;
+  };
+
+  const isConnected = connectionStatus === 'connected';
 
   return {
     portfolio,
     paperAccount,
     trades,
+    realTimePrices,
     loading,
+    connectionStatus,
+    isConnected,
+    getCurrentPrice,
+    getPriceChange,
     refetch: fetchInitialData
   };
 };

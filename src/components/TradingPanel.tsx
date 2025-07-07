@@ -7,7 +7,10 @@ import { MarketOverviewDashboard } from "@/components/enhanced/MarketOverviewDas
 import { AITradingBot } from "@/components/ai/AITradingBot";
 import { TradeFollower } from "@/components/trading/TradeFollower";
 import { TradingHistoryDashboard } from "@/components/TradingHistoryDashboard";
-import { BarChart3, Bot, Users, History, TrendingUp, Activity } from "lucide-react";
+import { EnhancedOrderManager } from "@/components/trading/EnhancedOrderManager";
+import { TradeAuditTrail } from "@/components/trading/TradeAuditTrail";
+import { PortfolioRebalancingSystem } from "@/components/portfolio/PortfolioRebalancingSystem";
+import { BarChart3, Bot, Users, History, TrendingUp, Activity, Edit, FileText, Balance } from "lucide-react";
 import { AIChatAssistant } from "@/components/ai/AIChatAssistant";
 import { TradingViewChart } from "@/components/charts/TradingViewChart";
 import { PortfolioRebalancer } from "@/components/portfolio/PortfolioRebalancer";
@@ -27,7 +30,7 @@ export const TradingPanel = () => {
       </div>
 
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-7 bg-card/50 backdrop-blur-sm">
+        <TabsList className="grid w-full grid-cols-9 bg-card/50 backdrop-blur-sm">
           <TabsTrigger value="overview" className="flex items-center gap-2">
             <BarChart3 className="w-4 h-4" />
             Market
@@ -35,6 +38,14 @@ export const TradingPanel = () => {
           <TabsTrigger value="quick-trade" className="flex items-center gap-2">
             <TrendingUp className="w-4 h-4" />
             Trade
+          </TabsTrigger>
+          <TabsTrigger value="orders" className="flex items-center gap-2">
+            <Edit className="w-4 h-4" />
+            Orders
+          </TabsTrigger>
+          <TabsTrigger value="rebalance" className="flex items-center gap-2">
+            <Balance className="w-4 h-4" />
+            Rebalance
           </TabsTrigger>
           <TabsTrigger value="ai-chat" className="flex items-center gap-2">
             <Bot className="w-4 h-4" />
@@ -48,13 +59,13 @@ export const TradingPanel = () => {
             <Users className="w-4 h-4" />
             Following
           </TabsTrigger>
+          <TabsTrigger value="audit" className="flex items-center gap-2">
+            <FileText className="w-4 h-4" />
+            Audit
+          </TabsTrigger>
           <TabsTrigger value="risk" className="flex items-center gap-2">
             <Activity className="w-4 h-4" />
             Risk
-          </TabsTrigger>
-          <TabsTrigger value="history" className="flex items-center gap-2">
-            <History className="w-4 h-4" />
-            History
           </TabsTrigger>
         </TabsList>
 
@@ -83,6 +94,14 @@ export const TradingPanel = () => {
           </div>
         </TabsContent>
 
+        <TabsContent value="orders">
+          <EnhancedOrderManager />
+        </TabsContent>
+
+        <TabsContent value="rebalance">
+          <PortfolioRebalancingSystem />
+        </TabsContent>
+
         <TabsContent value="ai-chat">
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
             <AIChatAssistant />
@@ -101,12 +120,12 @@ export const TradingPanel = () => {
           <TradeFollower />
         </TabsContent>
 
-        <TabsContent value="risk">
-          <RiskManagementDashboard />
+        <TabsContent value="audit">
+          <TradeAuditTrail />
         </TabsContent>
 
-        <TabsContent value="history">
-          <TradingHistoryDashboard />
+        <TabsContent value="risk">
+          <RiskManagementDashboard />
         </TabsContent>
       </Tabs>
     </div>
