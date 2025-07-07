@@ -4,8 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell } from "recharts";
-import { Activity, TrendingUp, TrendingDown, DollarSign, Users, Bot, Target, AlertTriangle, Zap, BarChart3 } from "lucide-react";
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
+import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
+import { Activity, TrendingUp, TrendingDown, DollarSign, Users, Bot, Target, AlertTriangle, Zap, BarChart3, Maximize2, Minimize2, Settings, RefreshCw } from "lucide-react";
 import { useMultipleAccounts } from "@/hooks/useMultipleAccounts";
 import { useRealTimePortfolio } from "@/hooks/useRealTimePortfolio";
 
@@ -25,12 +26,25 @@ interface PerformanceMetric {
   status: 'up' | 'down';
 }
 
+interface AuditEntry {
+  id: string;
+  timestamp: string;
+  action: string;
+  details: string;
+  status: 'success' | 'warning' | 'error';
+  user: string;
+}
+
 export const LiveMonitoringDashboard = () => {
   const { currentAccount, accounts } = useMultipleAccounts();
   const { portfolio, trades } = useRealTimePortfolio();
   const [liveData, setLiveData] = useState<LiveData[]>([]);
   const [performanceMetrics, setPerformanceMetrics] = useState<PerformanceMetric[]>([]);
+  const [auditLogs, setAuditLogs] = useState<AuditEntry[]>([]);
   const [selectedTimeframe, setSelectedTimeframe] = useState('1H');
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [autoRefresh, setAutoRefresh] = useState(true);
+  const [refreshInterval, setRefreshInterval] = useState(5000);
 
   // Generate live market data simulation
   useEffect(() => {
@@ -38,11 +52,17 @@ export const LiveMonitoringDashboard = () => {
       const now = new Date();
       const data: LiveData[] = [];
       
-      for (let i = 30; i >= 0; i--) {
+      for (let i = 100; i >= 0; i--) {
         const timestamp = new Date(now.getTime() - i * 60000);
+        const basePrice = 50000;
+        const volatility = 0.02;
+        const trend = Math.sin(i * 0.1) * 0.01;
+        const randomWalk = (Math.random() - 0.5) * volatility;
+        const price = basePrice * (1 + trend + randomWalk);
+        
         data.push({
           timestamp: timestamp.toISOString(),
-          price: 50000 + Math.random() * 10000 - 5000,
+          price: price,
           volume: 1000000 + Math.random() * 500000,
           change: (Math.random() - 0.5) * 10
         });
@@ -51,10 +71,38 @@ export const LiveMonitoringDashboard = () => {
       setLiveData(data);
     };
 
+    const generateAuditLogs = () => {
+      const actions = [
+        'Trade Executed', 'Position Opened', 'Stop Loss Triggered', 'Take Profit Hit',
+        'Account Switch', 'Risk Limit Adjusted', 'Bot Started', 'Bot Stopped',
+        'API Connected', 'Balance Updated', 'Signal Generated', 'Alert Triggered'
+      ];
+      
+      const logs: AuditEntry[] = [];
+      for (let i = 0; i < 50; i++) {
+        logs.push({
+          id: `audit-${i}`,
+          timestamp: new Date(Date.now() - i * 30000).toISOString(),
+          action: actions[Math.floor(Math.random() * actions.length)],
+          details: `System performed automated action for account ${currentAccount?.account_name || 'Default'}`,
+          status: Math.random() > 0.8 ? 'error' : Math.random() > 0.6 ? 'warning' : 'success',
+          user: 'System'
+        });
+      }
+      setAuditLogs(logs);
+    };
+
     generateLiveData();
-    const interval = setInterval(generateLiveData, 5000);
-    return () => clearInterval(interval);
-  }, []);
+    generateAuditLogs();
+    
+    if (autoRefresh) {
+      const interval = setInterval(() => {
+        generateLiveData();
+        generateAuditLogs();
+      }, refreshInterval);
+      return () => clearInterval(interval);
+    }
+  }, [autoRefresh, refreshInterval, currentAccount]);
 
   // Generate performance metrics
   useEffect(() => {
@@ -64,7 +112,9 @@ export const LiveMonitoringDashboard = () => {
       { name: 'Win Rate', value: 73.5, change: 5.1, status: 'up' },
       { name: 'Active Trades', value: 12, change: 2, status: 'up' },
       { name: 'Risk Score', value: 45, change: -3, status: 'down' },
-      { name: 'Efficiency', value: 89.2, change: 1.8, status: 'up' }
+      { name: 'Efficiency', value: 89.2, change: 1.8, status: 'up' },
+      { name: 'Sharpe Ratio', value: 1.67, change: 0.12, status: 'up' },
+      { name: 'Max Drawdown', value: 8.3, change: -2.1, status: 'up' }
     ];
     setPerformanceMetrics(metrics);
   }, [portfolio, currentAccount]);
@@ -77,6 +127,37 @@ export const LiveMonitoringDashboard = () => {
     trades: Math.floor(Math.random() * 50) + 10
   }));
 
+  const ChartComponent = ({ title, children, fullscreenContent }: { title: string, children: React.ReactNode, fullscreenContent?: React.ReactNode }) => (
+    <Card className="bg-slate-800 border-slate-700">
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-white flex items-center gap-2">
+            <Activity className="w-5 h-5 text-blue-400" />
+            {title}
+          </CardTitle>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="ghost" size="sm">
+                <Maximize2 className="w-4 h-4" />
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-6xl max-h-[90vh]">
+              <DialogHeader>
+                <DialogTitle>{title} - Fullscreen</DialogTitle>
+              </DialogHeader>
+              <div className="h-[70vh]">
+                {fullscreenContent || children}
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {children}
+      </CardContent>
+    </Card>
+  );
+
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -85,224 +166,263 @@ export const LiveMonitoringDashboard = () => {
           Live Dashboard
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-7xl max-h-[95vh] overflow-y-auto">
+      <DialogContent className="max-w-[95vw] max-h-[95vh] overflow-hidden">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Activity className="w-5 h-5 text-green-400" />
-            Live Monitoring Dashboard
-            <Badge className="bg-green-500/20 text-green-400 animate-pulse">
-              LIVE
-            </Badge>
-          </DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="flex items-center gap-2">
+              <Activity className="w-5 h-5 text-green-400" />
+              Live Monitoring Dashboard
+              <Badge className="bg-green-500/20 text-green-400 animate-pulse">
+                LIVE
+              </Badge>
+            </DialogTitle>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setAutoRefresh(!autoRefresh)}
+              >
+                <RefreshCw className={`w-4 h-4 ${autoRefresh ? 'animate-spin' : ''}`} />
+                {autoRefresh ? 'Auto' : 'Manual'}
+              </Button>
+              <Button variant="ghost" size="sm">
+                <Settings className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
         </DialogHeader>
 
-        <div className="space-y-6">
-          {/* Time Frame Selector */}
-          <div className="flex gap-2">
-            {['5M', '15M', '1H', '4H', '1D'].map((timeframe) => (
-              <Button
-                key={timeframe}
-                variant={selectedTimeframe === timeframe ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setSelectedTimeframe(timeframe)}
-              >
-                {timeframe}
-              </Button>
-            ))}
-          </div>
-
-          {/* Key Metrics Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {performanceMetrics.map((metric, index) => (
-              <Card key={index} className="bg-slate-800 border-slate-700">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-slate-400">{metric.name}</span>
-                    {metric.status === 'up' ? (
-                      <TrendingUp className="w-4 h-4 text-green-400" />
-                    ) : (
-                      <TrendingDown className="w-4 h-4 text-red-400" />
-                    )}
-                  </div>
-                  <div className="text-2xl font-bold text-white mb-1">
-                    {metric.name.includes('Rate') || metric.name.includes('Score') || metric.name.includes('Efficiency') 
-                      ? `${metric.value}%` 
-                      : `$${metric.value.toLocaleString()}`}
-                  </div>
-                  <div className={`text-sm ${metric.status === 'up' ? 'text-green-400' : 'text-red-400'}`}>
-                    {metric.status === 'up' ? '+' : ''}{metric.change}%
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          {/* Charts Row */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Live Price Chart */}
-            <Card className="bg-slate-800 border-slate-700">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2">
-                  <Activity className="w-5 h-5 text-blue-400" />
-                  Live Price Action ({selectedTimeframe})
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-80">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={liveData}>
-                      <XAxis 
-                        dataKey="timestamp" 
-                        tickFormatter={(value) => new Date(value).toLocaleTimeString()}
-                        axisLine={false}
-                        tickLine={false}
-                        tick={{ fill: '#94a3b8', fontSize: 12 }}
-                      />
-                      <YAxis 
-                        axisLine={false}
-                        tickLine={false}
-                        tick={{ fill: '#94a3b8', fontSize: 12 }}
-                      />
-                      <Area
-                        type="monotone"
-                        dataKey="price"
-                        stroke="#3b82f6"
-                        strokeWidth={2}
-                        fill="url(#priceGradient)"
-                      />
-                      <defs>
-                        <linearGradient id="priceGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                          <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                        </linearGradient>
-                      </defs>
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Volume Chart */}
-            <Card className="bg-slate-800 border-slate-700">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2">
-                  <BarChart3 className="w-5 h-5 text-purple-400" />
-                  Trading Volume
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-80">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={liveData}>
-                      <XAxis 
-                        dataKey="timestamp"
-                        tickFormatter={(value) => new Date(value).toLocaleTimeString()}
-                        axisLine={false}
-                        tickLine={false}
-                        tick={{ fill: '#94a3b8', fontSize: 12 }}
-                      />
-                      <YAxis 
-                        axisLine={false}
-                        tickLine={false}
-                        tick={{ fill: '#94a3b8', fontSize: 12 }}
-                      />
-                      <Bar dataKey="volume" fill="#8b5cf6" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Account Performance & Recent Trades */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Account Performance */}
-            <Card className="bg-slate-800 border-slate-700">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2">
-                  <Users className="w-5 h-5 text-yellow-400" />
-                  Account Performance
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {accountPerformance.map((account, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-slate-700 rounded">
-                      <div>
-                        <div className="font-medium text-white">{account.name}</div>
-                        <div className="text-sm text-slate-400">{account.trades} trades</div>
-                      </div>
-                      <div className="text-right">
-                        <div className={`font-bold ${account.pnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                          {account.pnl >= 0 ? '+' : ''}${account.pnl.toFixed(2)}
-                        </div>
-                        <div className={`text-sm ${account.percentage >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                          {account.percentage >= 0 ? '+' : ''}{account.percentage.toFixed(2)}%
-                        </div>
-                      </div>
-                    </div>
+        <div className="h-[85vh] overflow-y-auto">
+          <ResizablePanelGroup direction="vertical" className="space-y-4">
+            {/* Control Panel */}
+            <ResizablePanel defaultSize={15} minSize={10}>
+              <div className="space-y-4">
+                {/* Time Frame Selector */}
+                <div className="flex gap-2">
+                  {['5M', '15M', '1H', '4H', '1D'].map((timeframe) => (
+                    <Button
+                      key={timeframe}
+                      variant={selectedTimeframe === timeframe ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setSelectedTimeframe(timeframe)}
+                    >
+                      {timeframe}
+                    </Button>
                   ))}
                 </div>
-              </CardContent>
-            </Card>
 
-            {/* Recent Trades */}
-            <Card className="bg-slate-800 border-slate-700">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2">
-                  <Zap className="w-5 h-5 text-orange-400" />
-                  Recent Trades
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2 max-h-64 overflow-y-auto">
-                  {recentTrades.map((trade, index) => (
-                    <div key={trade.id || index} className="flex items-center justify-between p-2 bg-slate-700 rounded text-sm">
-                      <div className="flex items-center gap-2">
-                        <Badge className={trade.side === 'buy' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}>
-                          {trade.side?.toUpperCase()}
-                        </Badge>
-                        <span className="text-white">{trade.symbol}</span>
-                        <span className="text-slate-400">${trade.price?.toLocaleString()}</span>
+                {/* Key Metrics Grid */}
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2">
+                  {performanceMetrics.map((metric, index) => (
+                    <Card key={index} className="bg-slate-800 border-slate-700 p-2">
+                      <div className="text-center">
+                        <div className="flex items-center justify-center mb-1">
+                          {metric.status === 'up' ? (
+                            <TrendingUp className="w-3 h-3 text-green-400" />
+                          ) : (
+                            <TrendingDown className="w-3 h-3 text-red-400" />
+                          )}
+                        </div>
+                        <div className="text-xs text-slate-400">{metric.name}</div>
+                        <div className="text-sm font-bold text-white">
+                          {metric.name.includes('Rate') || metric.name.includes('Score') || metric.name.includes('Efficiency') || metric.name.includes('Ratio') || metric.name.includes('Drawdown')
+                            ? `${metric.value}%` 
+                            : `$${metric.value.toLocaleString()}`}
+                        </div>
+                        <div className={`text-xs ${metric.status === 'up' ? 'text-green-400' : 'text-red-400'}`}>
+                          {metric.status === 'up' ? '+' : ''}{metric.change}%
+                        </div>
                       </div>
-                      <div className="text-slate-400">
-                        {new Date(trade.created_at).toLocaleTimeString()}
-                      </div>
-                    </div>
+                    </Card>
                   ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Risk Analysis */}
-          <Card className="bg-slate-800 border-slate-700">
-            <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5 text-red-400" />
-                Risk Analysis & Alerts
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="p-4 bg-green-500/10 border border-green-500/20 rounded">
-                  <div className="text-green-400 font-medium">Portfolio Health</div>
-                  <div className="text-2xl font-bold text-white">Good</div>
-                  <div className="text-sm text-green-400">Risk Level: Low</div>
-                </div>
-                <div className="p-4 bg-yellow-500/10 border border-yellow-500/20 rounded">
-                  <div className="text-yellow-400 font-medium">Exposure</div>
-                  <div className="text-2xl font-bold text-white">45%</div>
-                  <div className="text-sm text-yellow-400">Market Cap</div>
-                </div>
-                <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded">
-                  <div className="text-blue-400 font-medium">Diversification</div>
-                  <div className="text-2xl font-bold text-white">8/10</div>
-                  <div className="text-sm text-blue-400">Well Balanced</div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </ResizablePanel>
+
+            <ResizableHandle withHandle />
+
+            {/* Charts Section */}
+            <ResizablePanel defaultSize={50} minSize={30}>
+              <ResizablePanelGroup direction="horizontal" className="gap-4">
+                <ResizablePanel defaultSize={60} minSize={40}>
+                  <ChartComponent 
+                    title={`Live Price Action (${selectedTimeframe})`}
+                    fullscreenContent={
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={liveData}>
+                          <XAxis 
+                            dataKey="timestamp" 
+                            tickFormatter={(value) => new Date(value).toLocaleTimeString()}
+                            axisLine={false}
+                            tickLine={false}
+                            tick={{ fill: '#94a3b8', fontSize: 12 }}
+                          />
+                          <YAxis 
+                            axisLine={false}
+                            tickLine={false}
+                            tick={{ fill: '#94a3b8', fontSize: 12 }}
+                          />
+                          <Tooltip 
+                            labelFormatter={(value) => new Date(value).toLocaleString()}
+                            formatter={(value: any) => [`$${value.toLocaleString()}`, 'Price']}
+                          />
+                          <Area
+                            type="monotone"
+                            dataKey="price"
+                            stroke="#3b82f6"
+                            strokeWidth={2}
+                            fill="url(#priceGradient)"
+                          />
+                          <defs>
+                            <linearGradient id="priceGradient" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                              <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                            </linearGradient>
+                          </defs>
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    }
+                  >
+                    <div className="h-64">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={liveData.slice(-20)}>
+                          <XAxis 
+                            dataKey="timestamp" 
+                            tickFormatter={(value) => new Date(value).toLocaleTimeString()}
+                            axisLine={false}
+                            tickLine={false}
+                            tick={{ fill: '#94a3b8', fontSize: 10 }}
+                          />
+                          <YAxis 
+                            axisLine={false}
+                            tickLine={false}
+                            tick={{ fill: '#94a3b8', fontSize: 10 }}
+                          />
+                          <Tooltip 
+                            labelFormatter={(value) => new Date(value).toLocaleString()}
+                            formatter={(value: any) => [`$${value.toLocaleString()}`, 'Price']}
+                          />
+                          <Area
+                            type="monotone"
+                            dataKey="price"
+                            stroke="#3b82f6"
+                            strokeWidth={2}
+                            fill="url(#priceGradient)"
+                          />
+                          <defs>
+                            <linearGradient id="priceGradient" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                              <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                            </linearGradient>
+                          </defs>
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </ChartComponent>
+                </ResizablePanel>
+
+                <ResizableHandle withHandle />
+
+                <ResizablePanel defaultSize={40} minSize={30}>
+                  <ChartComponent title="Trading Volume">
+                    <div className="h-64">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={liveData.slice(-15)}>
+                          <XAxis 
+                            dataKey="timestamp"
+                            tickFormatter={(value) => new Date(value).toLocaleTimeString()}
+                            axisLine={false}
+                            tickLine={false}
+                            tick={{ fill: '#94a3b8', fontSize: 10 }}
+                          />
+                          <YAxis 
+                            axisLine={false}
+                            tickLine={false}
+                            tick={{ fill: '#94a3b8', fontSize: 10 }}
+                          />
+                          <Tooltip 
+                            labelFormatter={(value) => new Date(value).toLocaleString()}
+                            formatter={(value: any) => [`${(value/1000000).toFixed(2)}M`, 'Volume']}
+                          />
+                          <Bar dataKey="volume" fill="#8b5cf6" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </ChartComponent>
+                </ResizablePanel>
+              </ResizablePanelGroup>
+            </ResizablePanel>
+
+            <ResizableHandle withHandle />
+
+            {/* Bottom Section - Account Performance & Audit Logs */}
+            <ResizablePanel defaultSize={35} minSize={25}>
+              <ResizablePanelGroup direction="horizontal" className="gap-4">
+                <ResizablePanel defaultSize={40} minSize={30}>
+                  <Card className="bg-slate-800 border-slate-700 h-full">
+                    <CardHeader>
+                      <CardTitle className="text-white flex items-center gap-2">
+                        <Users className="w-5 h-5 text-yellow-400" />
+                        Account Performance
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2 max-h-48 overflow-y-auto">
+                        {accountPerformance.map((account, index) => (
+                          <div key={index} className="flex items-center justify-between p-2 bg-slate-700 rounded">
+                            <div>
+                              <div className="font-medium text-white text-sm">{account.name}</div>
+                              <div className="text-xs text-slate-400">{account.trades} trades</div>
+                            </div>
+                            <div className="text-right">
+                              <div className={`font-bold text-sm ${account.pnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                {account.pnl >= 0 ? '+' : ''}${account.pnl.toFixed(2)}
+                              </div>
+                              <div className={`text-xs ${account.percentage >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                {account.percentage >= 0 ? '+' : ''}{account.percentage.toFixed(2)}%
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </ResizablePanel>
+
+                <ResizableHandle withHandle />
+
+                <ResizablePanel defaultSize={60} minSize={40}>
+                  <Card className="bg-slate-800 border-slate-700 h-full">
+                    <CardHeader>
+                      <CardTitle className="text-white flex items-center gap-2">
+                        <AlertTriangle className="w-5 h-5 text-orange-400" />
+                        Live Trading Audit Log
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-1 max-h-48 overflow-y-auto">
+                        {auditLogs.slice(0, 20).map((log) => (
+                          <div key={log.id} className="flex items-center justify-between p-2 bg-slate-700 rounded text-xs">
+                            <div className="flex items-center gap-2">
+                              <div className={`w-2 h-2 rounded-full ${
+                                log.status === 'success' ? 'bg-green-400' : 
+                                log.status === 'warning' ? 'bg-yellow-400' : 'bg-red-400'
+                              }`} />
+                              <span className="text-white font-medium">{log.action}</span>
+                              <span className="text-slate-400">{log.details}</span>
+                            </div>
+                            <span className="text-slate-500">
+                              {new Date(log.timestamp).toLocaleTimeString()}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </ResizablePanel>
+              </ResizablePanelGroup>
+            </ResizablePanel>
+          </ResizablePanelGroup>
         </div>
       </DialogContent>
     </Dialog>
