@@ -25,9 +25,12 @@ export const useSettings = (settingNames: string[] = []): SettingsHook => {
       setIsLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
+        console.log('No user found, skipping settings load');
         setIsLoading(false);
         return;
       }
+
+      console.log('Loading settings for user:', user.id);
 
       const { data, error } = await supabase
         .from('user_settings')

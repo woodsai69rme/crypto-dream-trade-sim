@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,7 @@ import { useMultipleAccounts } from '@/hooks/useMultipleAccounts';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useCryptoHoldings } from '@/hooks/useCryptoHoldings';
+import { useSettings } from '@/hooks/useSettings';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   TrendingUp, 
@@ -34,9 +36,26 @@ interface AccountCardProps {
 const AccountCard = ({ account, onSwitchAccount, isActive, viewMode = 'grid' }: AccountCardProps) => {
   const [aiBotsEnabled, setAiBotsEnabled] = useState(false);
   const [followingEnabled, setFollowingEnabled] = useState(false);
+  const [loading, setLoading] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
   const { holdings, loading: holdingsLoading, refreshHoldings } = useCryptoHoldings(account.id);
+  const { settings, updateSetting } = useSettings();
+
+  // Load settings on component mount and when settings change
+  useEffect(() => {
+    console.log('Loading settings for account:', account.id);
+    console.log('Current settings:', settings);
+    
+    const aiBotsSetting = settings[`ai_bots_${account.id}`];
+    const followingSetting = settings[`following_${account.id}`];
+    
+    console.log('AI Bots setting:', aiBotsSetting);
+    console.log('Following setting:', followingSetting);
+    
+    setAiBotsEnabled(Boolean(aiBotsSetting));
+    setFollowingEnabled(Boolean(followingSetting));
+  }, [account.id, settings]);
 
   // Mock performance data for mini chart
   const performanceData = Array.from({ length: 7 }, (_, i) => ({
@@ -44,25 +63,34 @@ const AccountCard = ({ account, onSwitchAccount, isActive, viewMode = 'grid' }: 
   }));
 
   const toggleAIBots = async (enabled: boolean) => {
-    if (!user) return;
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to update settings",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setLoading(true);
+    console.log('Toggling AI bots for account:', account.id, 'to:', enabled);
     
     try {
-      const { error } = await supabase
-        .from('user_settings')
-        .upsert({
-          user_id: user.id,
-          setting_name: `ai_bots_${account.id}`,
-          setting_value: enabled,
-          updated_at: new Date().toISOString()
-        });
-
-      if (error) throw error;
-      setAiBotsEnabled(enabled);
+      const success = await updateSetting(`ai_bots_${account.id}`, enabled);
       
-      toast({
-        title: enabled ? "AI Bots Enabled" : "AI Bots Disabled",
-        description: `AI trading bots ${enabled ? 'activated' : 'deactivated'} for ${account.account_name}`,
-      });
+      if (success) {
+        setAiBotsEnabled(enabled);
+        toast({
+          title: enabled ? "AI Bots Enabled" : "AI Bots Disabled",
+          description: `AI trading bots ${enabled ? 'activated' : 'deactivated'} for ${account.account_name}`,
+        });
+      } else {
+        toast({
+          title: "Update Failed",
+          description: "Failed to update AI bot settings. Please try again.",
+          variant: "destructive",
+        });
+      }
     } catch (error) {
       console.error('Error toggling AI bots:', error);
       toast({
@@ -70,29 +98,40 @@ const AccountCard = ({ account, onSwitchAccount, isActive, viewMode = 'grid' }: 
         description: "Failed to update AI bot settings",
         variant: "destructive",
       });
+    } finally {
+      setLoading(false);
     }
   };
 
   const toggleFollowing = async (enabled: boolean) => {
-    if (!user) return;
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to update settings",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setLoading(true);
+    console.log('Toggling following for account:', account.id, 'to:', enabled);
     
     try {
-      const { error } = await supabase
-        .from('user_settings')
-        .upsert({
-          user_id: user.id,
-          setting_name: `trade_following_${account.id}`,
-          setting_value: enabled,
-          updated_at: new Date().toISOString()
-        });
-
-      if (error) throw error;
-      setFollowingEnabled(enabled);
+      const success = await updateSetting(`following_${account.id}`, enabled);
       
-      toast({
-        title: enabled ? "Following Enabled" : "Following Disabled",
-        description: `Trade following ${enabled ? 'activated' : 'deactivated'} for ${account.account_name}`,
-      });
+      if (success) {
+        setFollowingEnabled(enabled);
+        toast({
+          title: enabled ? "Following Enabled" : "Following Disabled",
+          description: `Trade following ${enabled ? 'activated' : 'deactivated'} for ${account.account_name}`,
+        });
+      } else {
+        toast({
+          title: "Update Failed",
+          description: "Failed to update following settings. Please try again.",
+          variant: "destructive",
+        });
+      }
     } catch (error) {
       console.error('Error toggling following:', error);
       toast({
@@ -100,6 +139,8 @@ const AccountCard = ({ account, onSwitchAccount, isActive, viewMode = 'grid' }: 
         description: "Failed to update following settings",
         variant: "destructive",
       });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -205,9 +246,9 @@ const AccountCard = ({ account, onSwitchAccount, isActive, viewMode = 'grid' }: 
           )}
         </div>
 
-        {/* Controls */}
+        {/* Controls - FIXED */}
         <div className="grid grid-cols-2 gap-4">
-          <div className="flex items-center justify-between p-2 bg-card/20 rounded-lg">
+          <div className="flex items-center justify-between p-3 bg-card/20 rounded-lg">
             <div className="flex items-center gap-2">
               <Bot className="w-4 h-4 text-crypto-info" />
               <span className="text-sm">AI Bots</span>
@@ -215,10 +256,11 @@ const AccountCard = ({ account, onSwitchAccount, isActive, viewMode = 'grid' }: 
             <Switch
               checked={aiBotsEnabled}
               onCheckedChange={toggleAIBots}
+              disabled={loading}
             />
           </div>
 
-          <div className="flex items-center justify-between p-2 bg-card/20 rounded-lg">
+          <div className="flex items-center justify-between p-3 bg-card/20 rounded-lg">
             <div className="flex items-center gap-2">
               <UserCheck className="w-4 h-4 text-crypto-warning" />
               <span className="text-sm">Following</span>
@@ -226,6 +268,7 @@ const AccountCard = ({ account, onSwitchAccount, isActive, viewMode = 'grid' }: 
             <Switch
               checked={followingEnabled}
               onCheckedChange={toggleFollowing}
+              disabled={loading}
             />
           </div>
         </div>
@@ -283,6 +326,18 @@ const AccountCard = ({ account, onSwitchAccount, isActive, viewMode = 'grid' }: 
             Switch to Account
           </Button>
         )}
+
+        {/* Status Indicators */}
+        <div className="flex items-center justify-between text-xs text-muted-foreground">
+          <div className="flex items-center gap-2">
+            <div className={`w-2 h-2 rounded-full ${aiBotsEnabled ? 'bg-green-400' : 'bg-gray-400'}`}></div>
+            <span>AI Bots {aiBotsEnabled ? 'ON' : 'OFF'}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className={`w-2 h-2 rounded-full ${followingEnabled ? 'bg-blue-400' : 'bg-gray-400'}`}></div>
+            <span>Following {followingEnabled ? 'ON' : 'OFF'}</span>
+          </div>
+        </div>
       </CardContent>
     </Card>
   );
