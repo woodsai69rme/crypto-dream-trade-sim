@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,7 +11,8 @@ import {
   Shield,
   BarChart3,
   Activity,
-  Plus
+  Plus,
+  Settings
 } from 'lucide-react';
 
 export const MyAccounts = () => {
