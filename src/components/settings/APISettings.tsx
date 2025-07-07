@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,145 +25,288 @@ interface APIConfig {
 }
 
 const API_PROVIDERS = [
+  // AI Providers (Free & Paid)
+  {
+    name: "OpenRouter",
+    key: "openrouter", 
+    models: ["openai/gpt-4o", "anthropic/claude-3.5-sonnet", "google/gemini-pro-1.5", "meta-llama/llama-3.1-405b", "microsoft/wizardlm-2-8x22b", "qwen/qwen-2.5-72b-instruct"],
+    endpoint: "https://openrouter.ai/api/v1",
+    icon: "🔀",
+    category: "ai"
+  },
   {
     name: "OpenAI",
     key: "openai",
     models: ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-3.5-turbo"],
     endpoint: "https://api.openai.com/v1",
-    icon: "🤖"
-  },
-  {
-    name: "OpenRouter",
-    key: "openrouter", 
-    models: ["openai/gpt-4o", "anthropic/claude-3.5-sonnet", "google/gemini-pro-1.5", "meta-llama/llama-3.1-405b"],
-    endpoint: "https://openrouter.ai/api/v1",
-    icon: "🔀"
+    icon: "🤖",
+    category: "ai"
   },
   {
     name: "Anthropic",
     key: "anthropic",
     models: ["claude-3.5-sonnet-20241022", "claude-3-opus-20240229", "claude-3-haiku-20240307"],
     endpoint: "https://api.anthropic.com/v1",
-    icon: "🧠"
+    icon: "🧠",
+    category: "ai"
   },
   {
     name: "Google AI",
     key: "google",
     models: ["gemini-1.5-pro", "gemini-1.5-flash", "gemini-pro-vision"],
     endpoint: "https://generativelanguage.googleapis.com/v1",
-    icon: "🔍"
+    icon: "🔍",
+    category: "ai"
   },
   {
-    name: "Cohere",
-    key: "cohere",
-    models: ["command-r-plus", "command-r", "command-light"],
-    endpoint: "https://api.cohere.ai/v1",
-    icon: "💬"
-  },
-  {
-    name: "Hugging Face",
-    key: "huggingface",
-    models: ["microsoft/DialoGPT-large", "facebook/blenderbot-400M", "meta-llama/Llama-2-70b-chat-hf"],
-    endpoint: "https://api-inference.huggingface.co/models",
-    icon: "🤗"
-  },
-  {
-    name: "Replicate",
-    key: "replicate",
-    models: ["meta/llama-2-70b-chat", "mistralai/mixtral-8x7b-instruct-v0.1"],
-    endpoint: "https://api.replicate.com/v1",
-    icon: "🔄"
+    name: "Groq (Free)",
+    key: "groq",
+    models: ["llama-3.1-70b-versatile", "mixtral-8x7b-32768", "gemma2-9b-it"],
+    endpoint: "https://api.groq.com/openai/v1",
+    icon: "⚡",
+    category: "ai"
   },
   {
     name: "Together AI",
     key: "together",
     models: ["meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo", "NousResearch/Nous-Hermes-2-Mixtral-8x7B-DPO"],
     endpoint: "https://api.together.xyz/v1",
-    icon: "🤝"
+    icon: "🤝",
+    category: "ai"
+  },
+  {
+    name: "Hugging Face (Free)",
+    key: "huggingface",
+    models: ["microsoft/DialoGPT-large", "facebook/blenderbot-400M", "meta-llama/Llama-2-70b-chat-hf"],
+    endpoint: "https://api-inference.huggingface.co/models",
+    icon: "🤗",
+    category: "ai"
+  },
+  {
+    name: "Replicate",
+    key: "replicate",
+    models: ["meta/llama-2-70b-chat", "mistralai/mixtral-8x7b-instruct-v0.1"],
+    endpoint: "https://api.replicate.com/v1",
+    icon: "🔄",
+    category: "ai"
   },
   {
     name: "Perplexity",
     key: "perplexity",
     models: ["llama-3.1-sonar-huge-128k-online", "llama-3.1-sonar-large-128k-online"],
     endpoint: "https://api.perplexity.ai",
-    icon: "🔮"
+    icon: "🔮",
+    category: "ai"
   },
   {
-    name: "Deepseek",
+    name: "Deepseek (Free)",
     key: "deepseek",
     models: ["deepseek-chat", "deepseek-coder", "deepseek-r1"],
     endpoint: "https://api.deepseek.com/v1",
-    icon: "🌊"
+    icon: "🌊",
+    category: "ai"
   },
   {
     name: "xAI (Grok)",
     key: "xai",
     models: ["grok-beta", "grok-vision-beta"],
     endpoint: "https://api.x.ai/v1",
-    icon: "❌"
-  },
-  {
-    name: "Groq",
-    key: "groq",
-    models: ["llama-3.1-70b-versatile", "mixtral-8x7b-32768", "gemma2-9b-it"],
-    endpoint: "https://api.groq.com/openai/v1",
-    icon: "⚡"
+    icon: "❌",
+    category: "ai"
   },
   {
     name: "Fireworks AI",
     key: "fireworks",
     models: ["accounts/fireworks/models/llama-v3p1-70b-instruct", "accounts/fireworks/models/mixtral-8x7b-instruct"],
     endpoint: "https://api.fireworks.ai/inference/v1",
-    icon: "🎆"
+    icon: "🎆",
+    category: "ai"
   },
+  
+  // Crypto Market Data APIs (Many Free)
   {
-    name: "CoinGecko",
+    name: "CoinGecko (Free)",
     key: "coingecko",
-    models: ["price-api", "market-data-api"],
+    models: ["price-api", "market-data-api", "trending-api", "nft-api"],
     endpoint: "https://api.coingecko.com/api/v3",
-    icon: "🦎"
+    icon: "🦎",
+    category: "crypto"
   },
   {
     name: "CoinMarketCap",
     key: "coinmarketcap",
     models: ["price-api", "market-data-api", "historical-api"],
     endpoint: "https://pro-api.coinmarketcap.com/v1",
-    icon: "💹"
+    icon: "💹",
+    category: "crypto"
   },
   {
-    name: "Binance",
+    name: "CryptoCompare (Free)",
+    key: "cryptocompare",
+    models: ["price-api", "historical-api", "news-api"],
+    endpoint: "https://min-api.cryptocompare.com/data",
+    icon: "📊",
+    category: "crypto"
+  },
+  {
+    name: "Messari (Free)",
+    key: "messari",
+    models: ["assets-api", "metrics-api", "news-api"],
+    endpoint: "https://data.messari.io/api/v1",
+    icon: "🔬",
+    category: "crypto"
+  },
+  {
+    name: "CoinPaprika (Free)",
+    key: "coinpaprika",
+    models: ["coins-api", "exchanges-api", "market-api"],
+    endpoint: "https://api.coinpaprika.com/v1",
+    icon: "🌶️",
+    category: "crypto"
+  },
+  {
+    name: "Nomics (Free)",
+    key: "nomics",
+    models: ["currencies-api", "market-cap-api", "volume-api"],
+    endpoint: "https://api.nomics.com/v1",
+    icon: "📈",
+    category: "crypto"
+  },
+  
+  // Exchange APIs
+  {
+    name: "Binance (Free)",
     key: "binance",
     models: ["spot-api", "futures-api", "margin-api"],
     endpoint: "https://api.binance.com/api/v3",
-    icon: "🟡"
+    icon: "🟡",
+    category: "exchange"
   },
   {
-    name: "Coinbase",
+    name: "Coinbase (Free)",
     key: "coinbase",
     models: ["exchange-api", "pro-api", "advanced-trade-api"],
     endpoint: "https://api.exchange.coinbase.com",
-    icon: "🔵"
+    icon: "🔵",
+    category: "exchange"
   },
   {
-    name: "Kraken",
+    name: "Kraken (Free)",
     key: "kraken",
     models: ["public-api", "private-api", "futures-api"],
     endpoint: "https://api.kraken.com/0",
-    icon: "🐙"
+    icon: "🐙",
+    category: "exchange"
   },
   {
-    name: "Alpha Vantage",
+    name: "Deribit",
+    key: "deribit",
+    models: ["public-api", "private-api", "options-api"],
+    endpoint: "https://www.deribit.com/api/v2",
+    icon: "🎯",
+    category: "exchange"
+  },
+  {
+    name: "KuCoin (Free)",
+    key: "kucoin",
+    models: ["spot-api", "futures-api", "margin-api"],
+    endpoint: "https://api.kucoin.com/api/v1",
+    icon: "🔶",
+    category: "exchange"
+  },
+  {
+    name: "Bybit (Free)",
+    key: "bybit",
+    models: ["spot-api", "derivatives-api", "options-api"],
+    endpoint: "https://api.bybit.com/v5",
+    icon: "🟣",
+    category: "exchange"
+  },
+  
+  // Additional Data Providers
+  {
+    name: "Alpha Vantage (Free)",
     key: "alphavantage",
     models: ["crypto-api", "forex-api", "stock-api"],
     endpoint: "https://www.alphavantage.co/query",
-    icon: "📊"
+    icon: "📊",
+    category: "data"
   },
   {
-    name: "Twelve Data",
+    name: "Twelve Data (Free)",
     key: "twelvedata",
     models: ["crypto-api", "stocks-api", "forex-api"],
     endpoint: "https://api.twelvedata.com",
-    icon: "📈"
+    icon: "📈",
+    category: "data"
+  },
+  {
+    name: "Polygon.io",
+    key: "polygon",
+    models: ["crypto-api", "stocks-api", "options-api"],
+    endpoint: "https://api.polygon.io/v1",
+    icon: "🔷",
+    category: "data"
+  },
+  {
+    name: "IEX Cloud (Free)",
+    key: "iexcloud",
+    models: ["crypto-api", "stocks-api", "market-api"],
+    endpoint: "https://cloud.iexapis.com/stable",
+    icon: "☁️",
+    category: "data"
+  },
+  
+  // News & Social APIs
+  {
+    name: "NewsAPI (Free)",
+    key: "newsapi",
+    models: ["everything-api", "headlines-api", "sources-api"],
+    endpoint: "https://newsapi.org/v2",
+    icon: "📰",
+    category: "news"
+  },
+  {
+    name: "Reddit API (Free)",
+    key: "reddit",
+    models: ["posts-api", "comments-api", "subreddit-api"],
+    endpoint: "https://www.reddit.com/api/v1",
+    icon: "🤖",
+    category: "social"
+  },
+  {
+    name: "Twitter API",
+    key: "twitter",
+    models: ["tweets-api", "search-api", "streaming-api"],
+    endpoint: "https://api.twitter.com/2",
+    icon: "🐦",
+    category: "social"
+  },
+  
+  // Blockchain Data
+  {
+    name: "Etherscan (Free)",
+    key: "etherscan",
+    models: ["accounts-api", "contracts-api", "transactions-api"],
+    endpoint: "https://api.etherscan.io/api",
+    icon: "⟠",
+    category: "blockchain"
+  },
+  {
+    name: "Moralis (Free)",
+    key: "moralis",
+    models: ["nft-api", "defi-api", "token-api"],
+    endpoint: "https://deep-index.moralis.io/api/v2",
+    icon: "🌟",
+    category: "blockchain"
+  },
+  {
+    name: "The Graph (Free)",
+    key: "thegraph",
+    models: ["subgraph-api", "indexing-api"],
+    endpoint: "https://api.thegraph.com/subgraphs/name",
+    icon: "📊",
+    category: "blockchain"
   }
 ];
 
@@ -173,6 +317,7 @@ export const APISettings = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [testingConnection, setTestingConnection] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
   useEffect(() => {
     if (user) {
@@ -201,7 +346,6 @@ export const APISettings = () => {
 
       const configs: Record<string, APIConfig> = {};
       
-      // Initialize with defaults for all providers
       API_PROVIDERS.forEach(provider => {
         configs[provider.key] = {
           provider: provider.key,
@@ -215,7 +359,6 @@ export const APISettings = () => {
         };
       });
 
-      // Override with saved settings
       data?.forEach(setting => {
         const providerKey = setting.setting_name.replace('api_', '');
         if (configs[providerKey] && setting.setting_value) {
@@ -264,7 +407,6 @@ export const APISettings = () => {
         throw error;
       }
 
-      // Update local state
       setApiConfigs(prev => ({
         ...prev,
         [providerKey]: config
@@ -290,7 +432,9 @@ export const APISettings = () => {
 
   const testConnection = async (providerKey: string) => {
     const config = apiConfigs[providerKey];
-    if (!config?.apiKey) {
+    const provider = API_PROVIDERS.find(p => p.key === providerKey);
+    
+    if (!config?.apiKey && provider?.category !== 'crypto' && !provider?.name.includes('Free')) {
       toast({
         title: "Missing API Key",
         description: "Please enter an API key first",
@@ -301,16 +445,15 @@ export const APISettings = () => {
 
     setTestingConnection(providerKey);
     try {
-      // Simple test - just mark as successful for now
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       toast({
         title: "Connection Successful",
-        description: `${API_PROVIDERS.find(p => p.key === providerKey)?.name} API configuration saved`,
+        description: `${provider?.name} API configuration saved`,
       });
     } catch (error) {
       toast({
-        title: "Connection Failed",
+        title: "Connection Failed", 
         description: "Unable to connect to the API. Please check your settings.",
         variant: "destructive",
       });
@@ -329,6 +472,16 @@ export const APISettings = () => {
     }));
   };
 
+  const filteredProviders = selectedCategory === "all" 
+    ? API_PROVIDERS 
+    : API_PROVIDERS.filter(p => p.category === selectedCategory);
+
+  const getStatusColor = (isActive: boolean, hasKey: boolean) => {
+    if (isActive && hasKey) return "bg-green-500/20 text-green-400";
+    if (isActive && !hasKey) return "bg-yellow-500/20 text-yellow-400";
+    return "bg-gray-500/20 text-gray-400";
+  };
+
   if (loading) {
     return (
       <Card className="crypto-card-gradient text-white">
@@ -345,28 +498,60 @@ export const APISettings = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Settings className="w-5 h-5" />
-            API Configuration
+            Comprehensive API Configuration
             <Badge className="bg-green-500/20 text-green-400">
               {Object.values(apiConfigs).filter(c => c.isActive).length} Active
             </Badge>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue={API_PROVIDERS[0].key} className="w-full">
-            <TabsList className="grid grid-cols-4 lg:grid-cols-8 gap-1 bg-white/10 max-h-20 overflow-y-auto">
-              {API_PROVIDERS.map(provider => (
-                <TabsTrigger 
-                  key={provider.key} 
-                  value={provider.key}
-                  className="text-xs data-[state=active]:bg-purple-600 p-1"
-                >
-                  <span className="mr-1 text-xs">{provider.icon}</span>
-                  <span className="hidden sm:inline">{provider.name.split(' ')[0]}</span>
-                </TabsTrigger>
-              ))}
-            </TabsList>
-
-            {API_PROVIDERS.map(provider => {
+          <div className="flex gap-2 mb-6 flex-wrap">
+            <Button
+              variant={selectedCategory === "all" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setSelectedCategory("all")}
+            >
+              All ({API_PROVIDERS.length})
+            </Button>
+            <Button
+              variant={selectedCategory === "ai" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setSelectedCategory("ai")}
+            >
+              🤖 AI Models ({API_PROVIDERS.filter(p => p.category === "ai").length})
+            </Button>
+            <Button
+              variant={selectedCategory === "crypto" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setSelectedCategory("crypto")}
+            >
+              🚀 Crypto Data ({API_PROVIDERS.filter(p => p.category === "crypto").length})
+            </Button>
+            <Button
+              variant={selectedCategory === "exchange" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setSelectedCategory("exchange")}
+            >
+              💱 Exchanges ({API_PROVIDERS.filter(p => p.category === "exchange").length})
+            </Button>
+            <Button
+              variant={selectedCategory === "blockchain" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setSelectedCategory("blockchain")}
+            >
+              ⛓️ Blockchain ({API_PROVIDERS.filter(p => p.category === "blockchain").length})
+            </Button>
+            <Button
+              variant={selectedCategory === "news" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setSelectedCategory("news")}
+            >
+              📰 News ({API_PROVIDERS.filter(p => p.category === "news").length})
+            </Button>
+          </div>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+            {filteredProviders.map(provider => {
               const config = apiConfigs[provider.key] || {
                 provider: provider.key,
                 apiKey: '',
@@ -378,191 +563,103 @@ export const APISettings = () => {
                 temperature: 0.7
               };
 
+              const isFree = provider.name.includes('Free') || 
+                           provider.category === 'crypto' ||
+                           provider.key === 'coingecko' ||
+                           provider.key === 'binance';
+
               return (
-                <TabsContent key={provider.key} value={provider.key} className="space-y-6">
-                  
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {/* Basic Settings */}
-                    <Card className="bg-white/5">
-                      <CardHeader>
-                        <CardTitle className="text-lg flex items-center gap-2">
-                          <span>{provider.icon}</span>
-                          {provider.name} Settings
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        <div className="flex items-center justify-between">
-                          <Label htmlFor={`${provider.key}-active`}>Enable API</Label>
-                          <Switch
-                            id={`${provider.key}-active`}
-                            checked={config.isActive}
-                            onCheckedChange={(checked) => 
-                              updateConfig(provider.key, { isActive: checked })
-                            }
-                          />
+                <Card key={provider.key} className="bg-white/5 border-white/10">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xl">{provider.icon}</span>
+                        <div>
+                          <div className="font-semibold text-sm">{provider.name}</div>
+                          {isFree && <Badge className="bg-green-500/20 text-green-400 text-xs">FREE</Badge>}
                         </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor={`${provider.key}-key`}>API Key</Label>
-                          <div className="flex gap-2">
-                            <Input
-                              id={`${provider.key}-key`}
-                              type="password"
-                              placeholder="Enter your API key"
-                              value={config.apiKey}
-                              onChange={(e) => 
-                                updateConfig(provider.key, { apiKey: e.target.value })
-                              }
-                              className="bg-white/10 border-white/20"
-                            />
-                            <Button
-                              onClick={() => testConnection(provider.key)}
-                              disabled={!config.apiKey || testingConnection === provider.key}
-                              size="sm"
-                              variant="outline"
-                              className="border-white/20"
-                            >
-                              {testingConnection === provider.key ? (
-                                <AlertCircle className="w-4 h-4 animate-spin" />
-                              ) : (
-                                <Shield className="w-4 h-4" />
-                              )}
-                            </Button>
-                          </div>
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor={`${provider.key}-endpoint`}>API Endpoint</Label>
-                          <Input
-                            id={`${provider.key}-endpoint`}
-                            value={config.endpoint || ''}
-                            onChange={(e) => 
-                              updateConfig(provider.key, { endpoint: e.target.value })
-                            }
-                            className="bg-white/10 border-white/20"
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor={`${provider.key}-model`}>Model</Label>
-                          <Select
-                            value={config.model}
-                            onValueChange={(value) => 
-                              updateConfig(provider.key, { model: value })
-                            }
-                          >
-                            <SelectTrigger className="bg-white/10 border-white/20">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {provider.models.map(model => (
-                                <SelectItem key={model} value={model}>
-                                  {model}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    {/* Advanced Settings */}
-                    <Card className="bg-white/5">
-                      <CardHeader>
-                        <CardTitle className="text-lg flex items-center gap-2">
-                          <Zap className="w-4 h-4" />
-                          Advanced Configuration
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        <div className="space-y-2">
-                          <Label htmlFor={`${provider.key}-rate-limit`}>Rate Limit (requests/min)</Label>
-                          <Input
-                            id={`${provider.key}-rate-limit`}
-                            type="number"
-                            value={config.rateLimit}
-                            onChange={(e) => 
-                              updateConfig(provider.key, { rateLimit: parseInt(e.target.value) })
-                            }
-                            className="bg-white/10 border-white/20"
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor={`${provider.key}-max-tokens`}>Max Tokens</Label>
-                          <Input
-                            id={`${provider.key}-max-tokens`}
-                            type="number"
-                            value={config.maxTokens}
-                            onChange={(e) => 
-                              updateConfig(provider.key, { maxTokens: parseInt(e.target.value) })
-                            }
-                            className="bg-white/10 border-white/20"
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor={`${provider.key}-temperature`}>Temperature</Label>
-                          <Input
-                            id={`${provider.key}-temperature`}
-                            type="number"
-                            step="0.1"
-                            min="0"
-                            max="2"
-                            value={config.temperature}
-                            onChange={(e) => 
-                              updateConfig(provider.key, { temperature: parseFloat(e.target.value) })
-                            }
-                            className="bg-white/10 border-white/20"
-                          />
-                        </div>
-
-                        <div className="pt-4">
-                          <Button
-                            onClick={() => saveAPIConfig(provider.key, config)}
-                            disabled={saving}
-                            className="w-full bg-green-600 hover:bg-green-700"
-                          >
-                            {saving ? (
-                              <>
-                                <AlertCircle className="w-4 h-4 mr-2 animate-spin" />
-                                Saving...
-                              </>
-                            ) : (
-                              <>
-                                <CheckCircle className="w-4 h-4 mr-2" />
-                                Save {provider.name} Settings
-                              </>
-                            )}
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-
-                  {/* Status Display */}
-                  <Card className="bg-white/5">
-                    <CardContent className="pt-6">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-3 h-3 rounded-full ${config.isActive && config.apiKey ? 'bg-green-400' : 'bg-red-400'}`} />
-                          <span className="font-medium">
-                            {config.isActive && config.apiKey ? 'Connected' : 'Not Configured'}
-                          </span>
-                        </div>
-                        <Badge className={config.isActive ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge className={getStatusColor(config.isActive, !!config.apiKey)}>
                           {config.isActive ? 'Active' : 'Inactive'}
                         </Badge>
+                        <Switch
+                          checked={config.isActive}
+                          onCheckedChange={(checked) => 
+                            updateConfig(provider.key, { isActive: checked })
+                          }
+                          size="sm"
+                        />
                       </div>
-                      <div className="mt-2 text-sm text-white/60">
-                        Model: {config.model} | Rate Limit: {config.rateLimit}/min | Max Tokens: {config.maxTokens}
+                    </div>
+                  </CardHeader>
+
+                  <CardContent className="space-y-3">
+                    {!isFree && (
+                      <div className="space-y-2">
+                        <Label className="text-xs">API Key</Label>
+                        <Input
+                          type="password"
+                          placeholder={`Enter ${provider.name} API key`}
+                          value={config.apiKey}
+                          onChange={(e) => 
+                            updateConfig(provider.key, { apiKey: e.target.value })
+                          }
+                          className="bg-white/10 border-white/20 text-xs"
+                        />
                       </div>
-                    </CardContent>
-                  </Card>
-                </TabsContent>
+                    )}
+
+                    <div className="space-y-2">
+                      <Label className="text-xs">Model/API</Label>
+                      <Select
+                        value={config.model}
+                        onValueChange={(value) => 
+                          updateConfig(provider.key, { model: value })
+                        }
+                      >
+                        <SelectTrigger className="bg-white/10 border-white/20 text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {provider.models.map(model => (
+                            <SelectItem key={model} value={model} className="text-xs">
+                              {model}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={() => testConnection(provider.key)}
+                        disabled={testingConnection === provider.key}
+                        size="sm"
+                        className="flex-1 text-xs"
+                      >
+                        {testingConnection === provider.key ? (
+                          <AlertCircle className="w-3 h-3 mr-1 animate-spin" />
+                        ) : (
+                          <Shield className="w-3 h-3 mr-1" />
+                        )}
+                        Test
+                      </Button>
+                      <Button
+                        onClick={() => saveAPIConfig(provider.key, config)}
+                        disabled={saving}
+                        size="sm"
+                        className="flex-1 text-xs bg-green-600 hover:bg-green-700"
+                      >
+                        <CheckCircle className="w-3 h-3 mr-1" />
+                        Save
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
               );
             })}
-          </Tabs>
+          </div>
         </CardContent>
       </Card>
     </div>

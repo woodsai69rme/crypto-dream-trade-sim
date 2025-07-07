@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -8,6 +7,9 @@ import { AITradingBot } from "@/components/ai/AITradingBot";
 import { TradeFollower } from "@/components/trading/TradeFollower";
 import { TradingHistoryDashboard } from "@/components/TradingHistoryDashboard";
 import { BarChart3, Bot, Users, History, TrendingUp } from "lucide-react";
+import { AIChatAssistant } from "@/components/ai/AIChatAssistant";
+import { TradingViewChart } from "@/components/charts/TradingViewChart";
+import { PortfolioRebalancer } from "@/components/portfolio/PortfolioRebalancer";
 
 export const TradingPanel = () => {
   return (
@@ -18,14 +20,18 @@ export const TradingPanel = () => {
       </div>
 
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-5 bg-card/50 backdrop-blur-sm">
+        <TabsList className="grid w-full grid-cols-6 bg-card/50 backdrop-blur-sm">
           <TabsTrigger value="overview" className="flex items-center gap-2">
             <BarChart3 className="w-4 h-4" />
             Market
           </TabsTrigger>
           <TabsTrigger value="quick-trade" className="flex items-center gap-2">
             <TrendingUp className="w-4 h-4" />
-            Quick Trade
+            Trade
+          </TabsTrigger>
+          <TabsTrigger value="ai-chat" className="flex items-center gap-2">
+            <Bot className="w-4 h-4" />
+            AI Assistant
           </TabsTrigger>
           <TabsTrigger value="ai-bots" className="flex items-center gap-2">
             <Bot className="w-4 h-4" />
@@ -59,6 +65,16 @@ export const TradingPanel = () => {
                   <MarketOverviewDashboard />
                 </CardContent>
               </Card>
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="ai-chat">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            <AIChatAssistant />
+            <div className="space-y-6">
+              <TradingViewChart symbol="BTCUSD" height={300} />
+              <PortfolioRebalancer />
             </div>
           </div>
         </TabsContent>
