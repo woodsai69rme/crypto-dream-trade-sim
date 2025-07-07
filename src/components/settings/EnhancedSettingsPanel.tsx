@@ -9,7 +9,8 @@ import { GlobalAccountSettings } from "./GlobalAccountSettings";
 import { ComprehensiveTopTraders } from "../enhanced/ComprehensiveTopTraders";
 import { AIModelManager } from "../enhanced/AIModelManager";
 import { TradingWorkflowManager } from "../enhanced/TradingWorkflowManager";
-import { Settings, Bot, Key, TestTube, Users, Globe, Cog, Star, Cpu, Workflow } from "lucide-react";
+import { TradingAssistant } from "../ai/TradingAssistant";
+import { Settings, Bot, Key, TestTube, Users, Globe, Cog, Star, Cpu, Workflow, MessageSquare } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useSettings } from "@/hooks/useSettings";
 
@@ -45,10 +46,14 @@ export const EnhancedSettingsPanel = () => {
       </div>
 
       <Tabs defaultValue="global" className="w-full">
-        <TabsList className="grid w-full grid-cols-9 bg-card/50 backdrop-blur-sm">
+        <TabsList className="grid w-full grid-cols-10 bg-card/50 backdrop-blur-sm">
           <TabsTrigger value="global" className="flex items-center gap-2">
             <Globe className="w-4 h-4" />
             Global
+          </TabsTrigger>
+          <TabsTrigger value="assistant" className="flex items-center gap-2">
+            <MessageSquare className="w-4 h-4" />
+            AI Chat
           </TabsTrigger>
           <TabsTrigger value="traders" className="flex items-center gap-2">
             <Star className="w-4 h-4" />
@@ -86,6 +91,29 @@ export const EnhancedSettingsPanel = () => {
 
         <TabsContent value="global">
           <GlobalAccountSettings />
+        </TabsContent>
+
+        <TabsContent value="assistant">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <TradingAssistant />
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-primary-foreground">AI Assistant Features</h3>
+              <div className="grid grid-cols-1 gap-4">
+                <div className="p-4 bg-card/20 rounded-lg">
+                  <h4 className="font-medium mb-2">Market Analysis</h4>
+                  <p className="text-sm text-muted-foreground">Get real-time insights on cryptocurrency markets and trends.</p>
+                </div>
+                <div className="p-4 bg-card/20 rounded-lg">
+                  <h4 className="font-medium mb-2">Trading Strategies</h4>
+                  <p className="text-sm text-muted-foreground">Learn about different trading approaches and risk management.</p>
+                </div>
+                <div className="p-4 bg-card/20 rounded-lg">
+                  <h4 className="font-medium mb-2">Portfolio Advice</h4>
+                  <p className="text-sm text-muted-foreground">Get personalized recommendations for your trading portfolio.</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </TabsContent>
 
         <TabsContent value="traders">
