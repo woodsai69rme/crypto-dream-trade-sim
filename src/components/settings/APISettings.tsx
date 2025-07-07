@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -472,6 +471,16 @@ export const APISettings = () => {
     }));
   };
 
+  const toggleApiStatus = (providerKey: string) => {
+    setApiConfigs(prev => ({
+      ...prev,
+      [providerKey]: {
+        ...prev[providerKey],
+        isActive: !prev[providerKey]?.isActive
+      }
+    }));
+  };
+
   const filteredProviders = selectedCategory === "all" 
     ? API_PROVIDERS 
     : API_PROVIDERS.filter(p => p.category === selectedCategory);
@@ -588,7 +597,6 @@ export const APISettings = () => {
                           onCheckedChange={(checked) => 
                             updateConfig(provider.key, { isActive: checked })
                           }
-                          size="sm"
                         />
                       </div>
                     </div>

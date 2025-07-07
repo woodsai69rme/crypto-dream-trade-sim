@@ -316,7 +316,6 @@ export const RiskManagementDashboard = () => {
                       <Switch
                         checked={order.is_active}
                         onCheckedChange={() => toggleOrder(order.id)}
-                        size="sm"
                       />
                     </div>
                   </div>
