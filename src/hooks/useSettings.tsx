@@ -26,6 +26,7 @@ export const useSettings = (settingNames: string[] = []): SettingsHook => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         console.log('No user found, skipping settings load');
+        setSettings({});
         setIsLoading(false);
         return;
       }
@@ -59,11 +60,7 @@ export const useSettings = (settingNames: string[] = []): SettingsHook => {
     } catch (error: any) {
       console.error('Error loading settings:', error);
       setError(error.message || 'Failed to load settings');
-      toast({
-        title: "Settings Load Error",
-        description: "Failed to load your settings. Please refresh the page.",
-        variant: "destructive",
-      });
+      setSettings({});
     } finally {
       setIsLoading(false);
     }
