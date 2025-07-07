@@ -9,6 +9,8 @@ import { TopTraders } from "@/components/TopTraders";
 import { TradingHistoryDashboard } from "@/components/TradingHistoryDashboard";
 import { RiskManagementDashboard } from "@/components/RiskManagementDashboard";
 import { SettingsPanel } from "@/components/settings/SettingsPanel";
+import { CryptoNewsResearch } from "@/components/ai/CryptoNewsResearch";
+import { N8NWorkflowIntegration } from "@/components/ai/N8NWorkflowIntegration";
 
 const IndexPage = () => {
   const { user, loading } = useAuth();
@@ -42,6 +44,10 @@ const IndexPage = () => {
         return <TradingHistoryDashboard />;
       case "risk":
         return <RiskManagementDashboard />;
+      case "news":
+        return <CryptoNewsResearch />;
+      case "workflows":
+        return <N8NWorkflowIntegration />;
       case "settings":
         return <SettingsPanel />;
       default:

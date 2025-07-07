@@ -277,18 +277,27 @@ export const ComprehensiveAPISettings = () => {
   const saveAllSettings = async () => {
     setLoading(true);
     try {
-      await updateSetting('aiApis', aiApis);
-      await updateSetting('marketApis', marketApis);
-      await updateSetting('exchanges', exchanges);
+      const results = await Promise.all([
+        updateSetting('aiApis', aiApis),
+        updateSetting('marketApis', marketApis),
+        updateSetting('exchanges', exchanges)
+      ]);
       
-      toast({
-        title: "Settings Saved",
-        description: "All API configurations have been saved successfully",
-      });
+      const allSuccessful = results.every(success => success);
+      
+      if (allSuccessful) {
+        toast({
+          title: "Settings Saved",
+          description: "All API configurations have been saved successfully",
+        });
+      } else {
+        throw new Error('Some settings failed to save');
+      }
     } catch (error) {
+      console.error('Save settings error:', error);
       toast({
         title: "Save Failed",
-        description: "Failed to save API settings",
+        description: "Failed to save some API settings",
         variant: "destructive",
       });
     } finally {

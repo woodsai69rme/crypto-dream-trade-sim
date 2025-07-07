@@ -26,7 +26,10 @@ export const SettingsPanel = () => {
   // Update function that saves to database
   const handleTradeFollowingChange = async (newSettings: any) => {
     setTradeFollowingSettings(newSettings);
-    await updateSetting('tradeFollowingSettings', newSettings);
+    const success = await updateSetting('tradeFollowingSettings', newSettings);
+    if (!success) {
+      console.error('Failed to save trade following settings');
+    }
   };
 
   return (

@@ -4,13 +4,15 @@ import { useToast } from '@/hooks/use-toast';
 
 interface SettingsHook {
   settings: Record<string, any>;
-  updateSetting: (name: string, value: any) => Promise<void>;
+  updateSetting: (name: string, value: any) => Promise<boolean>;
   isLoading: boolean;
+  error: string | null;
 }
 
 export const useSettings = (settingNames: string[] = []): SettingsHook => {
   const [settings, setSettings] = useState<Record<string, any>>({});
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -47,10 +49,15 @@ export const useSettings = (settingNames: string[] = []): SettingsHook => {
     }
   };
 
-  const updateSetting = async (name: string, value: any) => {
+  const updateSetting = async (name: string, value: any): Promise<boolean> => {
     try {
+      console.log('Saving setting:', name, value);
+      setError(null);
+      
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
 
       const { error } = await supabase
         .from('user_settings')
@@ -63,30 +70,42 @@ export const useSettings = (settingNames: string[] = []): SettingsHook => {
           onConflict: 'user_id,setting_name'
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Database error:', error);
+        throw error;
+      }
 
+      // Update local state immediately
       setSettings(prev => ({
         ...prev,
         [name]: value
       }));
 
+      console.log('Setting saved successfully:', name);
       toast({
         title: "Settings Saved",
         description: `${name} updated successfully`,
       });
-    } catch (error) {
+      
+      return true;
+    } catch (error: any) {
       console.error('Error saving setting:', error);
+      setError(error.message || 'Failed to save setting');
+      
       toast({
         title: "Save Error",
-        description: `Failed to save ${name}`,
+        description: `Failed to save ${name}: ${error.message}`,
         variant: "destructive",
       });
+      
+      return false;
     }
   };
 
   return {
     settings,
     updateSetting,
-    isLoading
+    isLoading,
+    error
   };
 };

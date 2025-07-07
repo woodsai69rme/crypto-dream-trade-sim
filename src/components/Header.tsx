@@ -14,7 +14,9 @@ import {
   History, 
   Shield,
   UserPlus,
-  LogOut
+  LogOut,
+  Newspaper,
+  Workflow
 } from "lucide-react";
 
 interface HeaderProps {
@@ -43,6 +45,8 @@ export const Header = ({ activeTab, setActiveTab }: HeaderProps) => {
     { id: "trading", label: "Trading", icon: TrendingUp },
     { id: "accounts", label: "Accounts", icon: UserPlus },
     { id: "traders", label: "Top Traders", icon: Users },
+    { id: "news", label: "News AI", icon: Newspaper },
+    { id: "workflows", label: "Workflows", icon: Workflow },
     { id: "history", label: "History", icon: History },
     { id: "risk", label: "Risk", icon: Shield },
     { id: "settings", label: "Settings", icon: Settings },

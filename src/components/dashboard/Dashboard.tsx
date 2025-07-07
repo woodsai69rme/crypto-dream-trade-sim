@@ -4,7 +4,7 @@ import { useRealtimeMarketData } from "@/hooks/useRealtimeMarketData";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import { Wallet, TrendingUp, TrendingDown, Users, Activity, DollarSign } from "lucide-react";
+import { Wallet, TrendingUp, TrendingDown, Users, Activity, DollarSign, Newspaper, Workflow, Settings, Bot } from "lucide-react";
 
 export const Dashboard = () => {
   const { currentAccount, accounts } = useMultipleAccounts();
@@ -191,6 +191,45 @@ export const Dashboard = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Feature Summary */}
+      <Card className="crypto-card-gradient text-primary-foreground">
+        <CardHeader>
+          <CardTitle>System Features</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="flex items-center gap-3 p-3 bg-white/5 rounded-lg">
+              <Newspaper className="w-8 h-8 text-blue-400" />
+              <div>
+                <h3 className="font-medium">AI News Research</h3>
+                <p className="text-sm text-muted-foreground">Real-time sentiment analysis</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 p-3 bg-white/5 rounded-lg">
+              <Workflow className="w-8 h-8 text-purple-400" />
+              <div>
+                <h3 className="font-medium">N8N Workflows</h3>
+                <p className="text-sm text-muted-foreground">Automated trading flows</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 p-3 bg-white/5 rounded-lg">
+              <Bot className="w-8 h-8 text-green-400" />
+              <div>
+                <h3 className="font-medium">AI Trading Bots</h3>
+                <p className="text-sm text-muted-foreground">Smart trading strategies</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 p-3 bg-white/5 rounded-lg">
+              <Settings className="w-8 h-8 text-orange-400" />
+              <div>
+                <h3 className="font-medium">API Integrations</h3>
+                <p className="text-sm text-muted-foreground">Multiple exchanges & AI</p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

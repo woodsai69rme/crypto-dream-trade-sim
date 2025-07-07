@@ -25,17 +25,25 @@ export const TradeFollowingSettings = ({ settings, onSettingsChange }: TradeFoll
   }, [settings]);
 
   const handleSave = async () => {
-    await updateSetting('tradeFollowingSettings', localSettings);
-    onSettingsChange(localSettings);
-    toast({
-      title: "Settings Saved",
-      description: "Trade following settings updated successfully",
-    });
+    const success = await updateSetting('tradeFollowingSettings', localSettings);
+    if (success) {
+      onSettingsChange(localSettings);
+      toast({
+        title: "Settings Saved",
+        description: "Trade following settings updated successfully",
+      });
+    }
   };
 
-  const updateLocalSetting = (key: string, value: any) => {
+  const updateLocalSetting = async (key: string, value: any) => {
     const newSettings = { ...localSettings, [key]: value };
     setLocalSettings(newSettings);
+    
+    // Auto-save on change
+    const success = await updateSetting('tradeFollowingSettings', newSettings);
+    if (success) {
+      onSettingsChange(newSettings);
+    }
   };
 
   return (
