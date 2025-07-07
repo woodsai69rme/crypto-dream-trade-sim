@@ -1447,6 +1447,51 @@ export type Database = {
         }
         Relationships: []
       }
+      comprehensive_audit: {
+        Row: {
+          account_id: string | null
+          action_type: string
+          created_at: string
+          entity_id: string
+          entity_type: string
+          id: string
+          ip_address: unknown | null
+          metadata: Json | null
+          new_values: Json | null
+          old_values: Json | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          account_id?: string | null
+          action_type: string
+          created_at?: string
+          entity_id: string
+          entity_type: string
+          id?: string
+          ip_address?: unknown | null
+          metadata?: Json | null
+          new_values?: Json | null
+          old_values?: Json | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          account_id?: string | null
+          action_type?: string
+          created_at?: string
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          ip_address?: unknown | null
+          metadata?: Json | null
+          new_values?: Json | null
+          old_values?: Json | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       contents: {
         Row: {
           content: Json
@@ -2972,6 +3017,42 @@ export type Database = {
         }
         Relationships: []
       }
+      price_alerts: {
+        Row: {
+          created_at: string
+          direction: string
+          id: string
+          is_active: boolean
+          is_triggered: boolean
+          symbol: string
+          target_price: number
+          triggered_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          direction: string
+          id?: string
+          is_active?: boolean
+          is_triggered?: boolean
+          symbol: string
+          target_price: number
+          triggered_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          direction?: string
+          id?: string
+          is_active?: boolean
+          is_triggered?: boolean
+          symbol?: string
+          target_price?: number
+          triggered_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -3455,6 +3536,42 @@ export type Database = {
           follower_id?: string
           following_id?: string
           id?: string
+        }
+        Relationships: []
+      }
+      social_sentiment: {
+        Row: {
+          created_at: string
+          data_timestamp: string
+          id: string
+          mention_count: number
+          platform: string
+          raw_data: Json | null
+          sentiment_score: number
+          symbol: string
+          trending_rank: number | null
+        }
+        Insert: {
+          created_at?: string
+          data_timestamp?: string
+          id?: string
+          mention_count?: number
+          platform: string
+          raw_data?: Json | null
+          sentiment_score?: number
+          symbol: string
+          trending_rank?: number | null
+        }
+        Update: {
+          created_at?: string
+          data_timestamp?: string
+          id?: string
+          mention_count?: number
+          platform?: string
+          raw_data?: Json | null
+          sentiment_score?: number
+          symbol?: string
+          trending_rank?: number | null
         }
         Relationships: []
       }
@@ -4107,6 +4224,45 @@ export type Database = {
         }
         Relationships: []
       }
+      wallet_connections: {
+        Row: {
+          balance: number | null
+          created_at: string
+          id: string
+          is_active: boolean
+          network: string
+          updated_at: string
+          user_id: string
+          wallet_address: string
+          wallet_name: string | null
+          wallet_type: string
+        }
+        Insert: {
+          balance?: number | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          network?: string
+          updated_at?: string
+          user_id: string
+          wallet_address: string
+          wallet_name?: string | null
+          wallet_type: string
+        }
+        Update: {
+          balance?: number | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          network?: string
+          updated_at?: string
+          user_id?: string
+          wallet_address?: string
+          wallet_name?: string | null
+          wallet_type?: string
+        }
+        Relationships: []
+      }
       watchlists: {
         Row: {
           created_at: string | null
@@ -4211,6 +4367,18 @@ export type Database = {
           p_order_type?: string
         }
         Returns: Json
+      }
+      log_comprehensive_audit: {
+        Args: {
+          p_account_id: string
+          p_action_type: string
+          p_entity_type: string
+          p_entity_id: string
+          p_old_values?: Json
+          p_new_values?: Json
+          p_metadata?: Json
+        }
+        Returns: string
       }
       populate_dummy_snapshots: {
         Args: Record<PropertyKey, never>
