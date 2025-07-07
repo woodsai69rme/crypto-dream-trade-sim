@@ -22,16 +22,16 @@ export const OpenRouterIntegration = () => {
 
   return (
     <div className="space-y-6">
-      <Card>
+      <Card className="bg-card/50 backdrop-blur-sm border border-purple-500/20">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 text-primary-foreground">
             <Bot className="w-5 h-5" />
             OpenRouter Configuration
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="api-key">API Key</Label>
+            <Label htmlFor="api-key" className="text-primary-foreground">API Key</Label>
             <div className="flex gap-2">
               <Input
                 id="api-key"
@@ -39,8 +39,9 @@ export const OpenRouterIntegration = () => {
                 placeholder="sk-or-..."
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
+                className="bg-slate-800/50 border-slate-600 text-white"
               />
-              <Button onClick={() => setIsConnected(true)}>
+              <Button onClick={() => setIsConnected(true)} className="bg-purple-600 hover:bg-purple-700">
                 <Key className="w-4 h-4 mr-2" />
                 Connect
               </Button>
@@ -48,7 +49,7 @@ export const OpenRouterIntegration = () => {
           </div>
 
           <div className="flex items-center justify-between">
-            <span>Connection Status</span>
+            <span className="text-primary-foreground">Connection Status</span>
             <Badge className={isConnected ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}>
               {isConnected ? 'Connected' : 'Disconnected'}
             </Badge>
@@ -57,16 +58,16 @@ export const OpenRouterIntegration = () => {
       </Card>
 
       {isConnected && (
-        <Card>
+        <Card className="bg-card/50 backdrop-blur-sm border border-purple-500/20">
           <CardHeader>
-            <CardTitle>Available Models</CardTitle>
+            <CardTitle className="text-primary-foreground">Available Models</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {availableModels.map((model) => (
-                <div key={model.id} className="flex items-center justify-between p-3 border rounded-lg">
+                <div key={model.id} className="flex items-center justify-between p-3 border border-slate-600 rounded-lg bg-slate-800/30">
                   <div>
-                    <div className="font-medium">{model.name}</div>
+                    <div className="font-medium text-white">{model.name}</div>
                     <div className="text-sm text-muted-foreground">{model.provider}</div>
                     <div className="text-xs text-muted-foreground">{model.cost}</div>
                   </div>

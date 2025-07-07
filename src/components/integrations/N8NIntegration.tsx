@@ -37,8 +37,8 @@ export const N8NIntegration = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">N8N Workflows</h3>
-        <Button>
+        <h3 className="text-lg font-semibold text-primary-foreground">N8N Workflows</h3>
+        <Button className="bg-purple-600 hover:bg-purple-700">
           <Plus className="w-4 h-4 mr-2" />
           Create Workflow
         </Button>
@@ -46,13 +46,13 @@ export const N8NIntegration = () => {
 
       <div className="grid gap-4">
         {workflows.map((workflow) => (
-          <Card key={workflow.id}>
+          <Card key={workflow.id} className="bg-card/50 backdrop-blur-sm border border-purple-500/20">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <Network className="w-5 h-5 text-blue-400" />
                   <div>
-                    <div className="font-medium">{workflow.name}</div>
+                    <div className="font-medium text-white">{workflow.name}</div>
                     <div className="text-sm text-muted-foreground">
                       {workflow.executions} executions • Last run: {workflow.lastRun}
                     </div>

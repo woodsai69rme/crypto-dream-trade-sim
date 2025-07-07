@@ -13,10 +13,10 @@ const Index = () => {
   if (!user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-950 to-slate-950 flex items-center justify-center">
-        <Card className="w-full max-w-md">
+        <Card className="w-full max-w-md bg-card/50 backdrop-blur-sm border border-purple-500/20">
           <CardContent className="p-6 text-center">
             <TrendingUp className="w-12 h-12 mx-auto mb-4 text-purple-400" />
-            <h1 className="text-2xl font-bold mb-2">Welcome to CryptoTrader Pro</h1>
+            <h1 className="text-2xl font-bold mb-2 text-primary-foreground">Welcome to CryptoTrader Pro</h1>
             <p className="text-muted-foreground mb-4">
               Please sign in to access your trading dashboard
             </p>
@@ -30,16 +30,16 @@ const Index = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-950/20 to-slate-950">
       <div className="container mx-auto p-6">
         <Tabs defaultValue="accounts" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 bg-card/50 backdrop-blur-sm mb-6">
-            <TabsTrigger value="accounts" className="flex items-center gap-2">
+          <TabsList className="grid w-full grid-cols-3 bg-card/50 backdrop-blur-sm mb-6 border border-purple-500/20">
+            <TabsTrigger value="accounts" className="flex items-center gap-2 text-primary-foreground">
               <Users className="w-4 h-4" />
               Account Manager
             </TabsTrigger>
-            <TabsTrigger value="trading" className="flex items-center gap-2">
+            <TabsTrigger value="trading" className="flex items-center gap-2 text-primary-foreground">
               <TrendingUp className="w-4 h-4" />
               Trading Hub
             </TabsTrigger>
-            <TabsTrigger value="portfolio" className="flex items-center gap-2">
+            <TabsTrigger value="portfolio" className="flex items-center gap-2 text-primary-foreground">
               <BarChart3 className="w-4 h-4" />
               Portfolio
             </TabsTrigger>

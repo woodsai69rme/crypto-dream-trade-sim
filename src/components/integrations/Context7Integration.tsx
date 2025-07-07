@@ -40,8 +40,8 @@ export const Context7Integration = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Context7 AI Agents</h3>
-        <Button>
+        <h3 className="text-lg font-semibold text-primary-foreground">Context7 AI Agents</h3>
+        <Button className="bg-purple-600 hover:bg-purple-700">
           <Plus className="w-4 h-4 mr-2" />
           Create Agent
         </Button>
@@ -49,7 +49,7 @@ export const Context7Integration = () => {
 
       <div className="grid gap-4">
         {agents.map((agent) => (
-          <Card key={agent.id} className="bg-gradient-to-r from-purple-900/20 to-blue-900/20 border-purple-700/50">
+          <Card key={agent.id} className="bg-gradient-to-r from-purple-900/20 to-blue-900/20 border-purple-700/50 backdrop-blur-sm">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -57,7 +57,7 @@ export const Context7Integration = () => {
                     <Brain className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <div className="font-medium">{agent.name}</div>
+                    <div className="font-medium text-white">{agent.name}</div>
                     <div className="text-sm text-muted-foreground">
                       {agent.type.replace('_', ' ')} • {agent.contextWindow.toLocaleString()} context window
                     </div>
