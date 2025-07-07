@@ -5,14 +5,29 @@ import { MCPSettings } from "./MCPSettings";
 import { ComprehensiveTestingSuite } from "./ComprehensiveTestingSuite";
 import { TradeFollowingSettings } from "../trading/TradeFollowingSettings";
 import { Settings, Bot, Key, TestTube, Users } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSettings } from "@/hooks/useSettings";
 
 export const SettingsPanel = () => {
+  const { settings, updateSetting, isLoading } = useSettings();
   const [tradeFollowingSettings, setTradeFollowingSettings] = useState({
     minConfidence: 75,
     maxPositionSize: 2500,
     autoExecute: false,
   });
+
+  // Load settings on mount
+  useEffect(() => {
+    if (!isLoading && settings.tradeFollowingSettings) {
+      setTradeFollowingSettings(settings.tradeFollowingSettings);
+    }
+  }, [isLoading, settings]);
+
+  // Update function that saves to database
+  const handleTradeFollowingChange = async (newSettings: any) => {
+    setTradeFollowingSettings(newSettings);
+    await updateSetting('tradeFollowingSettings', newSettings);
+  };
 
   return (
     <div className="space-y-6">
@@ -52,7 +67,7 @@ export const SettingsPanel = () => {
         <TabsContent value="following">
           <TradeFollowingSettings 
             settings={tradeFollowingSettings}
-            onSettingsChange={setTradeFollowingSettings}
+            onSettingsChange={handleTradeFollowingChange}
           />
         </TabsContent>
 
