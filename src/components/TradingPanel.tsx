@@ -10,7 +10,10 @@ import { TradingHistoryDashboard } from "@/components/TradingHistoryDashboard";
 import { EnhancedOrderManager } from "@/components/trading/EnhancedOrderManager";
 import { TradeAuditTrail } from "@/components/trading/TradeAuditTrail";
 import { PortfolioRebalancingSystem } from "@/components/portfolio/PortfolioRebalancingSystem";
-import { BarChart3, Bot, Users, History, TrendingUp, Activity, Edit, FileText, Balance } from "lucide-react";
+import { AdvancedPortfolioAnalytics } from "@/components/analytics/AdvancedPortfolioAnalytics";
+import { BacktestingEngine } from "@/components/backtesting/BacktestingEngine";
+import { MobilePWA } from "@/components/mobile/MobilePWA";
+import { BarChart3, Bot, Users, History, TrendingUp, Activity, Edit, FileText, Scale, Brain, TestTube, Smartphone } from "lucide-react";
 import { AIChatAssistant } from "@/components/ai/AIChatAssistant";
 import { TradingViewChart } from "@/components/charts/TradingViewChart";
 import { PortfolioRebalancer } from "@/components/portfolio/PortfolioRebalancer";
@@ -30,7 +33,7 @@ export const TradingPanel = () => {
       </div>
 
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-9 bg-card/50 backdrop-blur-sm">
+        <TabsList className="grid w-full grid-cols-12 bg-card/50 backdrop-blur-sm">
           <TabsTrigger value="overview" className="flex items-center gap-2">
             <BarChart3 className="w-4 h-4" />
             Market
@@ -44,8 +47,16 @@ export const TradingPanel = () => {
             Orders
           </TabsTrigger>
           <TabsTrigger value="rebalance" className="flex items-center gap-2">
-            <Balance className="w-4 h-4" />
+            <Scale className="w-4 h-4" />
             Rebalance
+          </TabsTrigger>
+          <TabsTrigger value="analytics" className="flex items-center gap-2">
+            <Brain className="w-4 h-4" />
+            Analytics
+          </TabsTrigger>
+          <TabsTrigger value="backtest" className="flex items-center gap-2">
+            <TestTube className="w-4 h-4" />
+            Backtest
           </TabsTrigger>
           <TabsTrigger value="ai-chat" className="flex items-center gap-2">
             <Bot className="w-4 h-4" />
@@ -66,6 +77,10 @@ export const TradingPanel = () => {
           <TabsTrigger value="risk" className="flex items-center gap-2">
             <Activity className="w-4 h-4" />
             Risk
+          </TabsTrigger>
+          <TabsTrigger value="mobile" className="flex items-center gap-2">
+            <Smartphone className="w-4 h-4" />
+            Mobile
           </TabsTrigger>
         </TabsList>
 
@@ -102,6 +117,14 @@ export const TradingPanel = () => {
           <PortfolioRebalancingSystem />
         </TabsContent>
 
+        <TabsContent value="analytics">
+          <AdvancedPortfolioAnalytics />
+        </TabsContent>
+
+        <TabsContent value="backtest">
+          <BacktestingEngine />
+        </TabsContent>
+
         <TabsContent value="ai-chat">
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
             <AIChatAssistant />
@@ -126,6 +149,10 @@ export const TradingPanel = () => {
 
         <TabsContent value="risk">
           <RiskManagementDashboard />
+        </TabsContent>
+
+        <TabsContent value="mobile">
+          <MobilePWA />
         </TabsContent>
       </Tabs>
     </div>
