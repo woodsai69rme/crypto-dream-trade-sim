@@ -17,6 +17,15 @@ interface TradeRequest {
   reasoning?: string;
 }
 
+interface TradeResponse {
+  success: boolean;
+  trade_id?: string;
+  new_balance?: number;
+  trade_value?: number;
+  fee?: number;
+  error?: string;
+}
+
 export const usePaperTrading = () => {
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
@@ -49,18 +58,23 @@ export const usePaperTrading = () => {
 
       if (error) throw error;
 
-      if (data.success) {
+      // Type guard to check if data is a TradeResponse object
+      const tradeResponse = data as TradeResponse;
+      
+      if (tradeResponse && typeof tradeResponse === 'object' && tradeResponse.success) {
         // Add additional trade details if provided
         if (tradeRequest.stopLoss || tradeRequest.takeProfit || tradeRequest.reasoning) {
-          await supabase
-            .from('paper_trades')
-            .update({
-              stop_loss: tradeRequest.stopLoss,
-              take_profit: tradeRequest.takeProfit,
-              reasoning: tradeRequest.reasoning,
-              trade_category: 'manual'
-            })
-            .eq('id', data.trade_id);
+          if (tradeResponse.trade_id) {
+            await supabase
+              .from('paper_trades')
+              .update({
+                stop_loss: tradeRequest.stopLoss,
+                take_profit: tradeRequest.takeProfit,
+                reasoning: tradeRequest.reasoning,
+                trade_category: 'manual'
+              })
+              .eq('id', tradeResponse.trade_id);
+          }
         }
 
         toast({
@@ -68,9 +82,10 @@ export const usePaperTrading = () => {
           description: `${tradeRequest.side.toUpperCase()} ${tradeRequest.amount} ${tradeRequest.symbol} at $${tradeRequest.price}`,
         });
 
-        return data;
+        return tradeResponse;
       } else {
-        throw new Error(data.error);
+        const errorMessage = tradeResponse?.error || "Unknown error occurred";
+        throw new Error(errorMessage);
       }
     } catch (error: any) {
       console.error('Trade execution error:', error);
