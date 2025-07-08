@@ -1,0 +1,45 @@
+
+name: Feature Request
+description: Suggest a new feature for the trading system
+title: "[FEATURE] "
+labels: ["enhancement", "needs-review"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement
+      description: What problem does this feature solve?
+      placeholder: As a user, I want to...
+    validations:
+      required: true
+  
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: How should this feature work?
+    validations:
+      required: true
+  
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - Low
+        - Medium
+        - High
+        - Critical
+    validations:
+      required: true
+  
+  - type: checkboxes
+    id: implementation
+    attributes:
+      label: Implementation Areas
+      options:
+        - label: Frontend UI changes
+        - label: Backend API changes
+        - label: Database schema changes
+        - label: Third-party integrations
+        - label: Documentation updates

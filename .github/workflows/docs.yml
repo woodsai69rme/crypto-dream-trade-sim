@@ -1,0 +1,38 @@
+
+name: Update Documentation
+on:
+  push:
+    branches: [main]
+    paths: ['src/**', 'docs/**']
+
+jobs:
+  update-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      
+      - name: Generate API docs
+        run: |
+          npm ci
+          npm run generate-docs
+      
+      - name: Update README stats
+        run: |
+          echo "Last updated: $(date)" >> README.md
+          echo "Total components: $(find src/components -name '*.tsx' | wc -l)" >> README.md
+          echo "Total hooks: $(find src/hooks -name '*.tsx' | wc -l)" >> README.md
+      
+      - name: Commit documentation updates
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add docs/ README.md
+          git diff --staged --quiet || git commit -m "docs: auto-update documentation [skip ci]"
+          git push
