@@ -182,7 +182,7 @@ export const useMultipleAccounts = () => {
     } catch (error) {
       console.error('Error switching account:', error);
     }
-  }, [accounts, user, toast]);
+  }, [accounts, toast]);
 
   // Execute trade on current account
   const executeTrade = useCallback(async (trade: Trade): Promise<boolean> => {
@@ -258,7 +258,7 @@ export const useMultipleAccounts = () => {
     try {
       const { error } = await supabase
         .from('paper_trading_accounts')
-        .update(updates)
+        .update(updates as any)
         .eq('id', accountId)
         .eq('user_id', user?.id);
 
