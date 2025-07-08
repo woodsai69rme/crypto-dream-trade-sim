@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LiveTradingDashboard } from "./LiveTradingDashboard";
+import { LiveTradingDashboard } from "../dashboard/LiveTradingDashboard";
 import { ComprehensiveAuditViewer } from "./ComprehensiveAuditViewer";
 import { RealTimeSignalProcessor } from "./RealTimeSignalProcessor";
 import { AdvancedRiskManager } from "./AdvancedRiskManager";

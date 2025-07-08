@@ -63,7 +63,22 @@ export const useAITradingBots = () => {
 
       if (error) throw error;
 
-      setBots(data || []);
+      setBots((data || []).map(bot => ({
+        ...bot,
+        status: bot.status as 'active' | 'paused' | 'stopped',
+        mode: bot.mode as 'paper' | 'live',
+        performance: bot.performance as {
+          total_return: number;
+          win_rate: number;
+          total_trades: number;
+          daily_pnl: number;
+          weekly_pnl: number;
+          monthly_pnl: number;
+        },
+        paper_balance: bot.paper_balance || 0,
+        live_balance: bot.live_balance || 0,
+        last_trade_at: bot.last_trade_at || null
+      })));
       
       // Activate first 5 bots by default
       const activeIds = new Set((data || []).slice(0, 5).map(bot => bot.id));
@@ -158,7 +173,7 @@ export const useAITradingBots = () => {
     return {
       botId: bot.id,
       symbol,
-      side: signal.side,
+      side: signal.side as 'buy' | 'sell',
       amount: 0.001 + Math.random() * 0.05, // Small amounts for bots
       price: Math.round(price * 100) / 100,
       confidence: Math.round(signal.confidence),

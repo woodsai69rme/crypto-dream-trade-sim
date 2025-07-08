@@ -114,4 +114,31 @@ All colors MUST be HSL.
   .crypto-glow {
     box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
   }
+
+  /* Live Dashboard Animations */
+  .animate-scroll {
+    animation: scroll 30s linear infinite;
+  }
+
+  .animate-scroll-reverse {
+    animation: scroll-reverse 25s linear infinite;
+  }
+
+  @keyframes scroll {
+    0% {
+      transform: translateX(100%);
+    }
+    100% {
+      transform: translateX(-100%);
+    }
+  }
+
+  @keyframes scroll-reverse {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(100%);
+    }
+  }
 }
