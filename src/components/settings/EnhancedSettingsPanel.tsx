@@ -22,6 +22,7 @@ import { LiveTradingHub } from "../enhanced/LiveTradingHub";
 import { ComprehensiveAuditDashboard } from "../enhanced/ComprehensiveAuditDashboard";
 import { SocialSentimentMonitor } from "../SocialSentimentMonitor";
 import { PriceAlertsManager } from "../PriceAlertsManager";
+import { ComprehensiveTradeFollowingSystem } from "../trading/ComprehensiveTradeFollowingSystem";
 
 export const EnhancedSettingsPanel = () => {
   const { settings, updateSetting, isLoading } = useSettings();
@@ -54,8 +55,12 @@ export const EnhancedSettingsPanel = () => {
         <h1 className="text-3xl font-bold text-primary-foreground">Complete Trading System</h1>
       </div>
 
-      <Tabs defaultValue="global" className="w-full">
+      <Tabs defaultValue="complete-system" className="w-full">
         <TabsList className="grid w-full grid-cols-12 bg-card/50 backdrop-blur-sm text-xs">
+          <TabsTrigger value="complete-system" className="flex items-center gap-1">
+            <Users className="w-3 h-3" />
+            Complete System
+          </TabsTrigger>
           <TabsTrigger value="global" className="flex items-center gap-1">
             <Globe className="w-3 h-3" />
             Global
@@ -105,6 +110,10 @@ export const EnhancedSettingsPanel = () => {
             Bots
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="complete-system">
+          <ComprehensiveTradeFollowingSystem />
+        </TabsContent>
 
         <TabsContent value="global">
           <GlobalAccountSettings />
