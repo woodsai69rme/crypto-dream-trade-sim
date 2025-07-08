@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -37,7 +38,7 @@ const data = [
 
 export const PortfolioDashboard = () => {
   const { accounts, currentAccount, accountSummary } = useMultipleAccounts();
-  const [date, setDate] useState<Date | undefined>(new Date())
+  const [date, setDate] = useState<Date | undefined>(new Date())
 
   return (
     <div className="space-y-8">
