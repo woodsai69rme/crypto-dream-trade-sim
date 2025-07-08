@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { useMultipleAccounts } from '@/hooks/useMultipleAccounts';
 import { useToast } from '@/hooks/use-toast';
 import { EnhancedAccountCard } from './EnhancedAccountCard';
+import { BulkActionsModal } from './BulkActionsModal';
+import { CreateAccountModal } from './CreateAccountModal';
 import { 
   Wallet,
   Star,
@@ -16,22 +18,18 @@ import {
 } from 'lucide-react';
 
 export const MyAccounts = () => {
-  const { accounts, currentAccount, switchAccount } = useMultipleAccounts();
+  const { accounts, currentAccount, switchAccount, refreshAccounts } = useMultipleAccounts();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [showBulkActions, setShowBulkActions] = useState(false);
+  const [showCreateAccount, setShowCreateAccount] = useState(false);
   const { toast } = useToast();
 
   const handleCreateAccount = () => {
-    toast({
-      title: "Create Account",
-      description: "Account creation functionality coming soon",
-    });
+    setShowCreateAccount(true);
   };
 
   const handleBulkActions = () => {
-    toast({
-      title: "Bulk Actions",
-      description: "Bulk operations functionality coming soon",
-    });
+    setShowBulkActions(true);
   };
 
   return (
@@ -107,6 +105,19 @@ export const MyAccounts = () => {
           ))}
         </div>
       )}
+
+      <BulkActionsModal
+        accounts={accounts}
+        isOpen={showBulkActions}
+        onClose={() => setShowBulkActions(false)}
+        onAccountsUpdated={refreshAccounts}
+      />
+
+      <CreateAccountModal
+        isOpen={showCreateAccount}
+        onClose={() => setShowCreateAccount(false)}
+        onAccountCreated={refreshAccounts}
+      />
     </div>
   );
 };

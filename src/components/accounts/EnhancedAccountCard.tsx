@@ -1,19 +1,24 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { LineChart, Line, ResponsiveContainer } from 'recharts';
 import { Eye, Copy, Settings, TrendingUp, TrendingDown, Activity, BarChart3 } from 'lucide-react';
+import { AccountManagementModal } from './AccountManagementModal';
+import { AccountCryptoHoldings } from './AccountCryptoHoldings';
 
 interface EnhancedAccountCardProps {
   account: any;
   onSwitchAccount: (accountId: string) => void;
   isActive: boolean;
+  onAccountUpdated?: () => void;
 }
 
-export const EnhancedAccountCard = ({ account, onSwitchAccount, isActive }: EnhancedAccountCardProps) => {
+export const EnhancedAccountCard = ({ account, onSwitchAccount, isActive, onAccountUpdated }: EnhancedAccountCardProps) => {
+  const [showManagement, setShowManagement] = useState(false);
+  const [showHoldings, setShowHoldings] = useState(false);
   const mockPerformanceData = Array.from({ length: 7 }, (_, i) => ({
     day: i,
     value: account.balance * (1 + (Math.random() - 0.5) * 0.1)
@@ -145,6 +150,7 @@ export const EnhancedAccountCard = ({ account, onSwitchAccount, isActive }: Enha
             variant="secondary" 
             size="sm" 
             className="bg-purple-600 hover:bg-purple-700 text-white"
+            onClick={() => setShowManagement(true)}
           >
             <Settings className="w-4 h-4 mr-2" />
             Manage
@@ -153,11 +159,41 @@ export const EnhancedAccountCard = ({ account, onSwitchAccount, isActive }: Enha
             variant="outline" 
             size="sm"
             className="border-slate-600 hover:bg-slate-800"
-            onClick={() => onSwitchAccount(account.id)}
+            onClick={() => setShowHoldings(true)}
           >
-            View Details
+            View Holdings
           </Button>
         </div>
+
+        <AccountManagementModal
+          account={account}
+          isOpen={showManagement}
+          onClose={() => setShowManagement(false)}
+          onAccountUpdated={() => {
+            onAccountUpdated?.();
+            setShowManagement(false);
+          }}
+        />
+
+        {showHoldings && (
+          <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="w-full max-w-4xl max-h-[90vh] overflow-auto">
+              <AccountCryptoHoldings 
+                accountId={account.id} 
+                accountName={account.account_name} 
+              />
+              <div className="mt-4 text-center">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowHoldings(false)}
+                  className="bg-background/80"
+                >
+                  Close
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

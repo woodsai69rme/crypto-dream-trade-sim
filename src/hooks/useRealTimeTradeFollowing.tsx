@@ -172,13 +172,22 @@ export const useRealTimeTradeFollowing = () => {
           delay: delay
         });
 
-        const success = await executeTrade({
-          symbol: signal.symbol,
-          side: signal.side,
-          amount: finalAmount,
-          price: signal.price,
-          type: 'market'
+        // Execute trade directly on this specific account using database function
+        const { data, error } = await supabase.rpc('execute_paper_trade', {
+          p_user_id: user!.id,
+          p_account_id: account.id,
+          p_symbol: signal.symbol,
+          p_side: signal.side,
+          p_amount: finalAmount,
+          p_price: signal.price,
+          p_trade_type: 'market',
+          p_order_type: 'market'
         });
+
+        if (error) throw error;
+
+        const result = data as { success: boolean; error?: string; new_balance?: number };
+        const success = result.success;
 
         if (success) {
           totalExecuted++;
