@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LiveTradingDashboard } from "./LiveTradingDashboard";
@@ -10,6 +9,7 @@ import { SystemOptimizer } from "./SystemOptimizer";
 import { EnhancedTradeFollower } from "./EnhancedTradeFollower";
 import { AccountTradingMonitor } from "./AccountTradingMonitor";
 import { Activity, FileText, Settings, Users, Bot, BarChart3, Brain, Shield, Monitor } from "lucide-react";
+import { SystemHealthMonitor } from "../monitoring/SystemHealthMonitor";
 
 export const ComprehensiveTradeFollowingSystem = () => {
   return (
@@ -18,12 +18,12 @@ export const ComprehensiveTradeFollowingSystem = () => {
         <Activity className="w-6 h-6 text-green-400" />
         <h1 className="text-3xl font-bold text-white">Complete Trade Following System</h1>
         <div className="ml-auto text-sm text-white/60">
-          Advanced AI-powered multi-account trading system
+          Advanced AI-powered multi-account trading system with real-time monitoring
         </div>
       </div>
 
       <Tabs defaultValue="following" className="w-full">
-        <TabsList className="grid w-full grid-cols-8 bg-card/50 backdrop-blur-sm">
+        <TabsList className="grid w-full grid-cols-9 bg-card/50 backdrop-blur-sm">
           <TabsTrigger value="following" className="flex items-center gap-2">
             <Users className="w-4 h-4" />
             Trade Following
@@ -31,6 +31,10 @@ export const ComprehensiveTradeFollowingSystem = () => {
           <TabsTrigger value="monitor" className="flex items-center gap-2">
             <Monitor className="w-4 h-4" />
             Account Monitor
+          </TabsTrigger>
+          <TabsTrigger value="health" className="flex items-center gap-2">
+            <Activity className="w-4 h-4" />
+            System Health
           </TabsTrigger>
           <TabsTrigger value="dashboard" className="flex items-center gap-2">
             <Activity className="w-4 h-4" />
@@ -64,6 +68,10 @@ export const ComprehensiveTradeFollowingSystem = () => {
 
         <TabsContent value="monitor">
           <AccountTradingMonitor />
+        </TabsContent>
+
+        <TabsContent value="health">
+          <SystemHealthMonitor />
         </TabsContent>
 
         <TabsContent value="dashboard">

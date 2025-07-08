@@ -45,97 +45,131 @@ export const useRealTimeTradeFollowing = () => {
     accountStats: {} as Record<string, { trades: number; success: number; lastTrade: string }>
   });
 
-  // Initialize settings for all accounts
+  // Initialize settings for all accounts with proper distribution
   useEffect(() => {
     if (accounts.length > 0) {
       const newSettings: Record<string, AccountFollowingSettings> = {};
       
       accounts.forEach((account, index) => {
-        // Stagger settings to diversify trading behavior
+        // Create distinct settings for each account to ensure different behavior
         newSettings[account.id] = {
-          minConfidence: 65 + (index * 5), // Different confidence thresholds
-          maxPositionSize: account.balance * 0.1, // 10% of account balance
+          minConfidence: 60 + (index * 10), // Different confidence thresholds: 60%, 70%, 80%
+          maxPositionSize: account.balance * (0.15 + index * 0.05), // Different position sizes
           autoExecute: true,
-          followRatio: 0.8 + (index * 0.1), // Varying follow ratios
-          riskMultiplier: 1.0 - (index * 0.1), // Different risk levels
-          delayMs: index * 300, // Staggered execution
-          isActive: true
+          followRatio: 0.7 + (index * 0.15), // Different follow ratios: 70%, 85%, 100%
+          riskMultiplier: 1.2 - (index * 0.2), // Different risk levels: 1.2, 1.0, 0.8
+          delayMs: index * 500 + Math.random() * 300, // Staggered execution with randomness
+          isActive: true // Ensure all accounts are active by default
         };
       });
       
       setAccountSettings(newSettings);
-      console.log('Initialized settings for accounts:', Object.keys(newSettings));
+      console.log('✅ Initialized distinct settings for all accounts:', Object.keys(newSettings));
     }
   }, [accounts]);
 
-  // Generate realistic trading signals
+  // Enhanced signal generation with more realistic patterns
   useEffect(() => {
-    if (!isActive) return;
+    if (!isActive || accounts.length === 0) return;
 
     const generateSignal = () => {
-      const symbols = ['BTC', 'ETH', 'SOL', 'ADA', 'DOT', 'LINK', 'UNI', 'AVAX'];
+      const symbols = ['BTC', 'ETH', 'SOL', 'ADA', 'DOT', 'LINK', 'UNI', 'AVAX', 'MATIC', 'ATOM'];
       const sides: ('buy' | 'sell')[] = ['buy', 'sell'];
-      const sources = ['AI Analysis', 'Technical Indicator', 'Market Sentiment', 'Volume Analysis'];
+      const sources = ['AI Analysis', 'Technical Indicator', 'Market Sentiment', 'Volume Analysis', 'Whale Activity'];
+      
+      // Create more realistic price ranges per symbol
+      const priceRanges = {
+        BTC: { min: 40000, max: 70000 },
+        ETH: { min: 2000, max: 4000 },
+        SOL: { min: 80, max: 200 },
+        ADA: { min: 0.3, max: 1.5 },
+        DOT: { min: 5, max: 15 },
+        LINK: { min: 10, max: 30 },
+        UNI: { min: 5, max: 15 },
+        AVAX: { min: 20, max: 50 },
+        MATIC: { min: 0.5, max: 2 },
+        ATOM: { min: 8, max: 20 }
+      };
+
+      const symbol = symbols[Math.floor(Math.random() * symbols.length)];
+      const side = sides[Math.floor(Math.random() * sides.length)];
+      const priceRange = priceRanges[symbol as keyof typeof priceRanges];
+      const price = priceRange.min + Math.random() * (priceRange.max - priceRange.min);
       
       const signal: TradeSignal = {
         id: `signal_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        symbol: symbols[Math.floor(Math.random() * symbols.length)],
-        side: sides[Math.floor(Math.random() * sides.length)],
-        price: 1000 + Math.random() * 50000,
-        amount: 0.01 + Math.random() * 0.5,
+        symbol,
+        side,
+        price: Math.round(price * 100) / 100,
+        amount: 0.001 + Math.random() * 0.1, // Smaller, more realistic amounts
         confidence: 50 + Math.random() * 50,
         source: sources[Math.floor(Math.random() * sources.length)],
-        reasoning: `Technical analysis suggests ${sides[Math.floor(Math.random() * sides.length)]} opportunity`,
+        reasoning: `${side === 'buy' ? 'Bullish' : 'Bearish'} signal detected for ${symbol}`,
         timestamp: new Date().toISOString()
       };
 
       setSignals(prev => [signal, ...prev.slice(0, 49)]);
       setStats(prev => ({ ...prev, totalSignals: prev.totalSignals + 1 }));
       
-      // Process signal across all accounts
+      // Process signal with enhanced error handling
       handleNewSignal(signal);
     };
 
-    // Generate signals every 3-8 seconds for more activity
-    const interval = setInterval(generateSignal, 3000 + Math.random() * 5000);
+    // Generate signals every 5-10 seconds for more realistic trading
+    const interval = setInterval(generateSignal, 5000 + Math.random() * 5000);
     return () => clearInterval(interval);
-  }, [isActive, accounts]);
+  }, [isActive, accounts, accountSettings]);
 
   const handleNewSignal = useCallback(async (signal: TradeSignal) => {
-    console.log('Processing signal across all accounts:', signal);
+    console.log(`🔄 Processing signal ${signal.id} for ${signal.symbol} across ${accounts.length} accounts`);
     
-    // Process signal for each account with individual settings
-    const tradePromises = accounts.map(async (account, index) => {
+    if (accounts.length === 0) {
+      console.warn('❌ No accounts available for trade execution');
+      return;
+    }
+
+    let totalExecuted = 0;
+    let totalAttempted = 0;
+
+    // Process each account individually with proper error handling
+    for (const account of accounts) {
+      totalAttempted++;
       const settings = accountSettings[account.id];
-      if (!settings?.isActive || !settings.autoExecute) {
-        console.log(`Skipping account ${account.account_name} - inactive or manual mode`);
-        return null;
+      
+      if (!settings) {
+        console.warn(`⚠️ No settings found for account ${account.account_name}`);
+        continue;
+      }
+
+      if (!settings.isActive || !settings.autoExecute) {
+        console.log(`⏭️ Skipping account ${account.account_name} - inactive or manual mode`);
+        continue;
       }
       
       if (signal.confidence < settings.minConfidence) {
-        console.log(`Skipping account ${account.account_name} - low confidence: ${signal.confidence} < ${settings.minConfidence}`);
-        return null;
+        console.log(`⏭️ Skipping account ${account.account_name} - low confidence: ${signal.confidence} < ${settings.minConfidence}`);
+        continue;
       }
 
       try {
         const startTime = Date.now();
         
-        // Calculate position size based on account-specific settings
+        // Calculate position size with account-specific settings
         const baseAmount = signal.amount * settings.followRatio * settings.riskMultiplier;
         const maxAmount = Math.min(baseAmount, settings.maxPositionSize / signal.price);
-        
-        // Ensure minimum viable trade size
         const finalAmount = Math.max(maxAmount, 0.001);
 
         // Add staggered delay to prevent simultaneous execution
-        await new Promise(resolve => setTimeout(resolve, settings.delayMs + Math.random() * 200));
+        const delay = settings.delayMs + Math.random() * 200;
+        await new Promise(resolve => setTimeout(resolve, delay));
 
-        console.log(`Executing trade for ${account.account_name}:`, {
+        console.log(`💰 Executing trade for ${account.account_name}:`, {
           symbol: signal.symbol,
           side: signal.side,
           amount: finalAmount,
           price: signal.price,
-          confidence: signal.confidence
+          confidence: signal.confidence,
+          delay: delay
         });
 
         const success = await executeTrade({
@@ -147,13 +181,15 @@ export const useRealTimeTradeFollowing = () => {
         });
 
         if (success) {
+          totalExecuted++;
           const latency = Date.now() - startTime;
           
           // Update account-specific stats
           setStats(prev => ({
             ...prev,
             executedTrades: prev.executedTrades + 1,
-            avgLatency: (prev.avgLatency + latency) / 2,
+            avgLatency: Math.round((prev.avgLatency + latency) / 2),
+            successRate: Math.round(((prev.executedTrades + 1) / (prev.totalSignals || 1)) * 100),
             accountStats: {
               ...prev.accountStats,
               [account.id]: {
@@ -164,13 +200,13 @@ export const useRealTimeTradeFollowing = () => {
             }
           }));
 
-          // Log successful trade
+          // Log successful trade to comprehensive audit
           await supabase
             .from('comprehensive_audit')
             .insert({
               user_id: user?.id,
               account_id: account.id,
-              action_type: 'trade_followed',
+              action_type: 'trade_executed',
               entity_type: 'trade_signal',
               entity_id: signal.id,
               metadata: {
@@ -180,54 +216,108 @@ export const useRealTimeTradeFollowing = () => {
                 execution_latency: latency,
                 executed_amount: finalAmount,
                 confidence: signal.confidence,
-                account_name: account.account_name
+                account_name: account.account_name,
+                success: true
               } as any
             });
 
-          console.log(`✅ Trade executed successfully for ${account.account_name}`);
-          return { account: account.account_name, success: true, amount: finalAmount };
+          console.log(`✅ Trade executed successfully for ${account.account_name} (${latency}ms)`);
         } else {
           console.log(`❌ Trade failed for ${account.account_name}`);
-          return { account: account.account_name, success: false, error: 'Execution failed' };
+          
+          // Log failed trade
+          await supabase
+            .from('comprehensive_audit')
+            .insert({
+              user_id: user?.id,
+              account_id: account.id,
+              action_type: 'trade_failed',
+              entity_type: 'trade_signal',
+              entity_id: signal.id,
+              metadata: {
+                signal_id: signal.id,
+                symbol: signal.symbol,
+                side: signal.side,
+                account_name: account.account_name,
+                success: false,
+                error: 'Trade execution failed'
+              } as any
+            });
         }
       } catch (error) {
-        console.error(`Error executing trade for ${account.account_name}:`, error);
-        return { account: account.account_name, success: false, error: error.message };
+        console.error(`💥 Error executing trade for ${account.account_name}:`, error);
+        
+        // Log error to audit
+        await supabase
+          .from('comprehensive_audit')
+          .insert({
+            user_id: user?.id,
+            account_id: account.id,
+            action_type: 'trade_error',
+            entity_type: 'trade_signal',
+            entity_id: signal.id,
+            metadata: {
+              signal_id: signal.id,
+              symbol: signal.symbol,
+              side: signal.side,
+              account_name: account.account_name,
+              success: false,
+              error: error instanceof Error ? error.message : 'Unknown error'
+            } as any
+          });
       }
-    });
+    }
 
-    // Execute all trades and log results
-    const results = await Promise.allSettled(tradePromises);
-    const successful = results.filter(r => r.status === 'fulfilled' && r.value?.success).length;
-    console.log(`Signal processed: ${successful}/${accounts.length} accounts executed trades`);
+    console.log(`📊 Signal ${signal.id} processed: ${totalExecuted}/${totalAttempted} accounts executed trades`);
     
-  }, [accounts, accountSettings, executeTrade, user]);
+    // Show toast notification for significant results
+    if (totalExecuted > 0) {
+      toast({
+        title: "Trades Executed",
+        description: `${totalExecuted}/${totalAttempted} accounts executed ${signal.side} ${signal.symbol}`,
+      });
+    }
+    
+  }, [accounts, accountSettings, executeTrade, user, toast]);
 
   const updateAccountSettings = useCallback((accountId: string, settings: Partial<AccountFollowingSettings>) => {
     setAccountSettings(prev => ({
       ...prev,
       [accountId]: { ...prev[accountId], ...settings }
     }));
-    console.log(`Updated settings for account ${accountId}:`, settings);
+    console.log(`⚙️ Updated settings for account ${accountId}:`, settings);
   }, []);
 
   const startFollowing = useCallback(() => {
     setIsActive(true);
     
     // Ensure all accounts have active settings
+    const updatedSettings = { ...accountSettings };
     accounts.forEach(account => {
-      if (!accountSettings[account.id]?.isActive) {
-        updateAccountSettings(account.id, { isActive: true });
+      if (!updatedSettings[account.id]) {
+        updatedSettings[account.id] = {
+          minConfidence: 65,
+          maxPositionSize: account.balance * 0.1,
+          autoExecute: true,
+          followRatio: 0.8,
+          riskMultiplier: 1.0,
+          delayMs: Math.random() * 1000,
+          isActive: true
+        };
+      } else {
+        updatedSettings[account.id].isActive = true;
       }
     });
     
+    setAccountSettings(updatedSettings);
+    
     toast({
       title: "Trade Following Started",
-      description: `Active on all ${accounts.length} accounts with staggered execution`,
+      description: `Active on all ${accounts.length} accounts with distributed execution`,
     });
     
-    console.log('Trade following started for accounts:', accounts.map(a => a.account_name));
-  }, [accounts, accountSettings, updateAccountSettings, toast]);
+    console.log(`🚀 Trade following started for ${accounts.length} accounts:`, accounts.map(a => a.account_name));
+  }, [accounts, accountSettings, toast]);
 
   const stopFollowing = useCallback(() => {
     setIsActive(false);
@@ -238,7 +328,7 @@ export const useRealTimeTradeFollowing = () => {
       description: "All accounts paused from following trades",
     });
     
-    console.log('Trade following stopped for all accounts');
+    console.log('🛑 Trade following stopped for all accounts');
   }, [toast]);
 
   const getAccountStats = useCallback(() => {
