@@ -346,8 +346,7 @@ export const useMultipleAccounts = () => {
     try {
       const { error } = await supabase
         .from('paper_trading_accounts')
-        .insert({
-          user_id: user.id,
+        .insert([{
           account_name: accountData.account_name,
           account_type: accountData.account_type || 'balanced',
           risk_level: accountData.risk_level || 'medium',
@@ -361,7 +360,7 @@ export const useMultipleAccounts = () => {
           tags: accountData.tags || [],
           description: accountData.description || '',
           status: 'active'
-        });
+        }]);
 
       if (error) throw error;
 
