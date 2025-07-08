@@ -3,87 +3,30 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
 import { useRealTimePortfolio } from '@/hooks/useRealTimePortfolio';
-import { useMultipleAccounts } from '@/hooks/useMultipleAccounts';
+import { useRealTimeTradeFollowing } from '@/hooks/useRealTimeTradeFollowing';
 import { TradeSignalCard, TradeSignal } from './TradeSignal';
-import { TradeFollowingSettings } from './TradeFollowingSettings';
 import { ActiveAccountDisplay } from './ActiveAccountDisplay';
-import { Users } from 'lucide-react';
+import { Users, Activity, Settings, AlertCircle } from 'lucide-react';
 
 export const TradeFollower = () => {
   const { trades } = useRealTimePortfolio();
-  const { currentAccount, executeTrade } = useMultipleAccounts();
-  const [isFollowing, setIsFollowing] = useState(false);
-  const [signals, setSignals] = useState<TradeSignal[]>([]);
-  const [followSettings, setFollowSettings] = useState({
-    minConfidence: 70,
-    maxPositionSize: 1000,
-    autoExecute: false
-  });
+  const {
+    signals,
+    isActive,
+    stats,
+    startFollowing,
+    stopFollowing,
+    getAccountStats,
+    activeAccounts,
+    totalAccounts
+  } = useRealTimeTradeFollowing();
 
-  // Convert trades to the expected format for TradeTooltip
-  const formattedTrades = trades.map(trade => ({
-    ...trade,
-    side: (trade.side === 'buy' || trade.side === 'sell') ? trade.side : 'buy' as 'buy' | 'sell'
-  }));
-
-  // Simulate incoming trade signals with real market movements
-  useEffect(() => {
-    if (!isFollowing) return;
-
-    const interval = setInterval(() => {
-      const symbols = ['BTC', 'ETH', 'SOL', 'ADA', 'DOT', 'LINK'];
-      const sides: ('buy' | 'sell')[] = ['buy', 'sell'];
-      
-      const newSignal: TradeSignal = {
-        id: Date.now().toString(),
-        symbol: symbols[Math.floor(Math.random() * symbols.length)],
-        side: sides[Math.floor(Math.random() * sides.length)],
-        price: 50000 + Math.random() * 20000,
-        amount: 0.01 + Math.random() * 0.1,
-        confidence: 60 + Math.random() * 40,
-        source: 'AI Analysis',
-        timestamp: new Date().toISOString()
-      };
-
-      setSignals(prev => [newSignal, ...prev.slice(0, 9)]); // Keep last 10 signals
-
-      // Auto-execute if enabled and confidence is high enough
-      if (followSettings.autoExecute && newSignal.confidence >= followSettings.minConfidence) {
-        handleFollowTrade(newSignal);
-      }
-    }, 8000); // New signal every 8 seconds for better real-time feel
-
-    return () => clearInterval(interval);
-  }, [isFollowing, followSettings]);
+  const accountStats = getAccountStats();
 
   const handleFollowTrade = async (signal: TradeSignal) => {
-    if (!currentAccount) return;
-
-    const success = await executeTrade({
-      symbol: signal.symbol,
-      side: signal.side,
-      amount: Math.min(signal.amount, followSettings.maxPositionSize / signal.price),
-      price: signal.price,
-      type: 'market'
-    });
-
-    if (success) {
-      console.log('Trade followed successfully:', signal);
-      // Remove the signal after execution to show it was processed
-      setSignals(prev => prev.filter(s => s.id !== signal.id));
-    }
-  };
-
-  const handleToggleFollowing = (enabled: boolean) => {
-    console.log('Toggle following:', enabled);
-    setIsFollowing(enabled);
-    if (!enabled) {
-      console.log('Stopping trade following, clearing signals');
-      setSignals([]);
-    } else {
-      console.log('Starting trade following');
-    }
+    console.log('Manual trade execution from TradeFollower:', signal);
   };
 
   return (
@@ -91,56 +34,111 @@ export const TradeFollower = () => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Users className="w-5 h-5" />
-          Trade Following System
-          <Badge className={`ml-auto ${isFollowing ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'}`}>
-            {isFollowing ? 'Active' : 'Inactive'}
+          Advanced Trade Following System
+          <Badge className={`ml-auto ${isActive ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'}`}>
+            {isActive ? `${activeAccounts}/${totalAccounts} Active` : 'Inactive'}
           </Badge>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* System Status */}
         <div className="flex items-center justify-between p-4 bg-white/5 rounded-lg">
           <div>
-            <h3 className="font-medium">Enable Trade Following</h3>
+            <h3 className="font-medium">Multi-Account Trade Following</h3>
             <p className="text-sm text-white/60">
-              Automatically copy trades from top performers
+              AI-powered trading across {totalAccounts} accounts with individual configurations
             </p>
           </div>
           <Switch
-            checked={isFollowing}
-            onCheckedChange={handleToggleFollowing}
+            checked={isActive}
+            onCheckedChange={isActive ? stopFollowing : startFollowing}
           />
         </div>
 
-        {currentAccount && <ActiveAccountDisplay account={currentAccount} />}
+        {/* Quick Stats */}
+        <div className="grid grid-cols-3 gap-4">
+          <div className="text-center p-3 bg-white/5 rounded-lg">
+            <div className="text-xl font-bold text-green-400">{stats.executedTrades}</div>
+            <div className="text-xs text-white/60">Total Trades</div>
+          </div>
+          <div className="text-center p-3 bg-white/5 rounded-lg">
+            <div className="text-xl font-bold text-blue-400">{stats.totalSignals}</div>
+            <div className="text-xs text-white/60">Signals Processed</div>
+          </div>
+          <div className="text-center p-3 bg-white/5 rounded-lg">
+            <div className="text-xl font-bold text-purple-400">{activeAccounts}</div>
+            <div className="text-xs text-white/60">Active Accounts</div>
+          </div>
+        </div>
 
-        {isFollowing && (
-          <>
-            <TradeFollowingSettings
-              settings={followSettings}
-              onSettingsChange={setFollowSettings}
-            />
-
-            <div className="space-y-3">
-              <h3 className="font-medium">Live Trading Signals</h3>
-              {signals.length === 0 ? (
-                <div className="text-center py-8 text-white/60">
-                  <Users className="w-12 h-12 mx-auto mb-4 text-white/40" />
-                  <p>Waiting for trading signals...</p>
-                  <p className="text-sm mt-2">Signals will appear here when conditions are met</p>
-                </div>
-              ) : (
-                signals.map((signal) => (
-                  <TradeSignalCard
-                    key={signal.id}
-                    signal={signal}
-                    onExecute={handleFollowTrade}
-                    autoExecute={followSettings.autoExecute}
-                  />
-                ))
-              )}
+        {/* Account Status */}
+        <div className="space-y-2">
+          <h4 className="font-medium text-sm flex items-center gap-2">
+            <Activity className="w-4 h-4" />
+            Account Activity Status
+          </h4>
+          {accountStats.map((account) => (
+            <div key={account.accountId} className="flex items-center justify-between p-2 bg-white/5 rounded">
+              <div className="flex items-center gap-2">
+                <div className={`w-2 h-2 rounded-full ${
+                  account.settings?.isActive ? 'bg-green-400 animate-pulse' : 'bg-gray-400'
+                }`}></div>
+                <span className="text-sm font-medium">{account.accountName}</span>
+                <Badge variant="outline" className="text-xs">
+                  {account.stats.trades} trades
+                </Badge>
+              </div>
+              <div className="text-xs text-white/60">
+                Last: {account.stats.lastTrade}
+              </div>
             </div>
-          </>
+          ))}
+        </div>
+
+        {/* Recent Signals */}
+        {isActive && signals.length > 0 && (
+          <div className="space-y-3">
+            <h4 className="font-medium text-sm">Recent Trading Signals</h4>
+            <div className="space-y-2 max-h-64 overflow-y-auto">
+              {signals.slice(0, 5).map((signal) => (
+                <TradeSignalCard
+                  key={signal.id}
+                  signal={signal}
+                  onExecute={handleFollowTrade}
+                  autoExecute={true}
+                />
+              ))}
+            </div>
+          </div>
         )}
+
+        {/* Instructions */}
+        {!isActive && (
+          <div className="p-3 bg-yellow-500/10 rounded-lg border border-yellow-500/20">
+            <div className="flex items-center gap-2 text-yellow-200">
+              <AlertCircle className="w-4 h-4" />
+              <p className="text-sm">
+                Enable trade following to start automated trading across all your accounts.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Link to Enhanced View */}
+        <div className="pt-2 border-t border-white/10">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => {
+              // This would navigate to enhanced view in a real app
+              console.log('Navigate to enhanced trade following view');
+            }}
+            className="w-full"
+          >
+            <Settings className="w-4 h-4 mr-2" />
+            Advanced Settings & Monitoring
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
