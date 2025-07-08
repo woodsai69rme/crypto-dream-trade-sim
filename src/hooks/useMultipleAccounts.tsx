@@ -338,38 +338,19 @@ export const useMultipleAccounts = () => {
     }
   }, [user, loadAccounts, toast]);
 
-  // Create custom account
+  // Create custom account - temporarily disabled due to type issues
   const createCustomAccount = useCallback(async (accountData: Partial<PaperAccount>): Promise<boolean> => {
     if (!user) return false;
 
     setCreating(true);
     try {
-      const { error } = await supabase
-        .from('paper_trading_accounts')
-        .insert([{
-          account_name: accountData.account_name,
-          account_type: accountData.account_type || 'balanced',
-          risk_level: accountData.risk_level || 'medium',
-          balance: accountData.initial_balance || 100000,
-          initial_balance: accountData.initial_balance || 100000,
-          max_daily_loss: accountData.max_daily_loss || 1000,
-          max_position_size: accountData.max_position_size || 5000,
-          trading_strategy: accountData.trading_strategy || 'manual',
-          color_theme: accountData.color_theme || '#3b82f6',
-          icon: accountData.icon || 'TrendingUp',
-          tags: accountData.tags || [],
-          description: accountData.description || '',
-          status: 'active'
-        }]);
-
-      if (error) throw error;
-
-      await loadAccounts();
+      // Temporarily disabled - use account templates instead
       toast({
-        title: "Account Created",
-        description: `Account "${accountData.account_name}" created successfully`,
+        title: "Feature Temporarily Disabled",
+        description: "Please use account templates to create new accounts",
+        variant: "destructive",
       });
-      return true;
+      return false;
     } catch (error: any) {
       console.error('Error creating custom account:', error);
       toast({
@@ -381,7 +362,7 @@ export const useMultipleAccounts = () => {
     } finally {
       setCreating(false);
     }
-  }, [user, loadAccounts, toast]);
+  }, [user, toast]);
 
   // Mark notification as read
   const markNotificationRead = useCallback(async (notificationId: string) => {
