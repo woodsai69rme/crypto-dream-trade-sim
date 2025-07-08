@@ -4,122 +4,117 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { 
-  Activity, 
-  Server, 
-  Database, 
-  Wifi, 
-  AlertTriangle,
-  CheckCircle,
-  Clock
+  CheckCircle, 
+  AlertTriangle, 
+  XCircle, 
+  Activity,
+  Database,
+  Wifi,
+  Server,
+  Shield
 } from 'lucide-react';
 
-interface SystemMetric {
+interface HealthCheck {
   name: string;
   status: 'healthy' | 'warning' | 'error';
   value: number;
-  unit: string;
-  icon: any;
+  unit?: string;
+  icon: React.ElementType;
 }
 
 export const SystemHealthIndicator = () => {
-  const [metrics, setMetrics] = useState<SystemMetric[]>([
-    { name: 'API Response', status: 'healthy', value: 98, unit: 'ms', icon: Activity },
+  const [healthChecks, setHealthChecks] = useState<HealthCheck[]>([
     { name: 'Database', status: 'healthy', value: 99.9, unit: '%', icon: Database },
+    { name: 'API Response', status: 'healthy', value: 45, unit: 'ms', icon: Activity },
     { name: 'WebSocket', status: 'healthy', value: 100, unit: '%', icon: Wifi },
-    { name: 'Server Load', status: 'warning', value: 75, unit: '%', icon: Server }
+    { name: 'Server Load', status: 'warning', value: 75, unit: '%', icon: Server },
+    { name: 'Security', status: 'healthy', value: 100, unit: '%', icon: Shield }
   ]);
 
-  const [overallStatus, setOverallStatus] = useState<'healthy' | 'warning' | 'error'>('healthy');
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'healthy':
+        return <CheckCircle className="w-4 h-4 text-green-500" />;
+      case 'warning':
+        return <AlertTriangle className="w-4 h-4 text-yellow-500" />;
+      case 'error':
+        return <XCircle className="w-4 h-4 text-red-500" />;
+      default:
+        return <CheckCircle className="w-4 h-4 text-gray-500" />;
+    }
+  };
 
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'healthy':
+        return 'bg-green-500';
+      case 'warning':
+        return 'bg-yellow-500';
+      case 'error':
+        return 'bg-red-500';
+      default:
+        return 'bg-gray-500';
+    }
+  };
+
+  // Simulate real-time updates
   useEffect(() => {
-    // Update metrics periodically
     const interval = setInterval(() => {
-      setMetrics(prev => prev.map(metric => ({
-        ...metric,
-        value: Math.max(0, Math.min(100, metric.value + (Math.random() - 0.5) * 10)),
-        status: metric.value > 90 ? 'healthy' : metric.value > 70 ? 'warning' : 'error'
+      setHealthChecks(prev => prev.map(check => ({
+        ...check,
+        value: check.name === 'API Response' 
+          ? Math.random() * 100 + 20
+          : check.value + (Math.random() - 0.5) * 2
       })));
     }, 5000);
 
     return () => clearInterval(interval);
   }, []);
 
-  useEffect(() => {
-    const hasError = metrics.some(m => m.status === 'error');
-    const hasWarning = metrics.some(m => m.status === 'warning');
-    
-    if (hasError) setOverallStatus('error');
-    else if (hasWarning) setOverallStatus('warning');
-    else setOverallStatus('healthy');
-  }, [metrics]);
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'healthy': return 'text-green-600';
-      case 'warning': return 'text-yellow-600';
-      case 'error': return 'text-red-600';
-      default: return 'text-gray-600';
-    }
-  };
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'healthy':
-        return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
-          <CheckCircle className="w-3 h-3 mr-1" />
-          Healthy
-        </Badge>;
-      case 'warning':
-        return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">
-          <Clock className="w-3 h-3 mr-1" />
-          Warning
-        </Badge>;
-      case 'error':
-        return <Badge className="bg-red-100 text-red-800 hover:bg-red-100">
-          <AlertTriangle className="w-3 h-3 mr-1" />
-          Error
-        </Badge>;
-      default:
-        return null;
-    }
-  };
+  const overallHealth = healthChecks.every(check => check.status === 'healthy') 
+    ? 'healthy' 
+    : healthChecks.some(check => check.status === 'error') 
+    ? 'error' 
+    : 'warning';
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-medium">System Health</CardTitle>
-          {getStatusBadge(overallStatus)}
+    <div className="p-4">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="font-semibold">System Health</h3>
+        <div className="flex items-center gap-2">
+          {getStatusIcon(overallHealth)}
+          <Badge variant={overallHealth === 'healthy' ? 'default' : 'destructive'}>
+            {overallHealth === 'healthy' ? 'All Systems Operational' : 'Issues Detected'}
+          </Badge>
         </div>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {metrics.map((metric) => {
-          const IconComponent = metric.icon;
+      </div>
+      
+      <div className="space-y-3">
+        {healthChecks.map((check, index) => {
+          const IconComponent = check.icon;
           return (
-            <div key={metric.name} className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <div className="flex items-center gap-2">
-                  <IconComponent className={`w-4 h-4 ${getStatusColor(metric.status)}`} />
-                  <span>{metric.name}</span>
-                </div>
-                <span className="font-medium">
-                  {metric.name === 'API Response' ? 
-                    `${metric.value.toFixed(0)}${metric.unit}` :
-                    `${metric.value.toFixed(1)}${metric.unit}`
-                  }
-                </span>
+            <div key={index} className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <IconComponent className="w-4 h-4 text-muted-foreground" />
+                <span className="text-sm">{check.name}</span>
               </div>
-              <Progress 
-                value={metric.value} 
-                className={`h-2 ${
-                  metric.status === 'healthy' ? '' : 
-                  metric.status === 'warning' ? 'bg-yellow-100' : 'bg-red-100'
-                }`}
-              />
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-mono">
+                  {check.value.toFixed(check.unit === 'ms' ? 0 : 1)}{check.unit}
+                </span>
+                {getStatusIcon(check.status)}
+              </div>
             </div>
           );
         })}
-      </CardContent>
-    </Card>
+      </div>
+      
+      <div className="mt-4 pt-4 border-t">
+        <div className="flex items-center justify-between text-xs text-muted-foreground">
+          <span>Last updated</span>
+          <span>{new Date().toLocaleTimeString()}</span>
+        </div>
+      </div>
+    </div>
   );
 };
