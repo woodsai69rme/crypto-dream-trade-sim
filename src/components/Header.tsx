@@ -43,7 +43,7 @@ export const Header = () => {
 
         <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
           <div className="flex items-center space-x-2">
-            <StatusIndicator />
+            <StatusIndicator isActive={true} label="Live" />
             
             {/* Health Status */}
             <DropdownMenu open={showHealthPanel} onOpenChange={setShowHealthPanel}>
