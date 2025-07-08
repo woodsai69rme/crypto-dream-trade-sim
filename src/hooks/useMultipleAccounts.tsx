@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { useToast } from './use-toast';
 
-interface Account {
+export interface PaperAccount {
   id: string;
   user_id: string;
   account_name: string;
@@ -25,6 +25,48 @@ interface Account {
   is_default: boolean;
   created_at: string;
   updated_at: string;
+  last_accessed: string;
+  access_count: number;
+  performance_target?: number;
+  max_drawdown_limit?: number;
+  auto_rebalance?: boolean;
+  currency?: string;
+  timezone?: string;
+}
+
+export interface AccountTemplate {
+  id: string;
+  name: string;
+  description: string;
+  account_type: string;
+  risk_level: string;
+  initial_balance: number;
+  max_daily_loss: number;
+  max_position_size: number;
+  trading_strategy: string;
+  color_theme: string;
+  icon: string;
+  tags: string[];
+  is_public: boolean;
+  created_by: string;
+  usage_count: number;
+  rating: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AccountNotification {
+  id: string;
+  account_id: string;
+  user_id: string;
+  notification_type: string;
+  title: string;
+  message: string;
+  severity: string;
+  is_read: boolean;
+  metadata: any;
+  created_at: string;
+  expires_at?: string;
 }
 
 interface Trade {
@@ -35,14 +77,19 @@ interface Trade {
   type: 'market' | 'limit';
 }
 
+// Type alias for backward compatibility
+export type Account = PaperAccount;
+
 export const useMultipleAccounts = () => {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  const [accounts, setAccounts] = useState<Account[]>([]);
-  const [currentAccount, setCurrentAccount] = useState<Account | null>(null);
+  const [accounts, setAccounts] = useState<PaperAccount[]>([]);
+  const [currentAccount, setCurrentAccount] = useState<PaperAccount | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [notifications, setNotifications] = useState<AccountNotification[]>([]);
 
   // Load accounts from database
   const loadAccounts = useCallback(async () => {
@@ -61,7 +108,7 @@ export const useMultipleAccounts = () => {
 
       if (error) throw error;
 
-      const typedAccounts = data as Account[];
+      const typedAccounts = (data || []) as PaperAccount[];
       setAccounts(typedAccounts);
 
       // Set default account
@@ -84,6 +131,25 @@ export const useMultipleAccounts = () => {
     }
   }, [user, toast]);
 
+  // Load notifications
+  const loadNotifications = useCallback(async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('account_notifications')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('is_read', false)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setNotifications((data || []) as AccountNotification[]);
+    } catch (error) {
+      console.error('Error loading notifications:', error);
+    }
+  }, [user]);
+
   // Switch to different account
   const switchAccount = useCallback(async (accountId: string) => {
     const account = accounts.find(acc => acc.id === accountId);
@@ -103,23 +169,11 @@ export const useMultipleAccounts = () => {
       await supabase
         .from('paper_trading_accounts')
         .update({ 
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
+          last_accessed: new Date().toISOString(),
+          access_count: account.access_count + 1
         })
         .eq('id', accountId);
-
-      // Log account switch
-      await supabase.from('comprehensive_audit').insert({
-        user_id: user?.id,
-        account_id: accountId,
-        action_type: 'account_switched',
-        entity_type: 'account',
-        entity_id: accountId,
-        metadata: {
-          account_name: account.account_name,
-          previous_account: currentAccount?.account_name,
-          timestamp: new Date().toISOString()
-        }
-      });
 
       toast({
         title: "Account Switched",
@@ -128,7 +182,7 @@ export const useMultipleAccounts = () => {
     } catch (error) {
       console.error('Error switching account:', error);
     }
-  }, [accounts, currentAccount, user, toast]);
+  }, [accounts, user, toast]);
 
   // Execute trade on current account
   const executeTrade = useCallback(async (trade: Trade): Promise<boolean> => {
@@ -199,6 +253,154 @@ export const useMultipleAccounts = () => {
     }
   }, [currentAccount, user, toast, loadAccounts]);
 
+  // Update account
+  const updateAccount = useCallback(async (accountId: string, updates: Partial<PaperAccount>) => {
+    try {
+      const { error } = await supabase
+        .from('paper_trading_accounts')
+        .update(updates)
+        .eq('id', accountId)
+        .eq('user_id', user?.id);
+
+      if (error) throw error;
+
+      await loadAccounts();
+      toast({
+        title: "Account Updated",
+        description: "Account has been updated successfully",
+      });
+    } catch (error: any) {
+      console.error('Error updating account:', error);
+      toast({
+        title: "Update Failed",
+        description: error.message || "Failed to update account",
+        variant: "destructive",
+      });
+    }
+  }, [user, loadAccounts, toast]);
+
+  // Delete account
+  const deleteAccount = useCallback(async (accountId: string) => {
+    try {
+      const { error } = await supabase
+        .from('paper_trading_accounts')
+        .delete()
+        .eq('id', accountId)
+        .eq('user_id', user?.id);
+
+      if (error) throw error;
+
+      await loadAccounts();
+      toast({
+        title: "Account Deleted",
+        description: "Account has been deleted successfully",
+      });
+    } catch (error: any) {
+      console.error('Error deleting account:', error);
+      toast({
+        title: "Delete Failed",
+        description: error.message || "Failed to delete account",
+        variant: "destructive",
+      });
+    }
+  }, [user, loadAccounts, toast]);
+
+  // Create account from template
+  const createAccountFromTemplate = useCallback(async (templateId: string, accountName: string, customBalance?: number): Promise<boolean> => {
+    if (!user) return false;
+
+    setCreating(true);
+    try {
+      const { data, error } = await supabase.rpc('create_account_from_template', {
+        template_id_param: templateId,
+        account_name_param: accountName,
+        custom_balance_param: customBalance
+      });
+
+      if (error) throw error;
+
+      await loadAccounts();
+      toast({
+        title: "Account Created",
+        description: `Account "${accountName}" created successfully`,
+      });
+      return true;
+    } catch (error: any) {
+      console.error('Error creating account from template:', error);
+      toast({
+        title: "Creation Failed",
+        description: error.message || "Failed to create account",
+        variant: "destructive",
+      });
+      return false;
+    } finally {
+      setCreating(false);
+    }
+  }, [user, loadAccounts, toast]);
+
+  // Create custom account
+  const createCustomAccount = useCallback(async (accountData: Partial<PaperAccount>): Promise<boolean> => {
+    if (!user) return false;
+
+    setCreating(true);
+    try {
+      const { error } = await supabase
+        .from('paper_trading_accounts')
+        .insert({
+          user_id: user.id,
+          account_name: accountData.account_name,
+          account_type: accountData.account_type || 'balanced',
+          risk_level: accountData.risk_level || 'medium',
+          balance: accountData.initial_balance || 100000,
+          initial_balance: accountData.initial_balance || 100000,
+          max_daily_loss: accountData.max_daily_loss || 1000,
+          max_position_size: accountData.max_position_size || 5000,
+          trading_strategy: accountData.trading_strategy || 'manual',
+          color_theme: accountData.color_theme || '#3b82f6',
+          icon: accountData.icon || 'TrendingUp',
+          tags: accountData.tags || [],
+          description: accountData.description || '',
+          status: 'active'
+        });
+
+      if (error) throw error;
+
+      await loadAccounts();
+      toast({
+        title: "Account Created",
+        description: `Account "${accountData.account_name}" created successfully`,
+      });
+      return true;
+    } catch (error: any) {
+      console.error('Error creating custom account:', error);
+      toast({
+        title: "Creation Failed",
+        description: error.message || "Failed to create account",
+        variant: "destructive",
+      });
+      return false;
+    } finally {
+      setCreating(false);
+    }
+  }, [user, loadAccounts, toast]);
+
+  // Mark notification as read
+  const markNotificationRead = useCallback(async (notificationId: string) => {
+    try {
+      const { error } = await supabase
+        .from('account_notifications')
+        .update({ is_read: true })
+        .eq('id', notificationId)
+        .eq('user_id', user?.id);
+
+      if (error) throw error;
+
+      setNotifications(prev => prev.filter(n => n.id !== notificationId));
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+    }
+  }, [user]);
+
   // Get account summary statistics
   const getAccountSummary = useCallback(() => {
     if (accounts.length === 0) {
@@ -234,12 +436,14 @@ export const useMultipleAccounts = () => {
   // Refresh account data
   const refreshAccounts = useCallback(() => {
     loadAccounts();
-  }, [loadAccounts]);
+    loadNotifications();
+  }, [loadAccounts, loadNotifications]);
 
   // Initialize
   useEffect(() => {
     loadAccounts();
-  }, [loadAccounts]);
+    loadNotifications();
+  }, [loadAccounts, loadNotifications]);
 
   // Set up real-time subscriptions for account updates
   useEffect(() => {
@@ -268,8 +472,15 @@ export const useMultipleAccounts = () => {
     currentAccount,
     loading,
     error,
+    creating,
+    notifications,
     switchAccount,
     executeTrade,
+    updateAccount,
+    deleteAccount,
+    createAccountFromTemplate,
+    createCustomAccount,
+    markNotificationRead,
     refreshAccounts,
     accountSummary: getAccountSummary(),
     totalAccounts: accounts.length,

@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { useToast } from './use-toast';
 
-interface AIBot {
+export interface AIBot {
   id: string;
   name: string;
   strategy: string;
@@ -20,23 +20,23 @@ interface AIBot {
   target_symbols: string[];
 }
 
-interface MarketConditions {
-  trend: 'bullish' | 'bearish' | 'sideways';
-  volatility: 'low' | 'medium' | 'high';
-  volume: 'low' | 'medium' | 'high';
-  sentiment: number; // -100 to 100
-}
-
-interface TradingSignal {
-  id: string;
+export interface TradingSignal {
   symbol: string;
   side: 'buy' | 'sell';
   price: number;
   amount: number;
   confidence: number;
-  bot_votes: number;
-  reasoning: string;
   timestamp: string;
+  reasoning: string;
+  bot_id: string;
+}
+
+export interface MarketConditions {
+  volatility: number;
+  trend: 'bullish' | 'bearish' | 'sideways';
+  volume: number;
+  support_level: number;
+  resistance_level: number;
 }
 
 export const useAIEnsembleTrading = () => {
@@ -44,19 +44,23 @@ export const useAIEnsembleTrading = () => {
   const { toast } = useToast();
 
   const [bots, setBots] = useState<AIBot[]>([]);
-  const [isEnsembleActive, setIsEnsembleActive] = useState(false);
-  const [marketConditions, setMarketConditions] = useState<MarketConditions>({
-    trend: 'sideways',
-    volatility: 'medium',
-    volume: 'medium',
-    sentiment: 0
-  });
   const [signals, setSignals] = useState<TradingSignal[]>([]);
+  const [marketConditions, setMarketConditions] = useState<MarketConditions>({
+    volatility: 0.15,
+    trend: 'sideways',
+    volume: 1000000,
+    support_level: 45000,
+    resistance_level: 50000
+  });
   const [loading, setLoading] = useState(true);
+  const [ensembleActive, setEnsembleActive] = useState(false);
 
   // Load AI bots from database
   const loadBots = useCallback(async () => {
-    if (!user) return;
+    if (!user) {
+      setLoading(false);
+      return;
+    }
 
     try {
       const { data, error } = await supabase
@@ -67,24 +71,41 @@ export const useAIEnsembleTrading = () => {
 
       if (error) throw error;
 
-      const formattedBots: AIBot[] = data?.map(bot => ({
-        id: bot.id,
-        name: bot.name,
-        strategy: bot.strategy,
-        status: bot.status as 'active' | 'paused' | 'error',
-        performance: bot.performance || {
+      // Transform database records to AIBot format with proper type handling
+      const transformedBots: AIBot[] = (data || []).map(bot => {
+        // Parse performance JSON safely
+        let performance = {
           win_rate: 0,
           total_return: 0,
           total_trades: 0,
           daily_pnl: 0
-        },
-        confidence_threshold: 75,
-        risk_level: bot.risk_level,
-        target_symbols: bot.target_symbols || []
-      })) || [];
+        };
 
-      setBots(formattedBots);
-    } catch (error) {
+        if (bot.performance && typeof bot.performance === 'object') {
+          const perf = bot.performance as any;
+          performance = {
+            win_rate: Number(perf.win_rate) || 0,
+            total_return: Number(perf.total_return) || 0,
+            total_trades: Number(perf.total_trades) || 0,
+            daily_pnl: Number(perf.daily_pnl) || 0
+          };
+        }
+
+        return {
+          id: bot.id,
+          name: bot.name,
+          strategy: bot.strategy,
+          status: bot.status as 'active' | 'paused' | 'error',
+          performance,
+          confidence_threshold: 70,
+          risk_level: bot.risk_level,
+          target_symbols: bot.target_symbols || []
+        };
+      });
+
+      setBots(transformedBots);
+      console.log(`Loaded ${transformedBots.length} AI bots`);
+    } catch (error: any) {
       console.error('Error loading bots:', error);
       toast({
         title: "Error Loading Bots",
@@ -96,164 +117,171 @@ export const useAIEnsembleTrading = () => {
     }
   }, [user, toast]);
 
-  // Generate market conditions (simulated)
-  const updateMarketConditions = useCallback(() => {
-    const trends = ['bullish', 'bearish', 'sideways'] as const;
-    const volatilities = ['low', 'medium', 'high'] as const;
-    const volumes = ['low', 'medium', 'high'] as const;
-
-    setMarketConditions({
-      trend: trends[Math.floor(Math.random() * trends.length)],
-      volatility: volatilities[Math.floor(Math.random() * volatilities.length)],
-      volume: volumes[Math.floor(Math.random() * volumes.length)],
-      sentiment: Math.floor(Math.random() * 200) - 100 // -100 to 100
-    });
-  }, []);
-
-  // Generate AI ensemble signals
-  const generateEnsembleSignal = useCallback(() => {
-    if (!isEnsembleActive || bots.length === 0) return;
+  // Generate ensemble trading signal
+  const generateEnsembleSignal = useCallback(async (): Promise<TradingSignal | null> => {
+    if (!ensembleActive || bots.length === 0) return null;
 
     const activeBots = bots.filter(bot => bot.status === 'active');
-    const symbols = ['BTC', 'ETH', 'SOL', 'ADA', 'DOT', 'LINK'];
-    const sides = ['buy', 'sell'] as const;
+    if (activeBots.length === 0) return null;
 
-    // Simulate bot voting
-    const botVotes = Math.floor(Math.random() * activeBots.length) + 1;
-    const confidence = 60 + Math.random() * 35; // 60-95%
+    // Simulate AI ensemble decision making
+    const symbols = ['BTC', 'ETH', 'SOL', 'ADA', 'DOT'];
+    const symbol = symbols[Math.floor(Math.random() * symbols.length)];
+    const side: 'buy' | 'sell' = Math.random() > 0.5 ? 'buy' : 'sell';
+    
+    // Calculate ensemble confidence based on bot votes
+    const botVotes = activeBots.filter(() => Math.random() > 0.3).length;
+    const confidence = Math.min(95, (botVotes / activeBots.length) * 100);
+
+    if (confidence < 60) return null; // Only execute high-confidence signals
 
     const signal: TradingSignal = {
-      id: `signal-${Date.now()}`,
-      symbol: symbols[Math.floor(Math.random() * symbols.length)],
-      side: sides[Math.floor(Math.random() * sides.length)],
+      symbol,
+      side,
       price: 45000 + Math.random() * 25000,
-      amount: 0.1 + Math.random() * 0.9,
+      amount: 0.01 + Math.random() * 0.1,
       confidence,
-      bot_votes: botVotes,
-      reasoning: generateSignalReasoning(marketConditions),
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      reasoning: `Ensemble of ${botVotes}/${activeBots.length} bots agree on ${side} signal for ${symbol}`,
+      bot_id: 'ensemble'
     };
 
-    setSignals(prev => [signal, ...prev.slice(0, 49)]); // Keep last 50 signals
-
-    // Log signal to audit
-    if (user) {
-      supabase.from('comprehensive_audit').insert({
-        user_id: user.id,
-        action_type: 'ai_signal_generated',
+    // Log the signal generation with proper JSON conversion
+    try {
+      await supabase.from('comprehensive_audit').insert({
+        user_id: user?.id || '',
+        action_type: 'ensemble_signal_generated',
         entity_type: 'trading_signal',
-        entity_id: signal.id,
+        entity_id: signal.symbol,
         metadata: {
-          signal,
-          market_conditions: marketConditions,
+          signal: JSON.parse(JSON.stringify(signal)),
+          market_conditions: JSON.parse(JSON.stringify(marketConditions)),
           bot_votes: botVotes,
           active_bots: activeBots.length
-        }
+        } as any
       });
-    }
-  }, [isEnsembleActive, bots, marketConditions, user]);
-
-  const generateSignalReasoning = (conditions: MarketConditions) => {
-    const reasons = [
-      `${conditions.trend} market trend with ${conditions.volatility} volatility suggests strong momentum`,
-      `Technical analysis shows breakout potential with ${conditions.volume} volume confirmation`,
-      `AI ensemble detected pattern matching with ${Math.floor(Math.random() * 30 + 70)}% historical accuracy`,
-      `Risk-adjusted signal based on current ${conditions.trend} market conditions`,
-      `Multi-timeframe analysis confirms entry point with favorable risk/reward ratio`,
-      `Sentiment analysis (${conditions.sentiment > 0 ? 'positive' : 'negative'}) aligns with technical indicators`,
-      `Volume profile analysis indicates institutional ${conditions.volume === 'high' ? 'accumulation' : 'interest'}`,
-      `Correlation analysis with major assets suggests independent movement opportunity`
-    ];
-    return reasons[Math.floor(Math.random() * reasons.length)];
-  };
-
-  // Start/stop ensemble trading
-  const toggleEnsemble = useCallback(async (active: boolean) => {
-    setIsEnsembleActive(active);
-
-    if (active) {
-      // Activate all bots
-      await supabase
-        .from('ai_trading_bots')
-        .update({ status: 'active' })
-        .eq('user_id', user?.id);
-
-      toast({
-        title: "AI Ensemble Activated",
-        description: `${bots.length} trading bots are now generating signals`,
-      });
-    } else {
-      // Pause all bots
-      await supabase
-        .from('ai_trading_bots')
-        .update({ status: 'paused' })
-        .eq('user_id', user?.id);
-
-      toast({
-        title: "AI Ensemble Paused",
-        description: "All trading bots have been paused",
-      });
+    } catch (error) {
+      console.error('Error logging ensemble signal:', error);
     }
 
-    // Reload bot status
-    loadBots();
-  }, [user, bots.length, toast, loadBots]);
+    return signal;
+  }, [ensembleActive, bots, marketConditions, user]);
 
-  // Update bot performance (simulated)
-  const updateBotPerformance = useCallback(async () => {
-    if (!user || bots.length === 0) return;
+  // Start ensemble trading
+  const startEnsemble = useCallback(() => {
+    setEnsembleActive(true);
+    toast({
+      title: "AI Ensemble Activated",
+      description: `${bots.filter(b => b.status === 'active').length} bots now trading collectively`,
+    });
+  }, [bots, toast]);
 
-    const updatedBots = bots.map(bot => ({
-      ...bot,
-      performance: {
-        ...bot.performance,
-        win_rate: Math.max(0, Math.min(100, bot.performance.win_rate + (Math.random() - 0.5) * 2)),
-        total_return: bot.performance.total_return + (Math.random() - 0.4) * 0.5,
-        daily_pnl: (Math.random() - 0.4) * 100
+  // Stop ensemble trading
+  const stopEnsemble = useCallback(() => {
+    setEnsembleActive(false);
+    toast({
+      title: "AI Ensemble Deactivated",
+      description: "Collective trading has been stopped",
+    });
+  }, [toast]);
+
+  // Update bot status
+  const updateBotStatus = useCallback(async (botId: string, status: 'active' | 'paused' | 'error') => {
+    try {
+      const { error } = await supabase
+        .from('ai_trading_bots')
+        .update({ status })
+        .eq('id', botId)
+        .eq('user_id', user?.id);
+
+      if (error) throw error;
+
+      setBots(prev => prev.map(bot => 
+        bot.id === botId ? { ...bot, status } : bot
+      ));
+
+      toast({
+        title: "Bot Updated",
+        description: `Bot status changed to ${status}`,
+      });
+    } catch (error: any) {
+      console.error('Error updating bot status:', error);
+      toast({
+        title: "Update Failed",
+        description: error.message || "Failed to update bot",
+        variant: "destructive",
+      });
+    }
+  }, [user, toast]);
+
+  // Generate signals periodically when ensemble is active
+  useEffect(() => {
+    if (!ensembleActive) return;
+
+    const interval = setInterval(async () => {
+      const signal = await generateEnsembleSignal();
+      if (signal) {
+        setSignals(prev => [signal, ...prev.slice(0, 19)]); // Keep last 20 signals
       }
-    }));
+    }, 12000); // Generate signal every 12 seconds
 
-    setBots(updatedBots);
+    return () => clearInterval(interval);
+  }, [ensembleActive, generateEnsembleSignal]);
 
-    // Update database periodically
-    const randomBot = updatedBots[Math.floor(Math.random() * updatedBots.length)];
-    await supabase
-      .from('ai_trading_bots')
-      .update({ performance: randomBot.performance })
-      .eq('id', randomBot.id);
-  }, [user, bots]);
+  // Update market conditions periodically
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setMarketConditions(prev => ({
+        ...prev,
+        volatility: 0.1 + Math.random() * 0.3,
+        trend: ['bullish', 'bearish', 'sideways'][Math.floor(Math.random() * 3)] as any,
+        volume: 800000 + Math.random() * 400000,
+        support_level: 44000 + Math.random() * 2000,
+        resistance_level: 49000 + Math.random() * 3000
+      }));
+    }, 30000); // Update every 30 seconds
 
-  // Initialize and start intervals
+    return () => clearInterval(interval);
+  }, []);
+
+  // Initialize
   useEffect(() => {
     loadBots();
   }, [loadBots]);
 
+  // Set up real-time subscriptions
   useEffect(() => {
-    if (!isEnsembleActive) return;
+    if (!user) return;
 
-    const marketInterval = setInterval(updateMarketConditions, 30000); // Every 30s
-    const signalInterval = setInterval(generateEnsembleSignal, 8000); // Every 8s
-    const performanceInterval = setInterval(updateBotPerformance, 60000); // Every 60s
+    const channel = supabase
+      .channel('bot-changes')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'ai_trading_bots',
+        filter: `user_id=eq.${user.id}`
+      }, (payload) => {
+        console.log('Bot change detected:', payload);
+        loadBots();
+      })
+      .subscribe();
 
     return () => {
-      clearInterval(marketInterval);
-      clearInterval(signalInterval);
-      clearInterval(performanceInterval);
+      supabase.removeChannel(channel);
     };
-  }, [isEnsembleActive, updateMarketConditions, generateEnsembleSignal, updateBotPerformance]);
+  }, [user, loadBots]);
 
   return {
     bots,
-    isEnsembleActive,
-    marketConditions,
     signals,
+    marketConditions,
     loading,
-    toggleEnsemble,
-    loadBots,
+    ensembleActive,
+    startEnsemble,
+    stopEnsemble,
+    updateBotStatus,
+    refreshBots: loadBots,
     activeBots: bots.filter(bot => bot.status === 'active').length,
-    totalSignals: signals.length,
-    averageConfidence: signals.length > 0 
-      ? signals.reduce((sum, s) => sum + s.confidence, 0) / signals.length 
-      : 0
+    totalBots: bots.length
   };
 };

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -41,13 +42,13 @@ export const AccountComparison = ({ accountIds, accounts, onClose }: AccountComp
     color: account.color_theme
   }));
 
-  const totalValue = selectedAccounts.reduce((sum, acc) => sum + acc.balance, 0);
-  const totalPnL = selectedAccounts.reduce((sum, acc) => sum + acc.total_pnl, 0);
-  const avgReturn = selectedAccounts.reduce((sum, acc) => sum + acc.total_pnl_percentage, 0) / selectedAccounts.length;
+  const totalValue = selectedAccounts.reduce((sum, acc) => sum + Number(acc.balance), 0);
+  const totalPnL = selectedAccounts.reduce((sum, acc) => sum + Number(acc.total_pnl), 0);
+  const avgReturn = selectedAccounts.reduce((sum, acc) => sum + Number(acc.total_pnl_percentage), 0) / selectedAccounts.length;
 
   const pieData = selectedAccounts.map(account => ({
     name: account.account_name,
-    value: account.balance,
+    value: Number(account.balance),
     color: account.color_theme
   }));
 
@@ -249,17 +250,17 @@ export const AccountComparison = ({ accountIds, accounts, onClose }: AccountComp
                           </div>
                         </td>
                         <td className="text-right p-2 font-medium">
-                          ${account.balance.toLocaleString()}
+                          ${Number(account.balance).toLocaleString()}
                         </td>
                         <td className={`text-right p-2 font-medium ${
-                          account.total_pnl >= 0 ? 'text-green-600' : 'text-red-600'
+                          Number(account.total_pnl) >= 0 ? 'text-green-600' : 'text-red-600'
                         }`}>
-                          {account.total_pnl >= 0 ? '+' : ''}${account.total_pnl.toFixed(2)}
+                          {Number(account.total_pnl) >= 0 ? '+' : ''}${Number(account.total_pnl).toFixed(2)}
                         </td>
                         <td className={`text-right p-2 font-medium ${
-                          account.total_pnl_percentage >= 0 ? 'text-green-600' : 'text-red-600'
+                          Number(account.total_pnl_percentage) >= 0 ? 'text-green-600' : 'text-red-600'
                         }`}>
-                          {account.total_pnl_percentage >= 0 ? '+' : ''}{account.total_pnl_percentage.toFixed(2)}%
+                          {Number(account.total_pnl_percentage) >= 0 ? '+' : ''}{Number(account.total_pnl_percentage).toFixed(2)}%
                         </td>
                         <td className="text-center p-2">
                           <Badge variant="outline" className="text-xs">
@@ -289,7 +290,7 @@ export const AccountComparison = ({ accountIds, accounts, onClose }: AccountComp
               <CardContent>
                 <div className="space-y-4">
                   {selectedAccounts.map(account => {
-                    const percentage = (account.balance / totalValue) * 100;
+                    const percentage = (Number(account.balance) / totalValue) * 100;
                     return (
                       <div key={account.id} className="space-y-2">
                         <div className="flex justify-between text-sm">
@@ -321,13 +322,13 @@ export const AccountComparison = ({ accountIds, accounts, onClose }: AccountComp
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Highest Balance</span>
                     <span className="font-medium">
-                      ${Math.max(...selectedAccounts.map(acc => acc.balance)).toLocaleString()}
+                      ${Math.max(...selectedAccounts.map(acc => Number(acc.balance))).toLocaleString()}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Lowest Balance</span>
                     <span className="font-medium">
-                      ${Math.min(...selectedAccounts.map(acc => acc.balance)).toLocaleString()}
+                      ${Math.min(...selectedAccounts.map(acc => Number(acc.balance))).toLocaleString()}
                     </span>
                   </div>
                   <div className="flex justify-between">
@@ -340,7 +341,7 @@ export const AccountComparison = ({ accountIds, accounts, onClose }: AccountComp
                     <span className="text-muted-foreground">Best Performer</span>
                     <span className="font-medium text-green-600">
                       {selectedAccounts.reduce((best, acc) => 
-                        acc.total_pnl_percentage > best.total_pnl_percentage ? acc : best
+                        Number(acc.total_pnl_percentage) > Number(best.total_pnl_percentage) ? acc : best
                       ).account_name}
                     </span>
                   </div>
@@ -348,7 +349,7 @@ export const AccountComparison = ({ accountIds, accounts, onClose }: AccountComp
                     <span className="text-muted-foreground">Worst Performer</span>
                     <span className="font-medium text-red-600">
                       {selectedAccounts.reduce((worst, acc) => 
-                        acc.total_pnl_percentage < worst.total_pnl_percentage ? acc : worst
+                        Number(acc.total_pnl_percentage) < Number(worst.total_pnl_percentage) ? acc : worst
                       ).account_name}
                     </span>
                   </div>
@@ -427,21 +428,21 @@ export const AccountComparison = ({ accountIds, accounts, onClose }: AccountComp
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                     <div>
                       <span className="text-muted-foreground">Balance</span>
-                      <p className="font-medium">${account.balance.toLocaleString()}</p>
+                      <p className="font-medium">${Number(account.balance).toLocaleString()}</p>
                     </div>
                     <div>
                       <span className="text-muted-foreground">P&L</span>
-                      <p className={`font-medium ${account.total_pnl >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        {account.total_pnl >= 0 ? '+' : ''}${account.total_pnl.toFixed(2)}
+                      <p className={`font-medium ${Number(account.total_pnl) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {Number(account.total_pnl) >= 0 ? '+' : ''}${Number(account.total_pnl).toFixed(2)}
                       </p>
                     </div>
                     <div>
                       <span className="text-muted-foreground">Max Daily Loss</span>
-                      <p className="font-medium">${account.max_daily_loss.toLocaleString()}</p>
+                      <p className="font-medium">${Number(account.max_daily_loss).toLocaleString()}</p>
                     </div>
                     <div>
                       <span className="text-muted-foreground">Max Position</span>
-                      <p className="font-medium">${account.max_position_size.toLocaleString()}</p>
+                      <p className="font-medium">${Number(account.max_position_size).toLocaleString()}</p>
                     </div>
                   </div>
                 </CardContent>

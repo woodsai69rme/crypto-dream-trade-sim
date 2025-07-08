@@ -98,46 +98,47 @@ export const TradeFollower = () => {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="flex items-center justify-between p-3 bg-white/5 rounded">
-          <span>Enable Trade Following</span>
-          <Switch checked={isFollowing} onCheckedChange={handleToggleFollowing} />
+        <div className="flex items-center justify-between p-4 bg-white/5 rounded-lg">
+          <div>
+            <h3 className="font-medium">Enable Trade Following</h3>
+            <p className="text-sm text-white/60">
+              Automatically copy trades from top performers
+            </p>
+          </div>
+          <Switch
+            checked={isFollowing}
+            onCheckedChange={handleToggleFollowing}
+          />
         </div>
+
+        {currentAccount && <ActiveAccountDisplay account={currentAccount} />}
 
         {isFollowing && (
           <>
-          <TradeFollowingSettings 
-            settings={followSettings}
-            onSettingsChange={setFollowSettings}
-          />
+            <TradeFollowingSettings
+              settings={followSettings}
+              onSettingsChange={setFollowSettings}
+            />
 
-            <div className="space-y-2">
-              <h4 className="font-medium flex items-center gap-2">
-                Live Trading Signals
-                <Badge variant="outline" className="text-xs">
-                  {signals.length}
-                </Badge>
-              </h4>
-              
-              <div className="max-h-60 overflow-y-auto space-y-2">
-                {signals.length === 0 ? (
-                  <div className="text-center py-4 text-white/60">
-                    Waiting for trading signals...
-                  </div>
-                ) : (
-                  signals.map((signal) => (
-                    <TradeSignalCard
-                      key={signal.id}
-                      signal={signal}
-                      trades={formattedTrades}
-                      onFollow={handleFollowTrade}
-                      minConfidence={followSettings.minConfidence}
-                    />
-                  ))
-                )}
-              </div>
+            <div className="space-y-3">
+              <h3 className="font-medium">Live Trading Signals</h3>
+              {signals.length === 0 ? (
+                <div className="text-center py-8 text-white/60">
+                  <Users className="w-12 h-12 mx-auto mb-4 text-white/40" />
+                  <p>Waiting for trading signals...</p>
+                  <p className="text-sm mt-2">Signals will appear here when conditions are met</p>
+                </div>
+              ) : (
+                signals.map((signal) => (
+                  <TradeSignalCard
+                    key={signal.id}
+                    signal={signal}
+                    onExecute={handleFollowTrade}
+                    autoExecute={followSettings.autoExecute}
+                  />
+                ))
+              )}
             </div>
-
-            <ActiveAccountDisplay account={currentAccount} />
           </>
         )}
       </CardContent>
