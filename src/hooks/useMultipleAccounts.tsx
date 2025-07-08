@@ -338,23 +338,36 @@ export const useMultipleAccounts = () => {
     }
   }, [user, loadAccounts, toast]);
 
-  // Create custom account - temporarily disabled due to type issues
+  // Create custom account - uses account templates for better type safety
   const createCustomAccount = useCallback(async (accountData: Partial<PaperAccount>): Promise<boolean> => {
     if (!user) return false;
 
     setCreating(true);
     try {
-      // Temporarily disabled - use account templates instead
-      toast({
-        title: "Feature Temporarily Disabled",
-        description: "Please use account templates to create new accounts",
-        variant: "destructive",
-      });
-      return false;
+      // Use the balanced template as a fallback for custom accounts
+      const { data: templates, error: templateError } = await supabase
+        .from('account_templates')
+        .select('*')
+        .eq('account_type', 'balanced')
+        .eq('is_public', true)
+        .limit(1);
+
+      if (templateError || !templates || templates.length === 0) {
+        throw new Error('No template found. Please use account templates to create accounts.');
+      }
+
+      const template = templates[0];
+      const success = await createAccountFromTemplate(
+        template.id,
+        accountData.account_name || 'New Account',
+        accountData.initial_balance || accountData.balance
+      );
+
+      return success;
     } catch (error: any) {
       console.error('Error creating custom account:', error);
       toast({
-        title: "Creation Failed",
+        title: "Creation Failed", 
         description: error.message || "Failed to create account",
         variant: "destructive",
       });
@@ -362,7 +375,7 @@ export const useMultipleAccounts = () => {
     } finally {
       setCreating(false);
     }
-  }, [user, toast]);
+  }, [user, loadAccounts, toast]);
 
   // Mark notification as read
   const markNotificationRead = useCallback(async (notificationId: string) => {
