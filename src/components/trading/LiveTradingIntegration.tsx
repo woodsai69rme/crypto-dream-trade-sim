@@ -109,6 +109,10 @@ export const LiveTradingIntegration = () => {
     }
   };
 
+  const handleLiveTradingToggle = (checked: boolean) => {
+    setTradingStatus(prev => ({ ...prev, isLive: checked }));
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -428,7 +432,7 @@ export const LiveTradingIntegration = () => {
                   </div>
                   <Switch 
                     checked={tradingStatus.isLive}
-                    onCheckedChange={setTradingStatus(prev => ({ ...prev, isLive: !prev.isLive }))}
+                    onCheckedChange={handleLiveTradingToggle}
                   />
                 </div>
 
