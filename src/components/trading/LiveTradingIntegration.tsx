@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -37,12 +36,11 @@ export const LiveTradingIntegration = () => {
     isSandbox: true
   });
 
-  // Live trading status
   const [tradingStatus, setTradingStatus] = useState({
     isLive: false,
     connectedExchanges: 0,
-    activeOrders: 0,
-    dailyVolume: 0
+    activeOrders: 12,
+    dailyVolume: 45200
   });
 
   // Available exchanges
@@ -75,27 +73,47 @@ export const LiveTradingIntegration = () => {
       return;
     }
 
-    const success = await connectExchange(
-      exchangeId,
-      connectionForm.apiKey,
-      connectionForm.apiSecret,
-      connectionForm.passphrase,
-      connectionForm.isSandbox
-    );
+    try {
+      const success = await connectExchange(
+        exchangeId,
+        connectionForm.apiKey,
+        connectionForm.apiSecret,
+        connectionForm.passphrase,
+        connectionForm.isSandbox
+      );
 
-    if (success) {
-      setConnectionForm({ exchange: '', apiKey: '', apiSecret: '', passphrase: '', isSandbox: true });
+      if (success) {
+        setConnectionForm({ exchange: '', apiKey: '', apiSecret: '', passphrase: '', isSandbox: true });
+        setTradingStatus(prev => ({ ...prev, connectedExchanges: prev.connectedExchanges + 1 }));
+        toast({
+          title: "Exchange Connected",
+          description: `Successfully connected to ${exchangeId}`,
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Connection Failed",
+        description: "Failed to connect exchange. Please check your credentials.",
+        variant: "destructive",
+      });
     }
   };
 
   const handleWalletConnection = async (walletType: string) => {
-    // Simulate wallet connection
-    const success = await connectWallet(walletType as any, '0x1234...abcd', `My ${walletType} Wallet`);
-    
-    if (success) {
+    try {
+      const success = await connectWallet(walletType as any, '0x1234...abcd', `My ${walletType} Wallet`);
+      
+      if (success) {
+        toast({
+          title: "Wallet Connected",
+          description: `Successfully connected ${walletType} wallet`,
+        });
+      }
+    } catch (error) {
       toast({
-        title: "Wallet Connected",
-        description: `Successfully connected ${walletType} wallet`,
+        title: "Connection Failed",
+        description: "Failed to connect wallet. Please try again.",
+        variant: "destructive",
       });
     }
   };
@@ -111,6 +129,35 @@ export const LiveTradingIntegration = () => {
 
   const handleLiveTradingToggle = (checked: boolean) => {
     setTradingStatus(prev => ({ ...prev, isLive: checked }));
+    
+    if (checked) {
+      toast({
+        title: "Live Trading Enabled",
+        description: "⚠️ You are now trading with real money. Please be careful!",
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Live Trading Disabled",
+        description: "Switched back to demo mode",
+      });
+    }
+  };
+
+  const handleSyncAll = async () => {
+    try {
+      await syncExchangeBalances();
+      toast({
+        title: "Sync Complete",
+        description: "All exchange balances have been updated",
+      });
+    } catch (error) {
+      toast({
+        title: "Sync Failed",
+        description: "Failed to sync exchange balances",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -124,7 +171,7 @@ export const LiveTradingIntegration = () => {
           <Badge className={tradingStatus.isLive ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'}>
             {tradingStatus.isLive ? 'LIVE' : 'DEMO'}
           </Badge>
-          <Button variant="outline" onClick={syncExchangeBalances} disabled={loading}>
+          <Button variant="outline" onClick={handleSyncAll} disabled={loading}>
             <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             Sync All
           </Button>
@@ -150,7 +197,7 @@ export const LiveTradingIntegration = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-white/60">Active Orders</p>
-                <p className="text-2xl font-bold text-green-400">12</p>
+                <p className="text-2xl font-bold text-green-400">{tradingStatus.activeOrders}</p>
               </div>
               <Activity className="w-8 h-8 text-green-400" />
             </div>
@@ -162,7 +209,7 @@ export const LiveTradingIntegration = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-white/60">Daily Volume</p>
-                <p className="text-2xl font-bold text-purple-400">$45.2K</p>
+                <p className="text-2xl font-bold text-purple-400">${(tradingStatus.dailyVolume / 1000).toFixed(1)}K</p>
               </div>
               <TrendingUp className="w-8 h-8 text-purple-400" />
             </div>
@@ -442,6 +489,8 @@ export const LiveTradingIntegration = () => {
                     id="max-position"
                     type="number"
                     defaultValue="10"
+                    min="1"
+                    max="100"
                     className="bg-card/20 border-white/20"
                   />
                 </div>
@@ -452,6 +501,8 @@ export const LiveTradingIntegration = () => {
                     id="daily-loss"
                     type="number"
                     defaultValue="5"
+                    min="1"
+                    max="50"
                     className="bg-card/20 border-white/20"
                   />
                 </div>
@@ -462,9 +513,17 @@ export const LiveTradingIntegration = () => {
                     id="slippage"
                     type="number"
                     defaultValue="0.5"
+                    min="0.1"
+                    max="5"
+                    step="0.1"
                     className="bg-card/20 border-white/20"
                   />
                 </div>
+
+                <Button className="w-full">
+                  <Settings className="w-4 h-4 mr-2" />
+                  Save Trading Settings
+                </Button>
               </CardContent>
             </Card>
 

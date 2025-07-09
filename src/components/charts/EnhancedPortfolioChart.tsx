@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, AreaChart, Area, ComposedChart, Bar, Tooltip, Legend } from "recharts";
-import { TrendingUp, TrendingDown, BarChart3, Activity, Target } from "lucide-react";
+import { TrendingUp, TrendingDown, BarChart3, Activity, Target, RefreshCw } from "lucide-react";
 
 interface ChartDataPoint {
   time: string;
@@ -26,38 +26,46 @@ export const EnhancedPortfolioChart = ({
   const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
   const [selectedMetric, setSelectedMetric] = useState<'value' | 'pnl' | 'volume'>('value');
   const [isLive, setIsLive] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   // Generate realistic chart data
-  useEffect(() => {
-    const generateData = () => {
-      const points = timeRange === '1D' ? 24 : timeRange === '7D' ? 168 : 720;
-      const data: ChartDataPoint[] = [];
-      let baseValue = 100000;
-      
-      for (let i = 0; i < points; i++) {
-        const timestamp = new Date(Date.now() - (points - i) * 60000);
-        const change = (Math.random() - 0.5) * 1000;
-        baseValue += change;
-        
-        data.push({
-          time: timestamp.toISOString(),
-          value: baseValue,
-          volume: 10000 + Math.random() * 50000,
-          pnl: change,
-          trades: Math.floor(Math.random() * 10)
-        });
-      }
-      
-      setChartData(data);
-    };
-
-    generateData();
+  const generateData = () => {
+    setLoading(true);
+    const points = timeRange === '1D' ? 24 : timeRange === '7D' ? 168 : 720;
+    const data: ChartDataPoint[] = [];
+    let baseValue = 100000;
     
+    for (let i = 0; i < points; i++) {
+      const timestamp = new Date(Date.now() - (points - i) * 60000);
+      const change = (Math.random() - 0.48) * 1000; // Slight upward bias
+      baseValue += change;
+      
+      data.push({
+        time: timestamp.toISOString(),
+        value: Math.max(baseValue, 80000), // Minimum floor
+        volume: 10000 + Math.random() * 50000,
+        pnl: change,
+        trades: Math.floor(Math.random() * 10)
+      });
+    }
+    
+    setChartData(data);
+    setTimeout(() => setLoading(false), 500);
+  };
+
+  useEffect(() => {
+    generateData();
+  }, [timeRange]);
+
+  // Auto-refresh for live data
+  useEffect(() => {
     if (isLive) {
-      const interval = setInterval(generateData, 30000); // Update every 30 seconds
+      const interval = setInterval(() => {
+        generateData();
+      }, 15000); // Update every 15 seconds
       return () => clearInterval(interval);
     }
-  }, [timeRange, isLive]);
+  }, [isLive, timeRange]);
 
   const formatTime = (timestamp: string) => {
     const date = new Date(timestamp);
@@ -70,6 +78,9 @@ export const EnhancedPortfolioChart = ({
   const formatValue = (value: number) => {
     if (selectedMetric === 'volume') {
       return `$${(value / 1000).toFixed(0)}K`;
+    }
+    if (selectedMetric === 'pnl') {
+      return `${value >= 0 ? '+' : ''}$${value.toFixed(0)}`;
     }
     return `$${value.toLocaleString()}`;
   };
@@ -90,13 +101,24 @@ export const EnhancedPortfolioChart = ({
   const change = currentValue - previousValue;
   const changePercent = previousValue ? (change / previousValue) * 100 : 0;
 
+  if (loading) {
+    return (
+      <Card className="crypto-card-gradient text-white">
+        <CardContent className="p-8 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400"></div>
+          <span className="ml-2">Loading chart data...</span>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="crypto-card-gradient text-white">
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <BarChart3 className="w-5 h-5" />
-            Portfolio Analytics
+            Enhanced Portfolio Chart
             {isLive && (
               <Badge className="bg-green-500/20 text-green-400 animate-pulse">
                 LIVE
@@ -124,6 +146,13 @@ export const EnhancedPortfolioChart = ({
               onClick={() => setSelectedMetric('volume')}
             >
               Volume
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsLive(!isLive)}
+            >
+              {isLive ? 'Pause' : 'Resume'}
             </Button>
           </div>
         </div>
@@ -231,7 +260,7 @@ export const EnhancedPortfolioChart = ({
           <div className="text-center">
             <div className="text-sm text-white/60">Avg Volume</div>
             <div className="font-bold text-blue-400">
-              ${(chartData.reduce((sum, d) => sum + d.volume, 0) / chartData.length).toLocaleString()}
+              ${(chartData.reduce((sum, d) => sum + d.volume, 0) / chartData.length / 1000).toFixed(0)}K
             </div>
           </div>
           <div className="text-center">

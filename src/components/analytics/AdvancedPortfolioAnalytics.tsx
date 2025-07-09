@@ -1,428 +1,353 @@
 
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
-import { TrendingUp, TrendingDown, Activity, Target, PieChart as PieChartIcon, BarChart3, Calendar, Download } from 'lucide-react';
-import { useMultipleAccounts } from '@/hooks/useMultipleAccounts';
-import { usePerformanceAnalytics } from '@/hooks/usePerformanceAnalytics';
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
+import { useMultipleAccounts } from "@/hooks/useMultipleAccounts";
+import { PortfolioMetricsCards } from "./PortfolioMetricsCards";
+import { PerformanceChart } from "./PerformanceChart";
+import { RiskAnalysisPanel } from "./RiskAnalysisPanel";
+import { EnhancedPortfolioChart } from "../charts/EnhancedPortfolioChart";
+import { 
+  BarChart3, RefreshCw, Download, Settings, 
+  TrendingUp, AlertTriangle, Calendar
+} from 'lucide-react';
+
+interface AnalyticsData {
+  portfolioValue: number;
+  totalReturn: number;
+  dailyChange: number;
+  totalTrades: number;
+  winRate: number;
+  sharpeRatio: number;
+  maxDrawdown: number;
+  volatility: number;
+  performanceData: Array<{
+    date: string;
+    value: number;
+    volume: number;
+    benchmark: number;
+  }>;
+  riskMetrics: {
+    sharpeRatio: number;
+    maxDrawdown: number;
+    volatility: number;
+    beta: number;
+    alpha: number;
+    sortinoRatio: number;
+    calmarRatio: number;
+    var95: number;
+    skewness: number;
+    kurtosis: number;
+  };
+}
 
 export const AdvancedPortfolioAnalytics = () => {
-  const { currentAccount, accounts } = useMultipleAccounts();
-  const { performanceData, metrics, loading } = usePerformanceAnalytics(currentAccount?.id);
-  
-  const [timeframe, setTimeframe] = useState('30d');
-  const [selectedMetric, setSelectedMetric] = useState('return');
+  const { toast } = useToast();
+  const { accounts, currentAccount } = useMultipleAccounts();
+  const [timeframe, setTimeframe] = useState('30D');
+  const [loading, setLoading] = useState(true);
+  const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
-  // Advanced performance data
-  const [performanceMetrics, setPerformanceMetrics] = useState({
-    totalReturn: 12.45,
-    sharpeRatio: 1.82,
-    maxDrawdown: -5.3,
-    winRate: 68.5,
-    volatility: 15.2,
-    alpha: 0.08,
-    beta: 0.95,
-    sortinoRatio: 2.14,
-    calmarRatio: 2.35,
-    treynorRatio: 0.13
-  });
+  // Generate realistic analytics data
+  const generateAnalyticsData = (): AnalyticsData => {
+    const baseValue = currentAccount?.balance || 100000;
+    const performanceData = [];
+    
+    // Generate performance data based on timeframe
+    const days = timeframe === '1D' ? 1 : 
+                 timeframe === '7D' ? 7 : 
+                 timeframe === '30D' ? 30 : 
+                 timeframe === '90D' ? 90 : 
+                 timeframe === '1Y' ? 365 : 30;
 
-  // Risk metrics
-  const riskMetrics = [
-    { name: 'Value at Risk (95%)', value: '-$2,450', color: 'text-red-400' },
-    { name: 'Expected Shortfall', value: '-$3,200', color: 'text-red-400' },
-    { name: 'Maximum Drawdown', value: '-5.3%', color: 'text-red-400' },
-    { name: 'Downside Deviation', value: '8.7%', color: 'text-yellow-400' },
-    { name: 'Up Capture Ratio', value: '105.2%', color: 'text-green-400' },
-    { name: 'Down Capture Ratio', value: '92.8%', color: 'text-green-400' }
-  ];
+    let currentValue = baseValue * 0.9; // Start slightly below current
+    const volatility = 0.02; // 2% daily volatility
+    
+    for (let i = 0; i < days; i++) {
+      const date = new Date();
+      date.setDate(date.getDate() - (days - i));
+      
+      // Random walk with slight upward bias
+      const randomChange = (Math.random() - 0.45) * volatility;
+      currentValue *= (1 + randomChange);
+      
+      const benchmarkValue = baseValue * (1 + (i / days) * 0.05); // 5% benchmark growth
+      
+      performanceData.push({
+        date: date.toISOString().split('T')[0],
+        value: Math.round(currentValue),
+        volume: Math.round(50000 + Math.random() * 200000),
+        benchmark: Math.round(benchmarkValue)
+      });
+    }
 
-  // Portfolio composition
-  const portfolioComposition = [
-    { name: 'Bitcoin', value: 35, amount: 35000, color: '#f59e0b' },
-    { name: 'Ethereum', value: 25, amount: 25000, color: '#3b82f6' },
-    { name: 'Solana', value: 15, amount: 15000, color: '#8b5cf6' },
-    { name: 'Cardano', value: 10, amount: 10000, color: '#10b981' },
-    { name: 'Others', value: 15, amount: 15000, color: '#6b7280' }
-  ];
+    const finalValue = performanceData[performanceData.length - 1].value;
+    const totalReturn = ((finalValue - baseValue) / baseValue) * 100;
+    const dailyChanges = performanceData.slice(1).map((point, i) => 
+      (point.value - performanceData[i].value) / performanceData[i].value
+    );
+    
+    const avgDailyReturn = dailyChanges.reduce((sum, change) => sum + change, 0) / dailyChanges.length;
+    const dailyVolatility = Math.sqrt(
+      dailyChanges.reduce((sum, change) => sum + Math.pow(change - avgDailyReturn, 2), 0) / dailyChanges.length
+    );
+    
+    const sharpeRatio = avgDailyReturn / dailyVolatility * Math.sqrt(252); // Annualized
+    const maxDrawdownValue = Math.min(...performanceData.map((point, i) => {
+      const peak = Math.max(...performanceData.slice(0, i + 1).map(p => p.value));
+      return (point.value - peak) / peak * 100;
+    }));
 
-  // Sector allocation
-  const sectorAllocation = [
-    { name: 'Layer 1', percentage: 60, amount: 60000 },
-    { name: 'DeFi', percentage: 20, amount: 20000 },
-    { name: 'Layer 2', percentage: 10, amount: 10000 },
-    { name: 'Gaming', percentage: 5, amount: 5000 },
-    { name: 'NFTs', percentage: 5, amount: 5000 }
-  ];
-
-  // Performance comparison data
-  const benchmarkData = [
-    { date: '2024-01', portfolio: 5.2, btc: 3.8, sp500: 2.1 },
-    { date: '2024-02', portfolio: 8.1, btc: 6.5, sp500: 2.8 },
-    { date: '2024-03', portfolio: 12.3, btc: 9.2, sp500: 3.2 },
-    { date: '2024-04', portfolio: 15.7, btc: 12.1, sp500: 4.1 },
-    { date: '2024-05', portfolio: 18.9, btc: 15.3, sp500: 4.8 },
-    { date: '2024-06', portfolio: 22.4, btc: 18.7, sp500: 5.5 }
-  ];
-
-  // Drawdown analysis
-  const drawdownData = [
-    { date: '2024-01', drawdown: 0 },
-    { date: '2024-02', drawdown: -1.2 },
-    { date: '2024-03', drawdown: -2.8 },
-    { date: '2024-04', drawdown: -5.3 },
-    { date: '2024-05', drawdown: -3.1 },
-    { date: '2024-06', drawdown: -1.5 }
-  ];
-
-  const exportData = (format: 'csv' | 'pdf') => {
-    // Export analytics data
-    console.log(`Exporting analytics data as ${format}`);
+    return {
+      portfolioValue: finalValue,
+      totalReturn,
+      dailyChange: dailyChanges[dailyChanges.length - 1] * 100,
+      totalTrades: 247 + Math.floor(Math.random() * 50),
+      winRate: 65 + Math.random() * 15,
+      sharpeRatio: Math.max(0.5, sharpeRatio),
+      maxDrawdown: maxDrawdownValue,
+      volatility: dailyVolatility * Math.sqrt(252) * 100, // Annualized volatility
+      performanceData,
+      riskMetrics: {
+        sharpeRatio: Math.max(0.5, sharpeRatio),
+        maxDrawdown: maxDrawdownValue,
+        volatility: dailyVolatility * Math.sqrt(252) * 100,
+        beta: 0.8 + Math.random() * 0.4,
+        alpha: (Math.random() - 0.5) * 6,
+        sortinoRatio: Math.max(0.8, sharpeRatio * 1.2),
+        calmarRatio: Math.abs(totalReturn / maxDrawdownValue),
+        var95: -Math.abs(2 + Math.random() * 3),
+        skewness: (Math.random() - 0.5) * 2,
+        kurtosis: 3 + Math.random() * 2
+      }
+    };
   };
 
-  if (loading) {
-    return <div className="flex items-center justify-center py-12">Loading advanced analytics...</div>;
+  const loadAnalytics = async () => {
+    setLoading(true);
+    try {
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      const data = generateAnalyticsData();
+      setAnalyticsData(data);
+      setLastUpdated(new Date());
+      
+      toast({
+        title: "Analytics Updated",
+        description: "Portfolio analytics have been refreshed",
+      });
+    } catch (error) {
+      toast({
+        title: "Error Loading Analytics",
+        description: "Failed to load portfolio analytics",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const exportAnalytics = () => {
+    if (!analyticsData) return;
+    
+    const exportData = {
+      exportDate: new Date().toISOString(),
+      timeframe,
+      account: currentAccount?.account_name,
+      ...analyticsData
+    };
+    
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `portfolio-analytics-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    
+    toast({
+      title: "Analytics Exported",
+      description: "Portfolio analytics data has been downloaded",
+    });
+  };
+
+  useEffect(() => {
+    loadAnalytics();
+  }, [timeframe, currentAccount]);
+
+  // Auto-refresh every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (!loading) {
+        loadAnalytics();
+      }
+    }, 30000);
+    
+    return () => clearInterval(interval);
+  }, [loading]);
+
+  if (!analyticsData && loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-center p-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400"></div>
+          <span className="ml-2 text-white">Loading analytics...</span>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-primary-foreground">Advanced Portfolio Analytics</h2>
-          <p className="text-muted-foreground">Comprehensive performance analysis and risk metrics</p>
+          <h2 className="text-2xl font-bold text-primary-foreground flex items-center gap-2">
+            <BarChart3 className="w-6 h-6" />
+            Advanced Portfolio Analytics
+          </h2>
+          <p className="text-muted-foreground">
+            Comprehensive performance analysis and risk assessment
+          </p>
+          <div className="flex items-center gap-2 mt-2">
+            <Badge variant="outline" className="text-xs">
+              <Calendar className="w-3 h-3 mr-1" />
+              Last updated: {lastUpdated.toLocaleTimeString()}
+            </Badge>
+            {currentAccount && (
+              <Badge variant="secondary" className="text-xs">
+                {currentAccount.account_name}
+              </Badge>
+            )}
+          </div>
         </div>
+        
         <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={() => exportData('csv')}>
-            <Download className="w-4 h-4 mr-2" />
-            Export CSV
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={loadAnalytics}
+            disabled={loading}
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
           </Button>
-          <Button variant="outline" onClick={() => exportData('pdf')}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={exportAnalytics}
+            disabled={!analyticsData}
+          >
             <Download className="w-4 h-4 mr-2" />
-            Export PDF
+            Export
           </Button>
         </div>
       </div>
 
-      {/* Key Performance Indicators */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-        <Card className="crypto-card-gradient text-white">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-white/60">Total Return</p>
-                <p className="text-2xl font-bold text-green-400">+{performanceMetrics.totalReturn}%</p>
-              </div>
-              <TrendingUp className="w-8 h-8 text-green-400" />
-            </div>
-          </CardContent>
-        </Card>
+      {analyticsData && (
+        <>
+          {/* Key Metrics Cards */}
+          <PortfolioMetricsCards
+            metrics={{
+              totalValue: analyticsData.portfolioValue,
+              totalReturn: analyticsData.totalReturn,
+              dailyChange: analyticsData.dailyChange,
+              totalTrades: analyticsData.totalTrades,
+              winRate: analyticsData.winRate,
+              sharpeRatio: analyticsData.sharpeRatio,
+              maxDrawdown: analyticsData.maxDrawdown,
+              volatility: analyticsData.volatility
+            }}
+            loading={loading}
+          />
 
-        <Card className="crypto-card-gradient text-white">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-white/60">Sharpe Ratio</p>
-                <p className="text-2xl font-bold text-blue-400">{performanceMetrics.sharpeRatio}</p>
-              </div>
-              <Activity className="w-8 h-8 text-blue-400" />
-            </div>
-          </CardContent>
-        </Card>
+          <Tabs defaultValue="performance" className="w-full">
+            <TabsList className="grid w-full grid-cols-4 bg-card/50 backdrop-blur-sm">
+              <TabsTrigger value="performance">Performance</TabsTrigger>
+              <TabsTrigger value="risk">Risk Analysis</TabsTrigger>
+              <TabsTrigger value="charts">Advanced Charts</TabsTrigger>
+              <TabsTrigger value="comparison">Comparison</TabsTrigger>
+            </TabsList>
 
-        <Card className="crypto-card-gradient text-white">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-white/60">Max Drawdown</p>
-                <p className="text-2xl font-bold text-red-400">{performanceMetrics.maxDrawdown}%</p>
-              </div>
-              <TrendingDown className="w-8 h-8 text-red-400" />
-            </div>
-          </CardContent>
-        </Card>
+            <TabsContent value="performance" className="space-y-6">
+              <PerformanceChart
+                data={analyticsData.performanceData}
+                timeframe={timeframe}
+                onTimeframeChange={setTimeframe}
+                loading={loading}
+              />
+            </TabsContent>
 
-        <Card className="crypto-card-gradient text-white">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-white/60">Win Rate</p>
-                <p className="text-2xl font-bold text-purple-400">{performanceMetrics.winRate}%</p>
-              </div>
-              <Target className="w-8 h-8 text-purple-400" />
-            </div>
-          </CardContent>
-        </Card>
+            <TabsContent value="risk" className="space-y-6">
+              <RiskAnalysisPanel
+                metrics={analyticsData.riskMetrics}
+                loading={loading}
+              />
+            </TabsContent>
 
-        <Card className="crypto-card-gradient text-white">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-white/60">Volatility</p>
-                <p className="text-2xl font-bold text-orange-400">{performanceMetrics.volatility}%</p>
-              </div>
-              <BarChart3 className="w-8 h-8 text-orange-400" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+            <TabsContent value="charts" className="space-y-6">
+              <EnhancedPortfolioChart
+                accountId={currentAccount?.id}
+                timeRange={timeframe as any}
+              />
+            </TabsContent>
 
-      <Tabs defaultValue="performance" className="w-full">
-        <TabsList className="grid w-full grid-cols-6">
-          <TabsTrigger value="performance">Performance</TabsTrigger>
-          <TabsTrigger value="risk">Risk Analysis</TabsTrigger>
-          <TabsTrigger value="composition">Composition</TabsTrigger>
-          <TabsTrigger value="benchmarks">Benchmarks</TabsTrigger>
-          <TabsTrigger value="drawdown">Drawdown</TabsTrigger>
-          <TabsTrigger value="advanced">Advanced</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="performance">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card className="crypto-card-gradient text-white">
-              <CardHeader>
-                <CardTitle>Portfolio Performance</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <AreaChart data={benchmarkData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                    <XAxis dataKey="date" stroke="rgba(255,255,255,0.7)" />
-                    <YAxis stroke="rgba(255,255,255,0.7)" />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: 'rgba(0,0,0,0.8)', 
-                        border: '1px solid rgba(255,255,255,0.2)' 
-                      }} 
-                    />
-                    <Area type="monotone" dataKey="portfolio" stackId="1" stroke="#10b981" fill="#10b981" fillOpacity={0.3} />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-
-            <Card className="crypto-card-gradient text-white">
-              <CardHeader>
-                <CardTitle>Advanced Metrics</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-white/60">Alpha</p>
-                    <p className="text-lg font-bold text-green-400">+{performanceMetrics.alpha}</p>
+            <TabsContent value="comparison" className="space-y-6">
+              <Card className="crypto-card-gradient text-white">
+                <CardHeader>
+                  <CardTitle>Account Comparison</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {accounts.map((account, index) => (
+                      <div key={account.id} className="p-4 bg-white/5 rounded-lg border border-white/10">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="font-medium text-white">{account.account_name}</h4>
+                          <Badge className={
+                            account.total_pnl_percentage >= 0 
+                              ? 'bg-green-500/20 text-green-400' 
+                              : 'bg-red-500/20 text-red-400'
+                          }>
+                            {account.total_pnl_percentage >= 0 ? '+' : ''}
+                            {account.total_pnl_percentage.toFixed(2)}%
+                          </Badge>
+                        </div>
+                        
+                        <div className="grid grid-cols-3 gap-4 text-sm">
+                          <div>
+                            <span className="text-white/60">Balance:</span>
+                            <div className="font-medium text-white">
+                              ${account.balance.toLocaleString()}
+                            </div>
+                          </div>
+                          <div>
+                            <span className="text-white/60">P&L:</span>
+                            <div className={`font-medium ${
+                              account.total_pnl >= 0 ? 'text-green-400' : 'text-red-400'
+                            }`}>
+                              ${account.total_pnl.toLocaleString()}
+                            </div>
+                          </div>
+                          <div>
+                            <span className="text-white/60">Risk Level:</span>
+                            <div className="font-medium text-white capitalize">
+                              {account.risk_level}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                  <div>
-                    <p className="text-sm text-white/60">Beta</p>
-                    <p className="text-lg font-bold text-blue-400">{performanceMetrics.beta}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-white/60">Sortino Ratio</p>
-                    <p className="text-lg font-bold text-purple-400">{performanceMetrics.sortinoRatio}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-white/60">Calmar Ratio</p>
-                    <p className="text-lg font-bold text-orange-400">{performanceMetrics.calmarRatio}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-white/60">Treynor Ratio</p>
-                    <p className="text-lg font-bold text-cyan-400">{performanceMetrics.treynorRatio}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-white/60">Information Ratio</p>
-                    <p className="text-lg font-bold text-pink-400">1.28</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="risk">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card className="crypto-card-gradient text-white">
-              <CardHeader>
-                <CardTitle>Risk Metrics</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {riskMetrics.map((metric, index) => (
-                  <div key={index} className="flex justify-between items-center">
-                    <span className="text-white/80">{metric.name}</span>
-                    <span className={`font-bold ${metric.color}`}>{metric.value}</span>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-
-            <Card className="crypto-card-gradient text-white">
-              <CardHeader>
-                <CardTitle>Risk-Return Profile</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={[
-                    { risk: 0, return: 0 },
-                    { risk: 5, return: 3 },
-                    { risk: 10, return: 8 },
-                    { risk: 15, return: 12 },
-                    { risk: 20, return: 15 },
-                    { risk: 25, return: 18 }
-                  ]}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                    <XAxis dataKey="risk" stroke="rgba(255,255,255,0.7)" label={{ value: 'Risk (%)', position: 'insideBottom', offset: -5 }} />
-                    <YAxis stroke="rgba(255,255,255,0.7)" label={{ value: 'Return (%)', angle: -90, position: 'insideLeft' }} />
-                    <Tooltip />
-                    <Line type="monotone" dataKey="return" stroke="#10b981" strokeWidth={3} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="composition">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card className="crypto-card-gradient text-white">
-              <CardHeader>
-                <CardTitle>Asset Allocation</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie
-                      data={portfolioComposition}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={({ name, value }) => `${name}: ${value}%`}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="value"
-                    >
-                      {portfolioComposition.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-
-            <Card className="crypto-card-gradient text-white">
-              <CardHeader>
-                <CardTitle>Sector Allocation</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={sectorAllocation}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                    <XAxis dataKey="name" stroke="rgba(255,255,255,0.7)" />
-                    <YAxis stroke="rgba(255,255,255,0.7)" />
-                    <Tooltip />
-                    <Bar dataKey="percentage" fill="#3b82f6" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="benchmarks">
-          <Card className="crypto-card-gradient text-white">
-            <CardHeader>
-              <CardTitle>Performance vs Benchmarks</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={400}>
-                <LineChart data={benchmarkData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                  <XAxis dataKey="date" stroke="rgba(255,255,255,0.7)" />
-                  <YAxis stroke="rgba(255,255,255,0.7)" />
-                  <Tooltip />
-                  <Legend />
-                  <Line type="monotone" dataKey="portfolio" stroke="#10b981" strokeWidth={3} name="Portfolio" />
-                  <Line type="monotone" dataKey="btc" stroke="#f59e0b" strokeWidth={2} name="Bitcoin" />
-                  <Line type="monotone" dataKey="sp500" stroke="#3b82f6" strokeWidth={2} name="S&P 500" />
-                </LineChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="drawdown">
-          <Card className="crypto-card-gradient text-white">
-            <CardHeader>
-              <CardTitle>Drawdown Analysis</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={400}>
-                <AreaChart data={drawdownData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                  <XAxis dataKey="date" stroke="rgba(255,255,255,0.7)" />
-                  <YAxis stroke="rgba(255,255,255,0.7)" />
-                  <Tooltip />
-                  <Area type="monotone" dataKey="drawdown" stroke="#ef4444" fill="#ef4444" fillOpacity={0.3} />
-                </AreaChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="advanced">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card className="crypto-card-gradient text-white">
-              <CardHeader>
-                <CardTitle>Monte Carlo Simulation</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="text-center">
-                    <p className="text-2xl font-bold text-green-400">95%</p>
-                    <p className="text-sm text-white/60">Confidence Level</p>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="text-center">
-                      <p className="text-lg font-bold text-blue-400">$125,000</p>
-                      <p className="text-xs text-white/60">Expected Value (1Y)</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-lg font-bold text-red-400">$85,000</p>
-                      <p className="text-xs text-white/60">Worst Case (5%)</p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="crypto-card-gradient text-white">
-              <CardHeader>
-                <CardTitle>Portfolio Optimization</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-white/80">Current Allocation</span>
-                    <Badge variant="secondary">Good</Badge>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-white/80">Suggested Rebalancing</span>
-                    <Badge variant="outline" className="text-yellow-400">Available</Badge>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-white/80">Risk-Adjusted Return</span>
-                    <span className="text-green-400 font-bold">+15.2%</span>
-                  </div>
-                  <Button className="w-full mt-4">
-                    View Optimization Suggestions
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-      </Tabs>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </>
+      )}
     </div>
   );
 };
