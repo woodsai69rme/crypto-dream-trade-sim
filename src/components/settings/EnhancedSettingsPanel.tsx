@@ -9,7 +9,7 @@ import { ComprehensiveTopTraders } from "../enhanced/ComprehensiveTopTraders";
 import { AIModelManager } from "../enhanced/AIModelManager";
 import { TradingWorkflowManager } from "../enhanced/TradingWorkflowManager";
 import { TradingAssistant } from "../ai/TradingAssistant";
-import { Settings, Bot, Key, TestTube, Users, Globe, Cog, Star, Cpu, Workflow, MessageSquare, Wallet, Bell } from "lucide-react";
+import { Settings, Bot, Key, TestTube, Users, Globe, Cog, Star, Cpu, Workflow, MessageSquare, Wallet, Bell, BarChart3 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useSettings } from "@/hooks/useSettings";
 import { N8NLocalConnection } from "../integrations/N8NLocalConnection";
@@ -23,6 +23,10 @@ import { ComprehensiveAuditDashboard } from "../enhanced/ComprehensiveAuditDashb
 import { SocialSentimentMonitor } from "../SocialSentimentMonitor";
 import { PriceAlertsManager } from "../PriceAlertsManager";
 import { ComprehensiveTradeFollowingSystem } from "../trading/ComprehensiveTradeFollowingSystem";
+import { AdvancedPortfolioAnalytics } from "../analytics/AdvancedPortfolioAnalytics";
+import { LiveTradingIntegration } from "../trading/LiveTradingIntegration";
+import { AdvancedAIModels } from "../ai/AdvancedAIModels";
+import { SocialTradingHub } from "../social/SocialTradingHub";
 
 export const EnhancedSettingsPanel = () => {
   const { settings, updateSetting, isLoading } = useSettings();
@@ -52,11 +56,27 @@ export const EnhancedSettingsPanel = () => {
     <div className="space-y-6">
       <div className="flex items-center gap-2 mb-6">
         <Settings className="w-6 h-6" />
-        <h1 className="text-3xl font-bold text-primary-foreground">Complete Trading System</h1>
+        <h1 className="text-3xl font-bold text-primary-foreground">Complete Trading System - Phase 2</h1>
       </div>
 
-      <Tabs defaultValue="complete-system" className="w-full">
+      <Tabs defaultValue="advanced-analytics" className="w-full">
         <TabsList className="grid w-full grid-cols-12 bg-card/50 backdrop-blur-sm text-xs">
+          <TabsTrigger value="advanced-analytics" className="flex items-center gap-1">
+            <BarChart3 className="w-3 h-3" />
+            Analytics
+          </TabsTrigger>
+          <TabsTrigger value="live-trading" className="flex items-center gap-1">
+            <Wallet className="w-3 h-3" />
+            Live Trading
+          </TabsTrigger>
+          <TabsTrigger value="ai-models" className="flex items-center gap-1">
+            <Cpu className="w-3 h-3" />
+            AI Models
+          </TabsTrigger>
+          <TabsTrigger value="social-trading" className="flex items-center gap-1">
+            <Users className="w-3 h-3" />
+            Social Trading
+          </TabsTrigger>
           <TabsTrigger value="complete-system" className="flex items-center gap-1">
             <Users className="w-3 h-3" />
             Complete System
@@ -64,14 +84,6 @@ export const EnhancedSettingsPanel = () => {
           <TabsTrigger value="global" className="flex items-center gap-1">
             <Globe className="w-3 h-3" />
             Global
-          </TabsTrigger>
-          <TabsTrigger value="live-trading" className="flex items-center gap-1">
-            <Wallet className="w-3 h-3" />
-            Live Trading
-          </TabsTrigger>
-          <TabsTrigger value="social" className="flex items-center gap-1">
-            <MessageSquare className="w-3 h-3" />
-            Social
           </TabsTrigger>
           <TabsTrigger value="alerts" className="flex items-center gap-1">
             <Bell className="w-3 h-3" />
@@ -97,19 +109,23 @@ export const EnhancedSettingsPanel = () => {
             <Key className="w-3 h-3" />
             APIs
           </TabsTrigger>
-          <TabsTrigger value="assistant" className="flex items-center gap-1">
-            <MessageSquare className="w-3 h-3" />
-            AI Chat
-          </TabsTrigger>
-          <TabsTrigger value="traders" className="flex items-center gap-1">
-            <Star className="w-3 h-3" />
-            Traders
-          </TabsTrigger>
-          <TabsTrigger value="bots" className="flex items-center gap-1">
-            <Bot className="w-3 h-3" />
-            Bots
-          </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="advanced-analytics">
+          <AdvancedPortfolioAnalytics />
+        </TabsContent>
+
+        <TabsContent value="live-trading">
+          <LiveTradingIntegration />
+        </TabsContent>
+
+        <TabsContent value="ai-models">
+          <AdvancedAIModels />
+        </TabsContent>
+
+        <TabsContent value="social-trading">
+          <SocialTradingHub />
+        </TabsContent>
 
         <TabsContent value="complete-system">
           <ComprehensiveTradeFollowingSystem />
