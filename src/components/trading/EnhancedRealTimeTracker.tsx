@@ -1,11 +1,11 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useRealtimeMarketData } from '@/hooks/useRealtimeMarketData';
-import { Activity, TrendingUp, TrendingDown, Zap, RefreshCw } from 'lucide-react';
+import { Activity, TrendingUp, TrendingDown, Zap, RefreshCw, Bell, BellRing, X } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from '@/integrations/supabase/client';
 
 interface PriceAlert {
   id: string;
@@ -13,12 +13,15 @@ interface PriceAlert {
   targetPrice: number;
   direction: 'above' | 'below';
   triggered: boolean;
+  createdAt: Date;
 }
 
-export const RealTimeTracker = () => {
+export const EnhancedRealTimeTracker = () => {
   const { prices, isConnected, lastUpdate } = useRealtimeMarketData(['BTC', 'ETH', 'SOL', 'BNB', 'XRP', 'ADA']);
   const [alerts, setAlerts] = useState<PriceAlert[]>([]);
   const [priceHistory, setPriceHistory] = useState<Record<string, number[]>>({});
+  const [refreshing, setRefreshing] = useState(false);
+  const [clickedCoin, setClickedCoin] = useState<string | null>(null);
   const { toast } = useToast();
 
   // Track price changes for trend analysis
@@ -46,16 +49,17 @@ export const RealTimeTracker = () => {
           a.id === alert.id ? { ...a, triggered: true } : a
         ));
         
-        // Show notification
+        // Enhanced notification
         toast({
-          title: `🚨 Price Alert: ${alert.symbol}`,
-          description: `${alert.symbol} is now ${alert.direction} $${alert.targetPrice.toLocaleString()}. Current: $${currentPrice.toLocaleString()}`,
+          title: `🚨 Price Alert Triggered!`,
+          description: `${alert.symbol} reached ${alert.direction} $${alert.targetPrice.toLocaleString()}! Current: $${currentPrice.toLocaleString()}`,
         });
 
         if (Notification.permission === 'granted') {
-          new Notification(`🚨 Price Alert: ${alert.symbol}`, {
+          new Notification(`🚨 ${alert.symbol} Price Alert`, {
             body: `${alert.symbol} is now ${alert.direction} $${alert.targetPrice.toLocaleString()}`,
-            icon: '/favicon.ico'
+            icon: '/favicon.ico',
+            badge: '/favicon.ico'
           });
         }
       }
@@ -88,11 +92,34 @@ export const RealTimeTracker = () => {
     return `$${volume.toFixed(0)}`;
   };
 
+  const refreshMarketData = async () => {
+    setRefreshing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('fetch-market-data');
+      
+      if (error) throw error;
+      
+      toast({
+        title: "✅ Market Data Refreshed",
+        description: `Updated ${data?.updated || 0} cryptocurrency prices`,
+      });
+    } catch (error) {
+      console.error('Error refreshing market data:', error);
+      toast({
+        title: "Refresh Failed",
+        description: "Failed to refresh market data. Using cached data.",
+        variant: "destructive",
+      });
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   const createPriceAlert = (symbol: string) => {
     const currentPrice = prices[symbol]?.price;
     if (!currentPrice) {
       toast({
-        title: "Unable to Create Alert",
+        title: "❌ Unable to Create Alert",
         description: `No price data available for ${symbol}. Please wait for data to load.`,
         variant: "destructive",
       });
@@ -103,13 +130,13 @@ export const RealTimeTracker = () => {
     const getAlertPrice = (symbol: string, currentPrice: number) => {
       switch (symbol) {
         case 'BTC':
-          return currentPrice > 100000 ? 110000 : 95000;
+          return currentPrice > 100000 ? Math.round(currentPrice * 1.05) : Math.round(currentPrice * 0.95);
         case 'ETH':
-          return currentPrice > 3500 ? 4000 : 3200;
+          return currentPrice > 3500 ? Math.round(currentPrice * 1.1) : Math.round(currentPrice * 0.9);
         case 'SOL':
-          return currentPrice > 180 ? 220 : 160;
+          return currentPrice > 180 ? Math.round(currentPrice * 1.15) : Math.round(currentPrice * 0.85);
         default:
-          return currentPrice * (Math.random() > 0.5 ? 1.15 : 0.85);
+          return Math.round(currentPrice * (Math.random() > 0.5 ? 1.15 : 0.85));
       }
     };
 
@@ -121,10 +148,15 @@ export const RealTimeTracker = () => {
       symbol,
       targetPrice,
       direction,
-      triggered: false
+      triggered: false,
+      createdAt: new Date()
     };
 
     setAlerts(prev => [...prev, newAlert]);
+    setClickedCoin(symbol);
+    
+    // Visual feedback
+    setTimeout(() => setClickedCoin(null), 1000);
     
     // Enhanced user feedback
     toast({
@@ -137,7 +169,7 @@ export const RealTimeTracker = () => {
       Notification.requestPermission().then(permission => {
         if (permission === 'granted') {
           toast({
-            title: "Notifications Enabled",
+            title: "🔔 Notifications Enabled",
             description: "You'll receive browser notifications when your price alerts trigger.",
           });
         }
@@ -145,33 +177,56 @@ export const RealTimeTracker = () => {
     }
   };
 
+  const removeAlert = (alertId: string) => {
+    setAlerts(prev => prev.filter(a => a.id !== alertId));
+    toast({
+      title: "Alert Removed",
+      description: "Price alert has been deleted.",
+    });
+  };
+
   return (
     <Card className="crypto-card-gradient text-white">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Activity className="w-5 h-5" />
-          Real-Time Market Tracker
+          Enhanced Real-Time Market Tracker
           <Badge className={`ml-auto ${isConnected ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
             {isConnected ? '🟢 Live' : '🔴 Offline'}
           </Badge>
+          <Button
+            onClick={refreshMarketData}
+            variant="ghost"
+            size="sm"
+            disabled={refreshing}
+            className="ml-2"
+          >
+            <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+          </Button>
         </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           {Object.entries(prices).map(([symbol, data]) => {
             const trend = getTrendDirection(symbol);
+            const isClicked = clickedCoin === symbol;
             return (
               <div 
                 key={symbol} 
-                className="p-3 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-200 cursor-pointer transform hover:scale-[1.02]"
+                className={`p-3 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-200 cursor-pointer transform hover:scale-[1.02] ${
+                  isClicked ? 'bg-green-500/20 border-green-500/40 scale-105' : ''
+                }`}
                 onClick={() => createPriceAlert(symbol)}
                 title={`Click to set price alert for ${symbol} (Current: ${formatPrice(data.price)})`}
               >
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-medium text-sm">{symbol}</span>
-                  {trend === 'up' && <TrendingUp className="w-3 h-3 text-green-400" />}
-                  {trend === 'down' && <TrendingDown className="w-3 h-3 text-red-400" />}
-                  {trend === 'neutral' && <Zap className="w-3 h-3 text-yellow-400" />}
+                  <div className="flex items-center gap-1">
+                    {trend === 'up' && <TrendingUp className="w-3 h-3 text-green-400" />}
+                    {trend === 'down' && <TrendingDown className="w-3 h-3 text-red-400" />}
+                    {trend === 'neutral' && <Zap className="w-3 h-3 text-yellow-400" />}
+                    {isClicked && <Bell className="w-3 h-3 text-green-400 animate-pulse" />}
+                  </div>
                 </div>
                 <div className="space-y-1">
                   <div className="text-sm font-bold">{formatPrice(data.price)}</div>
@@ -187,27 +242,45 @@ export const RealTimeTracker = () => {
           })}
         </div>
         
-        {/* Price Alerts Section */}
+        {/* Enhanced Price Alerts Section */}
         {alerts.length > 0 && (
           <div className="mt-6">
             <h4 className="font-medium mb-3 flex items-center gap-2">
-              🚨 Active Price Alerts
+              <BellRing className="w-4 h-4" />
+              Active Price Alerts
               <Badge variant="outline" className="text-xs">
-                {alerts.filter(a => !a.triggered).length} Active
+                {alerts.filter(a => !a.triggered).length} Active • {alerts.filter(a => a.triggered).length} Triggered
               </Badge>
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-              {alerts.slice(0, 4).map((alert) => (
+              {alerts.slice(0, 6).map((alert) => (
                 <div 
                   key={alert.id} 
-                  className={`p-2 rounded text-xs ${
+                  className={`p-3 rounded-lg border text-xs relative group ${
                     alert.triggered 
-                      ? 'bg-green-500/20 text-green-400' 
-                      : 'bg-yellow-500/20 text-yellow-400'
+                      ? 'bg-green-500/20 text-green-400 border-green-500/30' 
+                      : 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
                   }`}
                 >
-                  {alert.symbol} {alert.direction} ${alert.targetPrice.toLocaleString()}
-                  {alert.triggered && ' ✅'}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="font-medium">{alert.symbol} {alert.direction} ${alert.targetPrice.toLocaleString()}</div>
+                      <div className="text-xs opacity-60">
+                        Created: {alert.createdAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {alert.triggered && <span>✅</span>}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeAlert(alert.id)}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0"
+                      >
+                        <X className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -224,6 +297,8 @@ export const RealTimeTracker = () => {
 
         <div className="mt-4 text-xs text-white/50 text-center">
           💡 Click on any coin to set a price alert • 🔔 Enable browser notifications for instant alerts
+          <br />
+          <span className="text-white/40">Real-time data updates every 30 seconds</span>
         </div>
       </CardContent>
     </Card>
