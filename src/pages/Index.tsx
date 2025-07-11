@@ -10,8 +10,11 @@ import { TopTraders } from "@/components/TopTraders";
 import { Settings } from "@/components/Settings";
 import { AdvancedPortfolioAnalytics } from "@/components/analytics/AdvancedPortfolioAnalytics";
 import { ComprehensiveTradeFollowingSystem } from "@/components/trading/ComprehensiveTradeFollowingSystem";
+import { AccountDashboard } from "@/components/accounts/AccountDashboard";
 import { SystemHealthIndicator } from "@/components/enhanced/SystemHealthIndicator";
 import { useAuth } from "@/hooks/useAuth";
+import { useAccountInitialization } from "@/hooks/useAccountInitialization";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { 
   Wallet, TrendingUp, BarChart3, Users, Settings as SettingsIcon,
   Activity, Trophy, Target
@@ -19,7 +22,8 @@ import {
 
 const Index = () => {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState("portfolio");
+  const { initializing } = useAccountInitialization();
+  const [activeTab, setActiveTab] = useState("accounts");
 
   // Listen for navigation events from TradeFollower
   useEffect(() => {
@@ -31,12 +35,15 @@ const Index = () => {
     return () => window.removeEventListener('navigate-to-following', handleNavigation);
   }, []);
 
-  if (!user) {
+
+  // Show loading while initializing accounts
+  if (initializing) {
     return (
       <div className="min-h-screen crypto-gradient flex items-center justify-center">
         <div className="text-center space-y-4">
-          <h1 className="text-4xl font-bold text-white">CryptoTrader Pro</h1>
-          <p className="text-xl text-gray-300">Please sign in to access the trading platform</p>
+          <LoadingSpinner size="lg" />
+          <h1 className="text-3xl font-bold text-white">Setting up your accounts...</h1>
+          <p className="text-xl text-gray-300">Preparing your trading environment</p>
         </div>
       </div>
     );
@@ -71,9 +78,13 @@ const Index = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-7 bg-card/50 backdrop-blur-sm">
-            <TabsTrigger value="portfolio" className="flex items-center gap-2">
+          <TabsList className="grid w-full grid-cols-8 bg-card/50 backdrop-blur-sm">
+            <TabsTrigger value="accounts" className="flex items-center gap-2">
               <Wallet className="w-4 h-4" />
+              Accounts
+            </TabsTrigger>
+            <TabsTrigger value="portfolio" className="flex items-center gap-2">
+              <BarChart3 className="w-4 h-4" />
               Portfolio
             </TabsTrigger>
             <TabsTrigger value="trading" className="flex items-center gap-2">
@@ -85,11 +96,11 @@ const Index = () => {
               Following
             </TabsTrigger>
             <TabsTrigger value="market" className="flex items-center gap-2">
-              <BarChart3 className="w-4 h-4" />
+              <Target className="w-4 h-4" />
               Market
             </TabsTrigger>
             <TabsTrigger value="traders" className="flex items-center gap-2">
-              <Users className="w-4 h-4" />
+              <Trophy className="w-4 h-4" />
               Top Traders
             </TabsTrigger>
             <TabsTrigger value="analytics" className="flex items-center gap-2">
@@ -101,6 +112,10 @@ const Index = () => {
               Settings
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="accounts">
+            <AccountDashboard />
+          </TabsContent>
 
           <TabsContent value="portfolio">
             <Portfolio />

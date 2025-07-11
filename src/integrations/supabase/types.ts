@@ -4373,6 +4373,10 @@ export type Database = {
         Args: { account_id_param: string }
         Returns: Json
       }
+      check_user_authenticated: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       create_account_from_template: {
         Args: {
           template_id_param: string
@@ -4381,8 +4385,16 @@ export type Database = {
         }
         Returns: string
       }
+      create_default_accounts_for_user: {
+        Args: { user_id_param: string }
+        Returns: undefined
+      }
       create_initial_trading_bots: {
         Args: { user_id: string }
+        Returns: undefined
+      }
+      ensure_user_accounts: {
+        Args: Record<PropertyKey, never>
         Returns: undefined
       }
       execute_paper_trade: {
@@ -4409,6 +4421,10 @@ export type Database = {
           p_metadata?: Json
         }
         Returns: string
+      }
+      manual_create_account: {
+        Args: { p_user_id?: string }
+        Returns: Json
       }
       populate_dummy_snapshots: {
         Args: Record<PropertyKey, never>
