@@ -9,6 +9,7 @@ import { MarketOverview } from "@/components/MarketOverview";
 import { TopTraders } from "@/components/TopTraders";
 import { Settings } from "@/components/Settings";
 import { AdvancedPortfolioAnalytics } from "@/components/analytics/AdvancedPortfolioAnalytics";
+import { SystemHealthIndicator } from "@/components/enhanced/SystemHealthIndicator";
 import { useAuth } from "@/hooks/useAuth";
 import { 
   Wallet, TrendingUp, BarChart3, Users, Settings as SettingsIcon,
@@ -21,7 +22,7 @@ const Index = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+      <div className="min-h-screen crypto-gradient flex items-center justify-center">
         <div className="text-center space-y-4">
           <h1 className="text-4xl font-bold text-white">CryptoTrader Pro</h1>
           <p className="text-xl text-gray-300">Please sign in to access the trading platform</p>
@@ -31,7 +32,7 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+    <div className="min-h-screen crypto-gradient">
       <div className="container mx-auto px-4 py-6">
         {/* Header with Phase 2 Badge */}
         <div className="flex items-center justify-between mb-6">
@@ -45,7 +46,8 @@ const Index = () => {
               Enterprise Ready
             </Badge>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            <SystemHealthIndicator />
             <Button 
               variant="outline" 
               onClick={() => setActiveTab("analytics")}

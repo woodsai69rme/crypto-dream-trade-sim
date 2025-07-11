@@ -1,120 +1,190 @@
-
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState, useEffect } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { 
-  CheckCircle, 
-  AlertTriangle, 
-  XCircle, 
-  Activity,
-  Database,
-  Wifi,
-  Server,
-  Shield
-} from 'lucide-react';
+import { Activity, Database, Wifi, Server, AlertTriangle, CheckCircle } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { useMultipleAccounts } from '@/hooks/useMultipleAccounts';
 
-interface HealthCheck {
+interface SystemHealth {
+  status: 'healthy' | 'warning' | 'error';
+  message: string;
+  lastCheck: Date;
+}
+
+interface HealthMetric {
   name: string;
   status: 'healthy' | 'warning' | 'error';
-  value: number;
-  unit?: string;
-  icon: React.ElementType;
+  value: string;
+  icon: React.ComponentType<any>;
 }
 
 export const SystemHealthIndicator = () => {
-  const [healthChecks, setHealthChecks] = useState<HealthCheck[]>([
-    { name: 'Database', status: 'healthy', value: 99.9, unit: '%', icon: Database },
-    { name: 'API Response', status: 'healthy', value: 45, unit: 'ms', icon: Activity },
-    { name: 'WebSocket', status: 'healthy', value: 100, unit: '%', icon: Wifi },
-    { name: 'Server Load', status: 'warning', value: 75, unit: '%', icon: Server },
-    { name: 'Security', status: 'healthy', value: 100, unit: '%', icon: Shield }
-  ]);
+  const { user } = useAuth();
+  const { accounts, loading } = useMultipleAccounts();
+  const [systemHealth, setSystemHealth] = useState<SystemHealth>({
+    status: 'healthy',
+    message: 'All systems operational',
+    lastCheck: new Date()
+  });
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'healthy':
-        return <CheckCircle className="w-4 h-4 text-green-500" />;
-      case 'warning':
-        return <AlertTriangle className="w-4 h-4 text-yellow-500" />;
-      case 'error':
-        return <XCircle className="w-4 h-4 text-red-500" />;
-      default:
-        return <CheckCircle className="w-4 h-4 text-gray-500" />;
+  const [metrics, setMetrics] = useState<HealthMetric[]>([]);
+
+  useEffect(() => {
+    checkSystemHealth();
+    const interval = setInterval(checkSystemHealth, 30000); // Check every 30 seconds
+    return () => clearInterval(interval);
+  }, [user, accounts]);
+
+  const checkSystemHealth = () => {
+    const newMetrics: HealthMetric[] = [];
+    let overallStatus: 'healthy' | 'warning' | 'error' = 'healthy';
+    let statusMessage = 'All systems operational';
+
+    // Database connectivity
+    if (user) {
+      newMetrics.push({
+        name: 'Database',
+        status: 'healthy',
+        value: 'Connected',
+        icon: Database
+      });
+    } else {
+      newMetrics.push({
+        name: 'Database',
+        status: 'warning',
+        value: 'Not authenticated',
+        icon: Database
+      });
+      overallStatus = 'warning';
+      statusMessage = 'Authentication required';
     }
+
+    // Account loading status
+    if (loading) {
+      newMetrics.push({
+        name: 'Accounts',
+        status: 'warning',
+        value: 'Loading...',
+        icon: Server
+      });
+    } else if (accounts.length > 0) {
+      newMetrics.push({
+        name: 'Accounts',
+        status: 'healthy',
+        value: `${accounts.length} active`,
+        icon: Server
+      });
+    } else {
+      newMetrics.push({
+        name: 'Accounts',
+        status: 'warning',
+        value: 'No accounts',
+        icon: Server
+      });
+      if (overallStatus === 'healthy') {
+        overallStatus = 'warning';
+        statusMessage = 'No trading accounts found';
+      }
+    }
+
+    // Network connectivity (simulated)
+    newMetrics.push({
+      name: 'Network',
+      status: navigator.onLine ? 'healthy' : 'error',
+      value: navigator.onLine ? 'Online' : 'Offline',
+      icon: Wifi
+    });
+
+    if (!navigator.onLine) {
+      overallStatus = 'error';
+      statusMessage = 'Network connection lost';
+    }
+
+    // Market data status (simulated based on current time)
+    const marketHours = new Date().getHours();
+    const isMarketHours = marketHours >= 9 && marketHours <= 16;
+    newMetrics.push({
+      name: 'Market Data',
+      status: isMarketHours ? 'healthy' : 'warning',
+      value: isMarketHours ? 'Live' : 'After hours',
+      icon: Activity
+    });
+
+    setMetrics(newMetrics);
+    setSystemHealth({
+      status: overallStatus,
+      message: statusMessage,
+      lastCheck: new Date()
+    });
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'healthy':
-        return 'bg-green-500';
+        return 'bg-green-500/20 text-green-400 border-green-500/30';
       case 'warning':
-        return 'bg-yellow-500';
+        return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
       case 'error':
-        return 'bg-red-500';
+        return 'bg-red-500/20 text-red-400 border-red-500/30';
       default:
-        return 'bg-gray-500';
+        return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
     }
   };
 
-  // Simulate real-time updates
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setHealthChecks(prev => prev.map(check => ({
-        ...check,
-        value: check.name === 'API Response' 
-          ? Math.random() * 100 + 20
-          : check.value + (Math.random() - 0.5) * 2
-      })));
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  const overallHealth = healthChecks.every(check => check.status === 'healthy') 
-    ? 'healthy' 
-    : healthChecks.some(check => check.status === 'error') 
-    ? 'error' 
-    : 'warning';
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'healthy':
+        return <CheckCircle className="w-4 h-4" />;
+      case 'warning':
+      case 'error':
+        return <AlertTriangle className="w-4 h-4" />;
+      default:
+        return <Activity className="w-4 h-4" />;
+    }
+  };
 
   return (
-    <div className="p-4">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="font-semibold">System Health</h3>
-        <div className="flex items-center gap-2">
-          {getStatusIcon(overallHealth)}
-          <Badge variant={overallHealth === 'healthy' ? 'default' : 'destructive'}>
-            {overallHealth === 'healthy' ? 'All Systems Operational' : 'Issues Detected'}
+    <Card className="crypto-card-gradient text-white w-64">
+      <CardContent className="p-4">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <Activity className="w-5 h-5" />
+            <span className="font-medium">System Health</span>
+          </div>
+          <Badge className={getStatusColor(systemHealth.status)}>
+            {getStatusIcon(systemHealth.status)}
+            <span className="ml-1 capitalize">{systemHealth.status}</span>
           </Badge>
         </div>
-      </div>
-      
-      <div className="space-y-3">
-        {healthChecks.map((check, index) => {
-          const IconComponent = check.icon;
-          return (
-            <div key={index} className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <IconComponent className="w-4 h-4 text-muted-foreground" />
-                <span className="text-sm">{check.name}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-mono">
-                  {check.value.toFixed(check.unit === 'ms' ? 0 : 1)}{check.unit}
-                </span>
-                {getStatusIcon(check.status)}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-      
-      <div className="mt-4 pt-4 border-t">
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span>Last updated</span>
-          <span>{new Date().toLocaleTimeString()}</span>
+
+        <div className="text-sm text-white/70 mb-3">
+          {systemHealth.message}
         </div>
-      </div>
-    </div>
+
+        <div className="grid grid-cols-2 gap-2">
+          {metrics.map((metric, index) => {
+            const Icon = metric.icon;
+            return (
+              <div key={index} className="flex items-center gap-2 p-2 bg-white/5 rounded">
+                <Icon className="w-4 h-4 text-white/60" />
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs text-white/60">{metric.name}</div>
+                  <div className={`text-xs font-medium ${
+                    metric.status === 'healthy' ? 'text-green-400' :
+                    metric.status === 'warning' ? 'text-yellow-400' : 'text-red-400'
+                  }`}>
+                    {metric.value}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="text-xs text-white/40 mt-3">
+          Last check: {systemHealth.lastCheck.toLocaleTimeString()}
+        </div>
+      </CardContent>
+    </Card>
   );
 };

@@ -95,14 +95,14 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, hsl(235, 84%, 68%) 0%, hsl(264, 41%, 52%) 100%);
     min-height: 100vh;
   }
 }
 
 @layer utilities {
   .crypto-gradient {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, hsl(235, 84%, 68%) 0%, hsl(264, 41%, 52%) 100%);
   }
   
   .crypto-card-gradient {
@@ -112,7 +112,7 @@ All colors MUST be HSL.
   }
   
   .crypto-glow {
-    box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 0 20px hsl(var(--crypto-info) / 0.3);
   }
 
   /* Live Dashboard Animations */
