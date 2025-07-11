@@ -127,15 +127,18 @@ export const useCryptoHoldings = (accountId?: string) => {
   };
 
   const getMockPrice = (symbol: string): number => {
+    // Use current realistic crypto prices (as of 2025)
     const prices: Record<string, number> = {
-      'BTC': 50000 + Math.random() * 10000,
-      'ETH': 2400 + Math.random() * 400,
-      'SOL': 60 + Math.random() * 20,
-      'ADA': 0.35 + Math.random() * 0.15,
-      'DOT': 5 + Math.random() * 2,
-      'LINK': 12 + Math.random() * 3,
-      'UNI': 6 + Math.random() * 2,
-      'DOGE': 0.08 + Math.random() * 0.02,
+      'BTC': 98000 + Math.random() * 8000, // Bitcoin ~$100K+
+      'ETH': 3800 + Math.random() * 400,   // Ethereum ~$4000
+      'SOL': 180 + Math.random() * 40,     // Solana ~$200
+      'ADA': 0.85 + Math.random() * 0.15,  // Cardano ~$0.90
+      'DOT': 8 + Math.random() * 2,        // Polkadot ~$9
+      'LINK': 18 + Math.random() * 4,      // Chainlink ~$20
+      'UNI': 12 + Math.random() * 3,       // Uniswap ~$13
+      'DOGE': 0.32 + Math.random() * 0.08, // Dogecoin ~$0.35
+      'BNB': 620 + Math.random() * 80,     // BNB ~$650
+      'MATIC': 0.45 + Math.random() * 0.1, // Polygon ~$0.50
     };
     return prices[symbol] || 1;
   };
