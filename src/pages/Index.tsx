@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { MarketOverview } from "@/components/MarketOverview";
 import { TopTraders } from "@/components/TopTraders";
 import { Settings } from "@/components/Settings";
 import { AdvancedPortfolioAnalytics } from "@/components/analytics/AdvancedPortfolioAnalytics";
+import { ComprehensiveTradeFollowingSystem } from "@/components/trading/ComprehensiveTradeFollowingSystem";
 import { SystemHealthIndicator } from "@/components/enhanced/SystemHealthIndicator";
 import { useAuth } from "@/hooks/useAuth";
 import { 
@@ -19,6 +20,16 @@ import {
 const Index = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("portfolio");
+
+  // Listen for navigation events from TradeFollower
+  useEffect(() => {
+    const handleNavigation = () => {
+      setActiveTab("following");
+    };
+    
+    window.addEventListener('navigate-to-following', handleNavigation);
+    return () => window.removeEventListener('navigate-to-following', handleNavigation);
+  }, []);
 
   if (!user) {
     return (
@@ -60,7 +71,7 @@ const Index = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-6 bg-card/50 backdrop-blur-sm">
+          <TabsList className="grid w-full grid-cols-7 bg-card/50 backdrop-blur-sm">
             <TabsTrigger value="portfolio" className="flex items-center gap-2">
               <Wallet className="w-4 h-4" />
               Portfolio
@@ -68,6 +79,10 @@ const Index = () => {
             <TabsTrigger value="trading" className="flex items-center gap-2">
               <TrendingUp className="w-4 h-4" />
               Trading
+            </TabsTrigger>
+            <TabsTrigger value="following" className="flex items-center gap-2">
+              <Users className="w-4 h-4" />
+              Following
             </TabsTrigger>
             <TabsTrigger value="market" className="flex items-center gap-2">
               <BarChart3 className="w-4 h-4" />
@@ -93,6 +108,10 @@ const Index = () => {
 
           <TabsContent value="trading">
             <TradingPanel />
+          </TabsContent>
+
+          <TabsContent value="following">
+            <ComprehensiveTradeFollowingSystem />
           </TabsContent>
 
           <TabsContent value="market">

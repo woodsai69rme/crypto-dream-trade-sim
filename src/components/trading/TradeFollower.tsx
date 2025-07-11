@@ -130,8 +130,8 @@ export const TradeFollower = () => {
             variant="outline" 
             size="sm" 
             onClick={() => {
-              // This would navigate to enhanced view in a real app
-              console.log('Navigate to enhanced trade following view');
+              // Navigate to the comprehensive trade following system
+              window.dispatchEvent(new CustomEvent('navigate-to-following'));
             }}
             className="w-full"
           >
