@@ -1,7 +1,7 @@
-
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useAuth } from './useAuth';
 import { useToast } from './use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface DeribitCredentials {
   clientId: string;
@@ -16,7 +16,7 @@ export interface DeribitPosition {
   average_price: number;
   mark_price: number;
   index_price: number;
-  unrealized_pnl: number;
+  unrealized_pnl: number | null;
   maintenance_margin: number;
 }
 
@@ -41,12 +41,82 @@ export const useDeribitIntegration = () => {
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [positions, setPositions] = useState<DeribitPosition[]>([]);
   const [orders, setOrders] = useState<DeribitOrder[]>([]);
+  const [savedCredentials, setSavedCredentials] = useState<DeribitCredentials | null>(null);
+
+  // Load saved credentials on component mount
+  useEffect(() => {
+    if (user) {
+      loadSavedCredentials();
+    }
+  }, [user]);
+
+  const loadSavedCredentials = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('user_settings')
+        .select('setting_value')
+        .eq('user_id', user?.id)
+        .eq('setting_name', 'deribit_credentials')
+        .single();
+
+      if (error) {
+        console.log('No saved Deribit credentials found');
+        return;
+      }
+
+      if (data?.setting_value) {
+        const credentials = typeof data.setting_value === 'string' 
+          ? JSON.parse(data.setting_value) 
+          : data.setting_value;
+        setSavedCredentials(credentials);
+        console.log('Loaded saved Deribit credentials');
+      }
+    } catch (error) {
+      console.error('Error loading Deribit credentials:', error);
+    }
+  };
+
+  const saveCredentials = async (credentials: DeribitCredentials) => {
+    if (!user) return false;
+
+    try {
+      const { error } = await supabase
+        .from('user_settings')
+        .upsert({
+          user_id: user.id,
+          setting_name: 'deribit_credentials',
+          setting_value: credentials,
+          updated_at: new Date().toISOString()
+        });
+
+      if (error) {
+        console.error('Error saving Deribit credentials:', error);
+        return false;
+      }
+
+      setSavedCredentials(credentials);
+      console.log('Deribit credentials saved successfully');
+      return true;
+    } catch (error) {
+      console.error('Error saving Deribit credentials:', error);
+      return false;
+    }
+  };
 
   const getBaseUrl = (isTestnet: boolean) => {
     return isTestnet ? 'https://test.deribit.com' : 'https://www.deribit.com';
   };
 
   const authenticate = useCallback(async (credentials: DeribitCredentials) => {
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to save Deribit settings",
+        variant: "destructive",
+      });
+      return false;
+    }
+
     setLoading(true);
     try {
       const baseUrl = getBaseUrl(credentials.isTestnet);
@@ -72,6 +142,16 @@ export const useDeribitIntegration = () => {
         throw new Error(data.error.message || 'Authentication failed');
       }
 
+      // Save credentials after successful authentication
+      const saved = await saveCredentials(credentials);
+      if (!saved) {
+        toast({
+          title: "Warning",
+          description: "Connected successfully but couldn't save credentials",
+          variant: "destructive",
+        });
+      }
+
       setAccessToken(data.result.access_token);
       setConnected(true);
       
@@ -92,7 +172,7 @@ export const useDeribitIntegration = () => {
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, [toast, user]);
 
   const fetchPositions = useCallback(async (isTestnet: boolean) => {
     if (!accessToken) return;
@@ -122,7 +202,13 @@ export const useDeribitIntegration = () => {
         throw new Error(data.error.message);
       }
 
-      setPositions(data.result || []);
+      // Ensure unrealized_pnl is properly handled
+      const processedPositions = (data.result || []).map((position: any) => ({
+        ...position,
+        unrealized_pnl: position.unrealized_pnl || 0,
+      }));
+
+      setPositions(processedPositions);
     } catch (error: any) {
       console.error('Error fetching positions:', error);
       toast({
@@ -238,27 +324,44 @@ export const useDeribitIntegration = () => {
     }
   }, [accessToken, toast]);
 
-  const disconnect = useCallback(() => {
+  const disconnect = useCallback(async () => {
     setAccessToken(null);
     setConnected(false);
     setPositions([]);
     setOrders([]);
+
+    // Clear saved credentials
+    if (user) {
+      try {
+        await supabase
+          .from('user_settings')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('setting_name', 'deribit_credentials');
+        
+        setSavedCredentials(null);
+      } catch (error) {
+        console.error('Error clearing saved credentials:', error);
+      }
+    }
     
     toast({
       title: "Disconnected",
-      description: "Deribit connection closed",
+      description: "Deribit connection closed and credentials cleared",
     });
-  }, [toast]);
+  }, [toast, user]);
 
   return {
     loading,
     connected,
     positions,
     orders,
+    savedCredentials,
     authenticate,
     fetchPositions,
     fetchOpenOrders,
     placeOrder,
     disconnect,
+    saveCredentials,
   };
 };

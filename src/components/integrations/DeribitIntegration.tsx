@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,6 +18,7 @@ export const DeribitIntegration = () => {
     connected,
     positions,
     orders,
+    savedCredentials,
     authenticate,
     fetchPositions,
     fetchOpenOrders,
@@ -31,6 +31,7 @@ export const DeribitIntegration = () => {
     clientSecret: '',
     isTestnet: true,
   });
+  
   const [showSecret, setShowSecret] = useState(false);
   const [orderForm, setOrderForm] = useState({
     instrument: 'BTC-PERPETUAL',
@@ -39,6 +40,17 @@ export const DeribitIntegration = () => {
     orderType: 'market' as 'limit' | 'market',
     price: 0,
   });
+
+  // Load saved credentials when component mounts
+  useEffect(() => {
+    if (savedCredentials) {
+      setCredentials({
+        clientId: savedCredentials.clientId || '',
+        clientSecret: savedCredentials.clientSecret || '',
+        isTestnet: savedCredentials.isTestnet !== false,
+      });
+    }
+  }, [savedCredentials]);
 
   const instruments = [
     'BTC-PERPETUAL',
@@ -117,6 +129,11 @@ export const DeribitIntegration = () => {
               <Badge className="bg-orange-500/20 text-orange-400">
                 {credentials.isTestnet ? "TESTNET" : "MAINNET"}
               </Badge>
+              {savedCredentials && (
+                <Badge className="bg-blue-500/20 text-blue-400">
+                  SAVED
+                </Badge>
+              )}
             </div>
             {connected && (
               <Button
@@ -174,6 +191,14 @@ export const DeribitIntegration = () => {
                   </div>
                 </div>
               </div>
+
+              {savedCredentials && (
+                <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                  <p className="text-sm text-blue-400">
+                    📁 Saved credentials loaded from previous session
+                  </p>
+                </div>
+              )}
 
               <Button
                 onClick={handleConnect}
