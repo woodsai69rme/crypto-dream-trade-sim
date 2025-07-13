@@ -14,12 +14,13 @@ import { AccountDashboard } from "@/components/accounts/AccountDashboard";
 import { SystemHealthIndicator } from "@/components/enhanced/SystemHealthIndicator";
 import { OpenRouterManagement } from "@/components/integrations/OpenRouterManagement";
 import { DeribitIntegration } from "@/components/integrations/DeribitIntegration";
+import { ComprehensiveAPIManager } from "@/components/integrations/ComprehensiveAPIManager";
 import { useAuth } from "@/hooks/useAuth";
 import { useAccountInitialization } from "@/hooks/useAccountInitialization";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { 
   Wallet, TrendingUp, BarChart3, Users, Settings as SettingsIcon,
-  Activity, Trophy, Target
+  Activity, Trophy, Target, Database
 } from "lucide-react";
 
 const Index = () => {
@@ -86,6 +87,14 @@ const Index = () => {
             </Button>
             <Button 
               variant="outline" 
+              onClick={() => setActiveTab("apis")}
+              className="bg-cyan-500/20 border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/30"
+            >
+              <Database className="w-4 h-4 mr-2" />
+              All APIs
+            </Button>
+            <Button 
+              variant="outline" 
               onClick={() => setActiveTab("analytics")}
               className="bg-purple-500/20 border-purple-500/30 text-purple-400 hover:bg-purple-500/30"
             >
@@ -96,7 +105,7 @@ const Index = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-10 bg-card/50 backdrop-blur-sm">
+          <TabsList className="grid w-full grid-cols-11 bg-card/50 backdrop-blur-sm">
             <TabsTrigger value="accounts" className="flex items-center gap-2">
               <Wallet className="w-4 h-4" />
               Accounts
@@ -120,6 +129,10 @@ const Index = () => {
             <TabsTrigger value="deribit" className="flex items-center gap-2 bg-orange-500/10">
               <TrendingUp className="w-4 h-4" />
               Deribit
+            </TabsTrigger>
+            <TabsTrigger value="apis" className="flex items-center gap-2 bg-cyan-500/10">
+              <Database className="w-4 h-4" />
+              All APIs
             </TabsTrigger>
             <TabsTrigger value="market" className="flex items-center gap-2">
               <Target className="w-4 h-4" />
@@ -161,6 +174,10 @@ const Index = () => {
 
           <TabsContent value="deribit">
             <DeribitIntegration />
+          </TabsContent>
+
+          <TabsContent value="apis">
+            <ComprehensiveAPIManager />
           </TabsContent>
 
           <TabsContent value="market">
