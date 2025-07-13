@@ -96,7 +96,7 @@ export const DeribitIntegration = () => {
   };
 
   const getTotalPnL = () => {
-    return positions.reduce((total, pos) => total + pos.unrealized_pnl, 0);
+    return positions.reduce((total, pos) => total + (pos.unrealized_pnl || 0), 0);
   };
 
   const getTotalMargin = () => {
@@ -365,8 +365,8 @@ export const DeribitIntegration = () => {
                             {position.direction.toUpperCase()}
                           </Badge>
                         </div>
-                        <Badge className={position.unrealized_pnl >= 0 ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}>
-                          ${position.unrealized_pnl.toFixed(2)}
+                        <Badge className={(position.unrealized_pnl || 0) >= 0 ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}>
+                          ${(position.unrealized_pnl || 0).toFixed(2)}
                         </Badge>
                       </div>
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">

@@ -198,9 +198,9 @@ export const ComprehensiveAuditDashboard = () => {
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="font-bold">${holding.current_value.toLocaleString()}</p>
-                        <div className={`text-sm ${holding.unrealized_pnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                          {holding.unrealized_pnl >= 0 ? '+' : ''}${holding.unrealized_pnl.toFixed(2)}
+                        <p className="font-bold">${holding.current_value?.toLocaleString() || '0'}</p>
+                        <div className={`text-sm ${(holding.unrealized_pnl || 0) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                          {(holding.unrealized_pnl || 0) >= 0 ? '+' : ''}${(holding.unrealized_pnl || 0).toFixed(2)}
                         </div>
                       </div>
                     </div>
@@ -262,8 +262,8 @@ export const ComprehensiveAuditDashboard = () => {
                           <div key={holding.symbol} className="flex items-center justify-between text-sm">
                             <span>{holding.symbol}</span>
                             <span>{holding.total_amount.toFixed(4)}</span>
-                            <span className={holding.unrealized_pnl >= 0 ? 'text-green-400' : 'text-red-400'}>
-                              {holding.unrealized_pnl >= 0 ? '+' : ''}${holding.unrealized_pnl.toFixed(2)}
+                            <span className={(holding.unrealized_pnl || 0) >= 0 ? 'text-green-400' : 'text-red-400'}>
+                              {(holding.unrealized_pnl || 0) >= 0 ? '+' : ''}${(holding.unrealized_pnl || 0).toFixed(2)}
                             </span>
                           </div>
                         ))}

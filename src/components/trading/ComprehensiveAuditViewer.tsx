@@ -329,8 +329,8 @@ export const ComprehensiveAuditViewer = () => {
                       </div>
                       <div className="flex justify-between">
                         <span className="text-white/60">P&L:</span>
-                        <span className={`${holding.unrealized_pnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                          {formatCurrency(holding.unrealized_pnl)}
+                        <span className={`${(holding.unrealized_pnl || 0) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                          {formatCurrency(holding.unrealized_pnl || 0)}
                         </span>
                       </div>
                     </div>

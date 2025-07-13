@@ -13,9 +13,12 @@ import { ComprehensiveTradeFollowingSystem } from "@/components/trading/Comprehe
 import { AccountDashboard } from "@/components/accounts/AccountDashboard";
 import { SystemHealthIndicator } from "@/components/enhanced/SystemHealthIndicator";
 import { OpenRouterManagement } from "@/components/integrations/OpenRouterManagement";
-import { DeribitIntegration } from "@/components/integrations/DeribitIntegration";
+import { 
+  LazyDeribitIntegration,
+  LazyEnhancedAccountResetManager,
+  LazyWrapper
+} from "@/components/performance/LazyComponentLoader";
 import { ComprehensiveAPIManager } from "@/components/integrations/ComprehensiveAPIManager";
-import { EnhancedAccountResetManager } from "@/components/EnhancedAccountResetManager";
 import { useAuth } from "@/hooks/useAuth";
 import { useAccountInitialization } from "@/hooks/useAccountInitialization";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -178,7 +181,9 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="deribit">
-            <DeribitIntegration />
+            <LazyWrapper>
+              <LazyDeribitIntegration />
+            </LazyWrapper>
           </TabsContent>
 
           <TabsContent value="apis">
@@ -198,7 +203,9 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="reset">
-            <EnhancedAccountResetManager />
+            <LazyWrapper>
+              <LazyEnhancedAccountResetManager />
+            </LazyWrapper>
           </TabsContent>
 
           <TabsContent value="settings">
