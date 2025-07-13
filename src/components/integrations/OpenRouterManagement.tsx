@@ -241,7 +241,7 @@ export const OpenRouterManagement = () => {
                       <span className="font-medium">Context Length:</span> {model.context_length.toLocaleString()}
                     </div>
                     <div>
-                      <span className="font-medium">Max Completion:</span> {model.top_provider.max_completion_tokens.toLocaleString()}
+                      <span className="font-medium">Max Completion:</span> {model.top_provider?.max_completion_tokens?.toLocaleString() || 'N/A'}
                     </div>
                     <div>
                       <span className="font-medium">Prompt Cost:</span> ${model.pricing.prompt}
