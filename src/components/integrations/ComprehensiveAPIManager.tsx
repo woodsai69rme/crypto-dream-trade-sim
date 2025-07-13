@@ -29,7 +29,7 @@ import {
 interface APIService {
   id: string;
   name: string;
-  category: 'trading_bots' | 'crypto_apis' | 'sentiment' | 'exchanges' | 'ai_models';
+  category: 'trading_bots' | 'crypto_apis' | 'sentiment' | 'exchanges' | 'ai_models' | 'automation' | 'infrastructure';
   type: 'free' | 'paid' | 'freemium';
   description: string;
   keyFields: {
@@ -58,6 +58,226 @@ const apiServices: APIService[] = [
     ],
     features: ['Grid Trading', 'DCA Bots', 'Beginner Friendly', 'Multiple Exchanges'],
     website: 'https://tradesanta.com',
+    icon: Bot
+  },
+  {
+    id: '3commas',
+    name: '3Commas',
+    category: 'trading_bots',
+    type: 'paid',
+    description: 'Smart trading terminal with bots and portfolio management',
+    keyFields: [
+      { name: 'api_key', type: 'password', required: true, placeholder: 'Your 3Commas API Key' },
+      { name: 'api_secret', type: 'password', required: true, placeholder: 'Your 3Commas API Secret' }
+    ],
+    features: ['DCA Bots', 'Grid Bots', 'Smart Trading', 'Portfolio Management'],
+    website: 'https://3commas.io',
+    icon: Bot
+  },
+  {
+    id: 'cryptohopper',
+    name: 'Cryptohopper',
+    category: 'trading_bots',
+    type: 'freemium',
+    description: 'Cloud-based crypto trading bot with strategy marketplace',
+    keyFields: [
+      { name: 'api_key', type: 'password', required: true, placeholder: 'Your Cryptohopper API Key' }
+    ],
+    features: ['Strategy Marketplace', 'Copy Trading', 'Technical Analysis', 'Paper Trading'],
+    website: 'https://cryptohopper.com',
+    icon: Bot
+  },
+  {
+    id: 'gunbot',
+    name: 'Gunbot',
+    category: 'trading_bots',
+    type: 'paid',
+    description: 'Professional crypto trading bot with advanced strategies',
+    keyFields: [
+      { name: 'api_key', type: 'password', required: true, placeholder: 'Your Gunbot API Key' },
+      { name: 'api_secret', type: 'password', required: true, placeholder: 'Your Gunbot API Secret' }
+    ],
+    features: ['Advanced Strategies', 'Multiple Exchanges', 'GUI Interface', 'Backtesting'],
+    website: 'https://gunbot.com',
+    icon: Bot
+  },
+  {
+    id: 'haasbot',
+    name: 'HaasBot',
+    category: 'trading_bots',
+    type: 'paid',
+    description: 'Advanced algorithmic trading bot platform',
+    keyFields: [
+      { name: 'api_key', type: 'password', required: true, placeholder: 'Your HaasBot API Key' },
+      { name: 'api_secret', type: 'password', required: true, placeholder: 'Your HaasBot API Secret' }
+    ],
+    features: ['Visual Strategy Editor', 'Backtesting', 'Advanced Indicators', 'Cloud Trading'],
+    website: 'https://haasonline.com',
+    icon: Bot
+  },
+  {
+    id: 'zenbot',
+    name: 'Zenbot',
+    category: 'trading_bots',
+    type: 'free',
+    description: 'Open-source trading bot with machine learning',
+    keyFields: [
+      { name: 'config_path', type: 'text', required: true, placeholder: 'Path to Zenbot config file' }
+    ],
+    features: ['Open Source', 'Machine Learning', 'Command Line', 'Multiple Exchanges'],
+    website: 'https://github.com/DeviaVir/zenbot',
+    icon: Bot
+  },
+  {
+    id: 'gekko',
+    name: 'Gekko',
+    category: 'trading_bots',
+    type: 'free',
+    description: 'Open-source trading bot and backtesting platform',
+    keyFields: [
+      { name: 'api_endpoint', type: 'url', required: true, placeholder: 'Gekko API endpoint' }
+    ],
+    features: ['Open Source', 'Backtesting', 'Paper Trading', 'Strategy Development'],
+    website: 'https://gekko.wizb.it',
+    icon: Bot
+  },
+  {
+    id: 'quadency',
+    name: 'Quadency',
+    category: 'trading_bots',
+    type: 'freemium',
+    description: 'Professional trading platform with automated strategies',
+    keyFields: [
+      { name: 'api_key', type: 'password', required: true, placeholder: 'Your Quadency API Key' }
+    ],
+    features: ['Automated Strategies', 'Portfolio Management', 'Risk Management', 'Social Trading'],
+    website: 'https://quadency.com',
+    icon: Bot
+  },
+  {
+    id: 'shrimpy',
+    name: 'Shrimpy',
+    category: 'trading_bots',
+    type: 'paid',
+    description: 'Portfolio management and rebalancing automation',
+    keyFields: [
+      { name: 'api_key', type: 'password', required: true, placeholder: 'Your Shrimpy API Key' },
+      { name: 'api_secret', type: 'password', required: true, placeholder: 'Your Shrimpy API Secret' }
+    ],
+    features: ['Portfolio Rebalancing', 'Social Trading', 'Index Funds', 'Backtesting'],
+    website: 'https://shrimpy.io',
+    icon: Bot
+  },
+  {
+    id: 'cornix',
+    name: 'Cornix',
+    category: 'trading_bots',
+    type: 'paid',
+    description: 'Telegram signal trading automation',
+    keyFields: [
+      { name: 'api_key', type: 'password', required: true, placeholder: 'Your Cornix API Key' }
+    ],
+    features: ['Telegram Signals', 'Risk Management', 'Multiple Exchanges', 'Copy Trading'],
+    website: 'https://cornix.io',
+    icon: Bot
+  },
+  {
+    id: 'bitsgap',
+    name: 'Bitsgap',
+    category: 'trading_bots',
+    type: 'freemium',
+    description: 'Grid trading and DCA bots with arbitrage',
+    keyFields: [
+      { name: 'api_key', type: 'password', required: true, placeholder: 'Your Bitsgap API Key' },
+      { name: 'api_secret', type: 'password', required: true, placeholder: 'Your Bitsgap API Secret' }
+    ],
+    features: ['Grid Trading', 'DCA Bots', 'Arbitrage', 'Portfolio Tracking'],
+    website: 'https://bitsgap.com',
+    icon: Bot
+  },
+  {
+    id: 'kucoin_bot',
+    name: 'KuCoin Trading Bot',
+    category: 'trading_bots',
+    type: 'free',
+    description: 'Built-in trading bots on KuCoin exchange',
+    keyFields: [
+      { name: 'api_key', type: 'password', required: true, placeholder: 'Your KuCoin API Key' },
+      { name: 'api_secret', type: 'password', required: true, placeholder: 'Your KuCoin API Secret' },
+      { name: 'passphrase', type: 'password', required: true, placeholder: 'Your KuCoin Passphrase' }
+    ],
+    features: ['Grid Trading', 'DCA', 'Spot-Futures Arbitrage', 'Infinity Grid'],
+    website: 'https://kucoin.com',
+    icon: Bot
+  },
+  {
+    id: 'bybit_bot',
+    name: 'Bybit Trading Bot',
+    category: 'trading_bots',
+    type: 'free',
+    description: 'Integrated trading bots on Bybit platform',
+    keyFields: [
+      { name: 'api_key', type: 'password', required: true, placeholder: 'Your Bybit API Key' },
+      { name: 'api_secret', type: 'password', required: true, placeholder: 'Your Bybit API Secret' }
+    ],
+    features: ['Grid Trading', 'DCA', 'Martingale', 'Copy Trading'],
+    website: 'https://bybit.com',
+    icon: Bot
+  },
+  {
+    id: 'gate_bot',
+    name: 'Gate.io Trading Bot',
+    category: 'trading_bots',
+    type: 'free',
+    description: 'Automated trading strategies on Gate.io',
+    keyFields: [
+      { name: 'api_key', type: 'password', required: true, placeholder: 'Your Gate.io API Key' },
+      { name: 'api_secret', type: 'password', required: true, placeholder: 'Your Gate.io API Secret' }
+    ],
+    features: ['Grid Trading', 'DCA', 'Smart Orders', 'Copy Trading'],
+    website: 'https://gate.io',
+    icon: Bot
+  },
+  {
+    id: 'deribit_bot',
+    name: 'Deribit Trading Bot',
+    category: 'trading_bots',
+    type: 'free',
+    description: 'Options and futures trading automation',
+    keyFields: [
+      { name: 'api_key', type: 'password', required: true, placeholder: 'Your Deribit API Key' },
+      { name: 'api_secret', type: 'password', required: true, placeholder: 'Your Deribit API Secret' }
+    ],
+    features: ['Options Trading', 'Futures', 'Delta Hedging', 'Volatility Trading'],
+    website: 'https://deribit.com',
+    icon: Bot
+  },
+  {
+    id: 'huobi_bot',
+    name: 'Huobi Trading Bot',
+    category: 'trading_bots',
+    type: 'free',
+    description: 'Grid and strategy bots on Huobi',
+    keyFields: [
+      { name: 'api_key', type: 'password', required: true, placeholder: 'Your Huobi API Key' },
+      { name: 'api_secret', type: 'password', required: true, placeholder: 'Your Huobi API Secret' }
+    ],
+    features: ['Grid Trading', 'Strategy Bots', 'Copy Trading', 'Spot Trading'],
+    website: 'https://huobi.com',
+    icon: Bot
+  },
+  {
+    id: 'crypto_com_bot',
+    name: 'Crypto.com Trading Bot',
+    category: 'trading_bots',
+    type: 'free',
+    description: 'Automated trading on Crypto.com Exchange',
+    keyFields: [
+      { name: 'api_key', type: 'password', required: true, placeholder: 'Your Crypto.com API Key' },
+      { name: 'api_secret', type: 'password', required: true, placeholder: 'Your Crypto.com API Secret' }
+    ],
+    features: ['Smart Orders', 'DCA', 'Grid Trading', 'Copy Trading'],
+    website: 'https://crypto.com',
     icon: Bot
   },
   {
@@ -242,6 +462,192 @@ const apiServices: APIService[] = [
     features: ['Spot Trading', 'Derivatives', 'DeFi', 'NFT Marketplace'],
     website: 'https://okx.com',
     icon: Zap
+  },
+
+  // Infrastructure & Automation
+  {
+    id: 'ccxt',
+    name: 'CCXT',
+    category: 'infrastructure',
+    type: 'free',
+    description: 'Cryptocurrency trading library supporting 130+ exchanges',
+    keyFields: [
+      { name: 'exchange_id', type: 'text', required: true, placeholder: 'Exchange ID (e.g., binance, coinbase)' },
+      { name: 'api_key', type: 'password', required: false, placeholder: 'Exchange API Key' },
+      { name: 'api_secret', type: 'password', required: false, placeholder: 'Exchange API Secret' }
+    ],
+    features: ['130+ Exchanges', 'Unified API', 'Trading', 'Order Management'],
+    website: 'https://ccxt.trade',
+    icon: Database
+  },
+  {
+    id: 'context7',
+    name: 'Context7',
+    category: 'ai_models',
+    type: 'paid',
+    description: 'Advanced AI context management for trading decisions',
+    keyFields: [
+      { name: 'api_key', type: 'password', required: true, placeholder: 'Your Context7 API Key' },
+      { name: 'context_id', type: 'text', required: true, placeholder: 'Context ID' }
+    ],
+    features: ['Context Management', 'AI Decision Making', 'Memory Systems', 'Trading Intelligence'],
+    website: 'https://context7.ai',
+    icon: Brain
+  },
+  {
+    id: 'n8n',
+    name: 'n8n',
+    category: 'automation',
+    type: 'freemium',
+    description: 'Workflow automation platform for trading strategies',
+    keyFields: [
+      { name: 'webhook_url', type: 'url', required: true, placeholder: 'n8n Webhook URL' },
+      { name: 'api_key', type: 'password', required: false, placeholder: 'n8n API Key (if using cloud)' }
+    ],
+    features: ['Workflow Automation', 'Visual Editor', 'Custom Triggers', 'API Integrations'],
+    website: 'https://n8n.io',
+    icon: Settings
+  },
+
+  // Additional Exchanges
+  {
+    id: 'kraken',
+    name: 'Kraken',
+    category: 'exchanges',
+    type: 'free',
+    description: 'Secure and trusted cryptocurrency exchange',
+    keyFields: [
+      { name: 'api_key', type: 'password', required: true, placeholder: 'Your Kraken API Key' },
+      { name: 'api_secret', type: 'password', required: true, placeholder: 'Your Kraken API Secret' }
+    ],
+    features: ['Spot Trading', 'Futures', 'Margin Trading', 'Staking'],
+    website: 'https://kraken.com',
+    icon: Shield
+  },
+  {
+    id: 'gemini',
+    name: 'Gemini',
+    category: 'exchanges',
+    type: 'free',
+    description: 'Regulated cryptocurrency exchange and custodian',
+    keyFields: [
+      { name: 'api_key', type: 'password', required: true, placeholder: 'Your Gemini API Key' },
+      { name: 'api_secret', type: 'password', required: true, placeholder: 'Your Gemini API Secret' }
+    ],
+    features: ['Regulated', 'Custody Services', 'ActiveTrader', 'Institutional'],
+    website: 'https://gemini.com',
+    icon: Shield
+  },
+  {
+    id: 'bitfinex',
+    name: 'Bitfinex',
+    category: 'exchanges',
+    type: 'free',
+    description: 'Professional trading platform with advanced features',
+    keyFields: [
+      { name: 'api_key', type: 'password', required: true, placeholder: 'Your Bitfinex API Key' },
+      { name: 'api_secret', type: 'password', required: true, placeholder: 'Your Bitfinex API Secret' }
+    ],
+    features: ['Advanced Trading', 'Margin Trading', 'Lending', 'Derivatives'],
+    website: 'https://bitfinex.com',
+    icon: TrendingUp
+  },
+  {
+    id: 'ftx',
+    name: 'FTX',
+    category: 'exchanges',
+    type: 'free',
+    description: 'Derivatives exchange (historical data)',
+    keyFields: [
+      { name: 'api_key', type: 'password', required: true, placeholder: 'Your FTX API Key' },
+      { name: 'api_secret', type: 'password', required: true, placeholder: 'Your FTX API Secret' }
+    ],
+    features: ['Historical Data', 'Derivatives', 'Spot Trading', 'Leveraged Tokens'],
+    website: 'https://ftx.com',
+    icon: Database
+  },
+
+  // Additional AI Models
+  {
+    id: 'openrouter',
+    name: 'OpenRouter',
+    category: 'ai_models',
+    type: 'paid',
+    description: 'Access to multiple AI models through unified API',
+    keyFields: [
+      { name: 'api_key', type: 'password', required: true, placeholder: 'Your OpenRouter API Key' }
+    ],
+    features: ['Multiple Models', 'Cost Optimization', 'Model Routing', 'Unified API'],
+    website: 'https://openrouter.ai',
+    icon: Brain
+  },
+  {
+    id: 'anthropic',
+    name: 'Anthropic Claude',
+    category: 'ai_models',
+    type: 'paid',
+    description: 'Advanced AI assistant for trading analysis',
+    keyFields: [
+      { name: 'api_key', type: 'password', required: true, placeholder: 'Your Anthropic API Key' }
+    ],
+    features: ['Advanced Reasoning', 'Safe AI', 'Long Context', 'Trading Analysis'],
+    website: 'https://anthropic.com',
+    icon: Brain
+  },
+  {
+    id: 'openai',
+    name: 'OpenAI',
+    category: 'ai_models',
+    type: 'paid',
+    description: 'GPT models for trading insights and automation',
+    keyFields: [
+      { name: 'api_key', type: 'password', required: true, placeholder: 'Your OpenAI API Key' }
+    ],
+    features: ['GPT Models', 'Code Generation', 'Analysis', 'Function Calling'],
+    website: 'https://openai.com',
+    icon: Brain
+  },
+  {
+    id: 'together',
+    name: 'Together AI',
+    category: 'ai_models',
+    type: 'paid',
+    description: 'Open-source AI models for trading strategies',
+    keyFields: [
+      { name: 'api_key', type: 'password', required: true, placeholder: 'Your Together AI API Key' }
+    ],
+    features: ['Open Source Models', 'Fast Inference', 'Custom Models', 'Cost Effective'],
+    website: 'https://together.ai',
+    icon: Brain
+  },
+
+  // Additional Trading Platforms
+  {
+    id: 'tradingview',
+    name: 'TradingView',
+    category: 'crypto_apis',
+    type: 'freemium',
+    description: 'Advanced charting and social trading platform',
+    keyFields: [
+      { name: 'username', type: 'text', required: true, placeholder: 'TradingView Username' },
+      { name: 'password', type: 'password', required: true, placeholder: 'TradingView Password' }
+    ],
+    features: ['Advanced Charts', 'Pine Script', 'Social Trading', 'Alerts'],
+    website: 'https://tradingview.com',
+    icon: BarChart3
+  },
+  {
+    id: 'coinalyze',
+    name: 'Coinalyze',
+    category: 'crypto_apis',
+    type: 'freemium',
+    description: 'Crypto derivatives and options analytics',
+    keyFields: [
+      { name: 'api_key', type: 'password', required: true, placeholder: 'Your Coinalyze API Key' }
+    ],
+    features: ['Derivatives Data', 'Options Analytics', 'Funding Rates', 'Open Interest'],
+    website: 'https://coinalyze.net',
+    icon: BarChart3
   }
 ];
 
@@ -256,6 +662,9 @@ export const ComprehensiveAPIManager = () => {
     crypto_apis: { label: 'Crypto APIs', icon: Database, color: 'bg-green-500/20 text-green-400' },
     sentiment: { label: 'Sentiment Analysis', icon: Eye, color: 'bg-purple-500/20 text-purple-400' },
     exchanges: { label: 'Exchanges', icon: TrendingUp, color: 'bg-orange-500/20 text-orange-400' },
+    ai_models: { label: 'AI Models', icon: Brain, color: 'bg-pink-500/20 text-pink-400' },
+    automation: { label: 'Automation', icon: Settings, color: 'bg-cyan-500/20 text-cyan-400' },
+    infrastructure: { label: 'Infrastructure', icon: Zap, color: 'bg-yellow-500/20 text-yellow-400' },
   };
 
   const filteredServices = apiServices.filter(service => service.category === activeCategory);
@@ -324,7 +733,7 @@ export const ComprehensiveAPIManager = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
             {Object.entries(categories).map(([key, category]) => {
               const CategoryIcon = category.icon;
               const count = apiServices.filter(s => s.category === key).length;
