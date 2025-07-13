@@ -12,6 +12,8 @@ import { AdvancedPortfolioAnalytics } from "@/components/analytics/AdvancedPortf
 import { ComprehensiveTradeFollowingSystem } from "@/components/trading/ComprehensiveTradeFollowingSystem";
 import { AccountDashboard } from "@/components/accounts/AccountDashboard";
 import { SystemHealthIndicator } from "@/components/enhanced/SystemHealthIndicator";
+import { OpenRouterManagement } from "@/components/integrations/OpenRouterManagement";
+import { DeribitIntegration } from "@/components/integrations/DeribitIntegration";
 import { useAuth } from "@/hooks/useAuth";
 import { useAccountInitialization } from "@/hooks/useAccountInitialization";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -68,6 +70,22 @@ const Index = () => {
             <SystemHealthIndicator />
             <Button 
               variant="outline" 
+              onClick={() => setActiveTab("openrouter")}
+              className="bg-emerald-500/20 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/30"
+            >
+              <Activity className="w-4 h-4 mr-2" />
+              OpenRouter AI
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => setActiveTab("deribit")}
+              className="bg-orange-500/20 border-orange-500/30 text-orange-400 hover:bg-orange-500/30"
+            >
+              <TrendingUp className="w-4 h-4 mr-2" />
+              Deribit Testnet
+            </Button>
+            <Button 
+              variant="outline" 
               onClick={() => setActiveTab("analytics")}
               className="bg-purple-500/20 border-purple-500/30 text-purple-400 hover:bg-purple-500/30"
             >
@@ -78,7 +96,7 @@ const Index = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-8 bg-card/50 backdrop-blur-sm">
+          <TabsList className="grid w-full grid-cols-10 bg-card/50 backdrop-blur-sm">
             <TabsTrigger value="accounts" className="flex items-center gap-2">
               <Wallet className="w-4 h-4" />
               Accounts
@@ -94,6 +112,14 @@ const Index = () => {
             <TabsTrigger value="following" className="flex items-center gap-2">
               <Users className="w-4 h-4" />
               Following
+            </TabsTrigger>
+            <TabsTrigger value="openrouter" className="flex items-center gap-2 bg-emerald-500/10">
+              <Activity className="w-4 h-4" />
+              OpenRouter
+            </TabsTrigger>
+            <TabsTrigger value="deribit" className="flex items-center gap-2 bg-orange-500/10">
+              <TrendingUp className="w-4 h-4" />
+              Deribit
             </TabsTrigger>
             <TabsTrigger value="market" className="flex items-center gap-2">
               <Target className="w-4 h-4" />
@@ -127,6 +153,14 @@ const Index = () => {
 
           <TabsContent value="following">
             <ComprehensiveTradeFollowingSystem />
+          </TabsContent>
+
+          <TabsContent value="openrouter">
+            <OpenRouterManagement />
+          </TabsContent>
+
+          <TabsContent value="deribit">
+            <DeribitIntegration />
           </TabsContent>
 
           <TabsContent value="market">
