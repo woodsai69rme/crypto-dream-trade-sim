@@ -4377,6 +4377,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
+      create_50_elite_bot_configs: {
+        Args: { user_id_param: string }
+        Returns: undefined
+      }
       create_account_from_template: {
         Args: {
           template_id_param: string
@@ -4429,6 +4433,14 @@ export type Database = {
       populate_dummy_snapshots: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      reset_account_with_stats: {
+        Args: { account_id_param: string; preserve_stats?: boolean }
+        Returns: Json
+      }
+      reset_multiple_accounts: {
+        Args: { account_ids: string[]; preserve_stats?: boolean }
+        Returns: Json
       }
       reset_paper_account: {
         Args: { account_id_param: string; reset_balance_param?: number }

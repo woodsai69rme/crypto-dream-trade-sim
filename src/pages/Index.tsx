@@ -15,6 +15,7 @@ import { SystemHealthIndicator } from "@/components/enhanced/SystemHealthIndicat
 import { OpenRouterManagement } from "@/components/integrations/OpenRouterManagement";
 import { DeribitIntegration } from "@/components/integrations/DeribitIntegration";
 import { ComprehensiveAPIManager } from "@/components/integrations/ComprehensiveAPIManager";
+import { EnhancedAccountResetManager } from "@/components/EnhancedAccountResetManager";
 import { useAuth } from "@/hooks/useAuth";
 import { useAccountInitialization } from "@/hooks/useAccountInitialization";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -105,7 +106,7 @@ const Index = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-11 bg-card/50 backdrop-blur-sm">
+          <TabsList className="grid w-full grid-cols-12 bg-card/50 backdrop-blur-sm">
             <TabsTrigger value="accounts" className="flex items-center gap-2">
               <Wallet className="w-4 h-4" />
               Accounts
@@ -145,6 +146,10 @@ const Index = () => {
             <TabsTrigger value="analytics" className="flex items-center gap-2">
               <Activity className="w-4 h-4" />
               Analytics
+            </TabsTrigger>
+            <TabsTrigger value="reset" className="flex items-center gap-2 bg-red-500/10">
+              <Target className="w-4 h-4" />
+              Reset Pro
             </TabsTrigger>
             <TabsTrigger value="settings" className="flex items-center gap-2">
               <SettingsIcon className="w-4 h-4" />
@@ -190,6 +195,10 @@ const Index = () => {
 
           <TabsContent value="analytics">
             <AdvancedPortfolioAnalytics />
+          </TabsContent>
+
+          <TabsContent value="reset">
+            <EnhancedAccountResetManager />
           </TabsContent>
 
           <TabsContent value="settings">
