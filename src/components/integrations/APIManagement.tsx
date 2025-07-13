@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,7 +6,9 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from '@/hooks/use-toast';
-import { Key, Plus, Trash2, TestTube, CheckCircle, XCircle, Eye, EyeOff } from "lucide-react";
+import { Key, Plus, Trash2, TestTube, CheckCircle, XCircle, Eye, EyeOff, Bot, TrendingUp } from "lucide-react";
+import { OpenRouterManagement } from './OpenRouterManagement';
+import { DeribitIntegration } from './DeribitIntegration';
 
 interface APIConnection {
   id: string;
@@ -42,6 +43,15 @@ export const APIManagement = () => {
       status: 'connected',
       lastTested: new Date(Date.now() - 300000).toISOString(),
       isActive: true
+    },
+    {
+      id: '3',
+      name: 'Deribit Testnet',
+      provider: 'deribit',
+      apiKey: 'testnet-***',
+      baseUrl: 'https://test.deribit.com/api/v2',
+      status: 'disconnected',
+      isActive: false
     }
   ]);
 
@@ -152,8 +162,16 @@ export const APIManagement = () => {
       </div>
 
       <Tabs defaultValue="existing" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="existing">Existing APIs</TabsTrigger>
+          <TabsTrigger value="openrouter">
+            <Bot className="w-4 h-4 mr-2" />
+            OpenRouter
+          </TabsTrigger>
+          <TabsTrigger value="deribit">
+            <TrendingUp className="w-4 h-4 mr-2" />
+            Deribit
+          </TabsTrigger>
           <TabsTrigger value="add-new">Add New API</TabsTrigger>
         </TabsList>
 
@@ -227,6 +245,14 @@ export const APIManagement = () => {
               </Card>
             ))}
           </div>
+        </TabsContent>
+
+        <TabsContent value="openrouter">
+          <OpenRouterManagement />
+        </TabsContent>
+
+        <TabsContent value="deribit">
+          <DeribitIntegration />
         </TabsContent>
 
         <TabsContent value="add-new">
