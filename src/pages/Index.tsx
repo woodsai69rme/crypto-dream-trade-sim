@@ -13,6 +13,8 @@ import { ComprehensiveTradeFollowingSystem } from "@/components/trading/Comprehe
 import { AccountDashboard } from "@/components/accounts/AccountDashboard";
 import { SystemHealthIndicator } from "@/components/enhanced/SystemHealthIndicator";
 import { OpenRouterManagement } from "@/components/integrations/OpenRouterManagement";
+import { TopInfoBar } from "@/components/dashboard/TopInfoBar";
+import { BottomAccountSummary } from "@/components/dashboard/BottomAccountSummary";
 import { 
   LazyDeribitIntegration,
   LazyEnhancedAccountResetManager,
@@ -58,7 +60,10 @@ const Index = () => {
 
   return (
     <div className="min-h-screen crypto-gradient">
-      <div className="container mx-auto px-4 py-6">
+      {/* Top Info Bar */}
+      <TopInfoBar />
+      
+      <div className="container mx-auto px-4 py-6" style={{ marginTop: '160px', marginBottom: '320px' }}>
         {/* Header with Phase 2 Badge */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
@@ -213,6 +218,9 @@ const Index = () => {
           </TabsContent>
         </Tabs>
       </div>
+      
+      {/* Bottom Account Summary */}
+      <BottomAccountSummary />
     </div>
   );
 };
