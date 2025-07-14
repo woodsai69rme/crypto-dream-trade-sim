@@ -38,7 +38,7 @@ export const DatabaseHealthMonitor = () => {
     try {
       // Test basic connectivity
       const { data: connectionTest, error: connectionError } = await supabase
-        .from('profiles')
+        .from('paper_trading_accounts')
         .select('id')
         .limit(1);
 
@@ -52,7 +52,7 @@ export const DatabaseHealthMonitor = () => {
           lastError: connectionError.message,
           errorCount: prev.errorCount + 1,
           recentErrors: [
-            { timestamp: new Date().toISOString(), error: connectionError.message, query: 'profiles connectivity test' },
+            { timestamp: new Date().toISOString(), error: connectionError.message, query: 'paper_trading_accounts connectivity test' },
             ...prev.recentErrors.slice(0, 9)
           ]
         }));
@@ -93,23 +93,8 @@ export const DatabaseHealthMonitor = () => {
     }
   };
 
-  const validateMarketDataIntegrity = async () => {
-    try {
-      // Check for UUID parsing issues in market data
-      const { data: invalidRecords, error } = await supabase
-        .rpc('check_market_data_integrity');
-      
-      if (error) {
-        console.warn('Market data integrity check failed:', error);
-      }
-    } catch (error) {
-      console.warn('Could not run market data integrity check:', error);
-    }
-  };
-
   useEffect(() => {
     checkDatabaseHealth();
-    validateMarketDataIntegrity();
     
     const interval = setInterval(() => {
       checkDatabaseHealth();

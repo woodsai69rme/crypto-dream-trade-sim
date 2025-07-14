@@ -13,7 +13,9 @@ import { PortfolioRebalancingSystem } from "@/components/portfolio/PortfolioReba
 import { AdvancedPortfolioAnalytics } from "@/components/analytics/AdvancedPortfolioAnalytics";
 import { BacktestingEngine } from "@/components/backtesting/BacktestingEngine";
 import { MobilePWA } from "@/components/mobile/MobilePWA";
-import { BarChart3, Bot, Users, History, TrendingUp, Activity, Edit, FileText, Scale, Brain, TestTube, Smartphone } from "lucide-react";
+import { TradingCircuitBreaker } from "@/components/trading/TradingCircuitBreaker";
+import { SmartTradingLimits } from "@/components/trading/SmartTradingLimits";
+import { BarChart3, Bot, Users, History, TrendingUp, Activity, Edit, FileText, Scale, Brain, TestTube, Smartphone, Shield, Zap } from "lucide-react";
 import { AIChatAssistant } from "@/components/ai/AIChatAssistant";
 import { TradingViewChart } from "@/components/charts/TradingViewChart";
 import { PortfolioRebalancer } from "@/components/portfolio/PortfolioRebalancer";
@@ -41,6 +43,14 @@ export const TradingPanel = () => {
           <TabsTrigger value="quick-trade" className="flex items-center gap-2">
             <TrendingUp className="w-4 h-4" />
             Trade
+          </TabsTrigger>
+          <TabsTrigger value="protection" className="flex items-center gap-2 bg-red-500/10">
+            <Shield className="w-4 h-4" />
+            Protection
+          </TabsTrigger>
+          <TabsTrigger value="smart-limits" className="flex items-center gap-2 bg-blue-500/10">
+            <Zap className="w-4 h-4" />
+            Smart Limits
           </TabsTrigger>
           <TabsTrigger value="orders" className="flex items-center gap-2">
             <Edit className="w-4 h-4" />
@@ -74,14 +84,6 @@ export const TradingPanel = () => {
             <FileText className="w-4 h-4" />
             Audit
           </TabsTrigger>
-          <TabsTrigger value="risk" className="flex items-center gap-2">
-            <Activity className="w-4 h-4" />
-            Risk
-          </TabsTrigger>
-          <TabsTrigger value="mobile" className="flex items-center gap-2">
-            <Smartphone className="w-4 h-4" />
-            Mobile
-          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview">
@@ -107,6 +109,14 @@ export const TradingPanel = () => {
               </Card>
             </div>
           </div>
+        </TabsContent>
+
+        <TabsContent value="protection">
+          <TradingCircuitBreaker />
+        </TabsContent>
+
+        <TabsContent value="smart-limits">
+          <SmartTradingLimits />
         </TabsContent>
 
         <TabsContent value="orders">
@@ -145,14 +155,6 @@ export const TradingPanel = () => {
 
         <TabsContent value="audit">
           <TradeAuditTrail />
-        </TabsContent>
-
-        <TabsContent value="risk">
-          <RiskManagementDashboard />
-        </TabsContent>
-
-        <TabsContent value="mobile">
-          <MobilePWA />
         </TabsContent>
       </Tabs>
     </div>
