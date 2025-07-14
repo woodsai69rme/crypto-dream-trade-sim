@@ -11,6 +11,15 @@ export interface TradeFollowingStats {
   executedTrades: number;
   successRate: number;
   lastSignalTime: string;
+  avgLatency: number;
+}
+
+export interface AccountSettings {
+  isActive: boolean;
+  confidenceThreshold: number;
+  minConfidence: number;
+  followRatio: number;
+  delayMs: number;
 }
 
 export const useRealTimeTradeFollowing = () => {
@@ -24,8 +33,11 @@ export const useRealTimeTradeFollowing = () => {
     totalSignals: 0,
     executedTrades: 0,
     successRate: 0,
-    lastSignalTime: 'Never'
+    lastSignalTime: 'Never',
+    avgLatency: 0
   });
+
+  const [accountSettings, setAccountSettings] = useState<Record<string, AccountSettings>>({});
 
   // Check if following is enabled for each account
   const getAccountFollowingStatus = useCallback(() => {
@@ -106,8 +118,9 @@ export const useRealTimeTradeFollowing = () => {
         symbol,
         side,
         price,
+        amount: Math.random() * 2 + 0.1, // Random amount between 0.1 and 2.1
         confidence,
-        timestamp: new Date(),
+        timestamp: new Date().toISOString(),
         source: 'AI_ENSEMBLE',
         reasoning: `${confidence > 80 ? 'Strong' : 'Moderate'} ${side} signal for ${symbol} based on technical analysis`
       };
@@ -175,7 +188,8 @@ export const useRealTimeTradeFollowing = () => {
           setStats(prev => ({
             ...prev,
             executedTrades: prev.executedTrades + 1,
-            successRate: ((prev.executedTrades + 1) / prev.totalSignals) * 100
+            successRate: ((prev.executedTrades + 1) / prev.totalSignals) * 100,
+            avgLatency: executionTime
           }));
 
         } catch (error) {
@@ -208,21 +222,37 @@ export const useRealTimeTradeFollowing = () => {
     }
   };
 
+  // Update account settings
+  const updateAccountSettings = useCallback((accountId: string, newSettings: Partial<AccountSettings>) => {
+    setAccountSettings(prev => ({
+      ...prev,
+      [accountId]: { ...prev[accountId], ...newSettings }
+    }));
+  }, []);
+
   // Get account statistics
   const getAccountStats = useCallback(() => {
-    return accounts.map(account => ({
-      accountId: account.id,
-      accountName: account.account_name,
-      settings: {
+    return accounts.map(account => {
+      const defaultSettings: AccountSettings = {
         isActive: settings[`following_${account.id}`] || false,
-        confidenceThreshold: getConfidenceThreshold(account.risk_level)
-      },
-      stats: {
-        trades: Math.floor(Math.random() * 50) + 10,
-        lastTrade: Math.random() > 0.5 ? 'Just now' : `${Math.floor(Math.random() * 60)} min ago`
-      }
-    }));
-  }, [accounts, settings]);
+        confidenceThreshold: getConfidenceThreshold(account.risk_level),
+        minConfidence: 75,
+        followRatio: 0.5,
+        delayMs: 500
+      };
+      
+      return {
+        accountId: account.id,
+        accountName: account.account_name,
+        balance: account.balance || 100000,
+        settings: { ...defaultSettings, ...accountSettings[account.id] },
+        stats: {
+          trades: Math.floor(Math.random() * 50) + 10,
+          lastTrade: Math.random() > 0.5 ? 'Just now' : `${Math.floor(Math.random() * 60)} min ago`
+        }
+      };
+    });
+  }, [accounts, settings, accountSettings]);
 
   // Load saved state on mount
   useEffect(() => {
@@ -249,6 +279,8 @@ export const useRealTimeTradeFollowing = () => {
     totalAccounts,
     startFollowing,
     stopFollowing,
-    getAccountStats
+    getAccountStats,
+    accountSettings,
+    updateAccountSettings
   };
 };
