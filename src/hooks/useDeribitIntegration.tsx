@@ -68,7 +68,7 @@ export const useDeribitIntegration = () => {
         const credentials = typeof data.setting_value === 'string' 
           ? JSON.parse(data.setting_value) 
           : data.setting_value;
-        setSavedCredentials(credentials);
+        setSavedCredentials(credentials as DeribitCredentials);
         console.log('Loaded saved Deribit credentials');
       }
     } catch (error) {
@@ -80,12 +80,15 @@ export const useDeribitIntegration = () => {
     if (!user) return false;
 
     try {
+      // Convert credentials to JSON-compatible format
+      const credentialsJson = JSON.stringify(credentials);
+      
       const { error } = await supabase
         .from('user_settings')
         .upsert({
           user_id: user.id,
           setting_name: 'deribit_credentials',
-          setting_value: credentials,
+          setting_value: credentialsJson,
           updated_at: new Date().toISOString()
         });
 
@@ -205,7 +208,7 @@ export const useDeribitIntegration = () => {
       // Ensure unrealized_pnl is properly handled
       const processedPositions = (data.result || []).map((position: any) => ({
         ...position,
-        unrealized_pnl: position.unrealized_pnl || 0,
+        unrealized_pnl: position.unrealized_pnl ?? 0,
       }));
 
       setPositions(processedPositions);
