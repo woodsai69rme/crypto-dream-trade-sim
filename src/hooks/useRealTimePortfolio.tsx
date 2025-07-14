@@ -2,170 +2,179 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
-import { websocketService, PriceUpdate } from '@/services/websocketService';
+import { useToast } from '@/hooks/use-toast';
 
-interface PortfolioData {
+export interface Portfolio {
   id: string;
+  user_id: string;
   name: string;
+  is_default: boolean;
+  mode: 'paper' | 'live';
+  initial_balance: number;
   current_balance: number;
   total_value: number;
   total_pnl: number;
   total_pnl_percentage: number;
   positions: any;
-  updated_at: string;
-}
-
-interface PaperAccount {
-  id: string;
-  balance: number;
-  total_pnl: number;
-  total_pnl_percentage: number;
-  updated_at: string;
-}
-
-interface Trade {
-  id: string;
-  symbol: string;
-  side: string;
-  amount: number;
-  price: number;
-  total_value: number;
-  fee: number;
-  status: string;
-  reasoning: string;
   created_at: string;
-}
-
-interface RealTimePrices {
-  [symbol: string]: {
-    price: number;
-    change_24h: number;
-    volume_24h: number;
-    lastUpdate: number;
-  };
+  updated_at: string;
 }
 
 export const useRealTimePortfolio = () => {
-  const { user } = useAuth();
-  const [portfolio, setPortfolio] = useState<PortfolioData | null>(null);
-  const [paperAccount, setPaperAccount] = useState<PaperAccount | null>(null);
-  const [trades, setTrades] = useState<Trade[]>([]);
-  const [realTimePrices, setRealTimePrices] = useState<RealTimePrices>({});
+  const { user, isAuthenticated } = useAuth();
+  const { toast } = useToast();
+  const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
+  const [defaultPortfolio, setDefaultPortfolio] = useState<Portfolio | null>(null);
   const [loading, setLoading] = useState(true);
-  const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'connecting'>('disconnected');
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!user) {
+  // Fetch portfolios
+  const fetchPortfolios = async () => {
+    if (!user?.id) {
       setLoading(false);
       return;
     }
 
-    fetchInitialData();
-    setupRealtimeSubscriptions();
-    setupWebSocketConnection();
-  }, [user]);
-
-  const fetchInitialData = async () => {
-    if (!user) return;
-
     try {
-      // Fetch portfolio
-      const { data: portfolioData } = await supabase
+      setError(null);
+      const { data, error } = await supabase
         .from('portfolios')
         .select('*')
         .eq('user_id', user.id)
-        .eq('is_default', true)
-        .single();
+        .order('created_at', { ascending: true });
 
-      if (portfolioData) {
-        setPortfolio(portfolioData);
+      if (error) {
+        console.error('Error fetching portfolios:', error);
+        setError(error.message);
+        toast({
+          title: "Error Loading Portfolios",
+          description: error.message,
+          variant: "destructive",
+        });
+        return;
       }
 
-      // Fetch paper trading account
-      const { data: accountData } = await supabase
-        .from('paper_trading_accounts')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-
-      if (accountData) {
-        setPaperAccount(accountData);
+      if (data) {
+        setPortfolios(data);
+        const defaultPort = data.find(p => p.is_default) || data[0];
+        setDefaultPortfolio(defaultPort || null);
       }
-
-      // Fetch recent trades
-      const { data: tradesData } = await supabase
-        .from('paper_trades')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(50);
-
-      if (tradesData) {
-        setTrades(tradesData);
-      }
-
-    } catch (error) {
-      console.error('Error fetching portfolio data:', error);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch portfolios';
+      console.error('Error in fetchPortfolios:', err);
+      setError(errorMessage);
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  const setupWebSocketConnection = () => {
-    setConnectionStatus('connecting');
-    
-    // Connect to WebSocket service
-    websocketService.connect();
-    
-    // Subscribe to price updates
-    const unsubscribePrices = websocketService.subscribeToPrices((priceUpdate: PriceUpdate) => {
-      setRealTimePrices(prev => ({
-        ...prev,
-        [priceUpdate.symbol]: {
-          price: priceUpdate.price,
-          change_24h: priceUpdate.change_24h,
-          volume_24h: priceUpdate.volume_24h,
-          lastUpdate: priceUpdate.timestamp
-        }
-      }));
-      
-      setConnectionStatus('connected');
-      
-      // Update portfolio value based on real-time prices
-      if (portfolio && paperAccount) {
-        updatePortfolioValue(priceUpdate);
+  // Create default portfolio if none exists
+  const createDefaultPortfolio = async () => {
+    if (!user?.id) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('portfolios')
+        .insert({
+          user_id: user.id,
+          name: 'My Paper Portfolio',
+          is_default: true,
+          mode: 'paper',
+          initial_balance: 100000,
+          current_balance: 100000,
+          total_value: 100000,
+          total_pnl: 0,
+          total_pnl_percentage: 0,
+          positions: {}
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error creating default portfolio:', error);
+        toast({
+          title: "Error Creating Portfolio",
+          description: error.message,
+          variant: "destructive",
+        });
+        return;
       }
-    });
 
-    return unsubscribePrices;
+      if (data) {
+        setPortfolios([data]);
+        setDefaultPortfolio(data);
+        toast({
+          title: "Portfolio Created",
+          description: "Your default portfolio has been created successfully.",
+        });
+      }
+    } catch (err) {
+      console.error('Error in createDefaultPortfolio:', err);
+      toast({
+        title: "Error",
+        description: "Failed to create default portfolio",
+        variant: "destructive",
+      });
+    }
   };
 
-  const updatePortfolioValue = (priceUpdate: PriceUpdate) => {
-    // Calculate updated portfolio value based on real-time price changes
-    // This is a simplified calculation - in production you'd have actual position data
-    setPortfolio(prev => {
-      if (!prev) return prev;
-      
-      const priceChangeImpact = Math.random() * 1000 - 500; // Mock impact calculation
-      const newTotalValue = prev.total_value + priceChangeImpact;
-      const newPnL = newTotalValue - prev.current_balance;
-      const newPnLPercentage = (newPnL / prev.current_balance) * 100;
-      
-      return {
-        ...prev,
-        total_value: newTotalValue,
-        total_pnl: newPnL,
-        total_pnl_percentage: newPnLPercentage,
-        updated_at: new Date().toISOString()
-      };
-    });
+  // Update portfolio
+  const updatePortfolio = async (portfolioId: string, updates: Partial<Portfolio>) => {
+    if (!user?.id) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('portfolios')
+        .update(updates)
+        .eq('id', portfolioId)
+        .eq('user_id', user.id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error updating portfolio:', error);
+        toast({
+          title: "Error Updating Portfolio",
+          description: error.message,
+          variant: "destructive",
+        });
+        return null;
+      }
+
+      if (data) {
+        setPortfolios(prev => prev.map(p => p.id === portfolioId ? data : p));
+        if (defaultPortfolio?.id === portfolioId) {
+          setDefaultPortfolio(data);
+        }
+        return data;
+      }
+    } catch (err) {
+      console.error('Error in updatePortfolio:', err);
+      toast({
+        title: "Error",
+        description: "Failed to update portfolio",
+        variant: "destructive",
+      });
+      return null;
+    }
   };
 
-  const setupRealtimeSubscriptions = () => {
-    if (!user) return;
+  // Initialize and set up real-time subscriptions
+  useEffect(() => {
+    if (!isAuthenticated || !user?.id) {
+      setLoading(false);
+      return;
+    }
 
-    // Portfolio updates
-    const portfolioChannel = supabase
+    fetchPortfolios();
+
+    // Set up real-time subscription
+    const channel = supabase
       .channel('portfolio-changes')
       .on(
         'postgres_changes',
@@ -176,79 +185,46 @@ export const useRealTimePortfolio = () => {
           filter: `user_id=eq.${user.id}`
         },
         (payload) => {
-          if (payload.new && (payload.new as any).is_default) {
-            setPortfolio(payload.new as PortfolioData);
-          }
-        }
-      )
-      .subscribe();
-
-    // Paper account updates
-    const accountChannel = supabase
-      .channel('account-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'paper_trading_accounts',
-          filter: `user_id=eq.${user.id}`
-        },
-        (payload) => {
-          if (payload.new) {
-            setPaperAccount(payload.new as PaperAccount);
-          }
-        }
-      )
-      .subscribe();
-
-    // Trades updates
-    const tradesChannel = supabase
-      .channel('trades-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'paper_trades',
-          filter: `user_id=eq.${user.id}`
-        },
-        (payload) => {
-          if (payload.new) {
-            setTrades(prev => [payload.new as Trade, ...prev.slice(0, 49)]);
+          console.log('Portfolio change detected:', payload);
+          
+          if (payload.eventType === 'INSERT') {
+            setPortfolios(prev => [...prev, payload.new as Portfolio]);
+          } else if (payload.eventType === 'UPDATE') {
+            const updatedPortfolio = payload.new as Portfolio;
+            setPortfolios(prev => 
+              prev.map(p => p.id === updatedPortfolio.id ? updatedPortfolio : p)
+            );
+            if (defaultPortfolio?.id === updatedPortfolio.id) {
+              setDefaultPortfolio(updatedPortfolio);
+            }
+          } else if (payload.eventType === 'DELETE') {
+            setPortfolios(prev => prev.filter(p => p.id !== payload.old.id));
+            if (defaultPortfolio?.id === payload.old.id) {
+              setDefaultPortfolio(null);
+            }
           }
         }
       )
       .subscribe();
 
     return () => {
-      supabase.removeChannel(portfolioChannel);
-      supabase.removeChannel(accountChannel);
-      supabase.removeChannel(tradesChannel);
-      websocketService.disconnect();
+      channel.unsubscribe();
     };
-  };
+  }, [isAuthenticated, user?.id]);
 
-  const getCurrentPrice = (symbol: string) => {
-    return realTimePrices[symbol]?.price || null;
-  };
-
-  const getPriceChange = (symbol: string) => {
-    return realTimePrices[symbol]?.change_24h || null;
-  };
-
-  const isConnected = connectionStatus === 'connected';
+  // Create default portfolio if none exists
+  useEffect(() => {
+    if (!loading && portfolios.length === 0 && user?.id) {
+      createDefaultPortfolio();
+    }
+  }, [loading, portfolios.length, user?.id]);
 
   return {
-    portfolio,
-    paperAccount,
-    trades,
-    realTimePrices,
+    portfolios,
+    defaultPortfolio,
     loading,
-    connectionStatus,
-    isConnected,
-    getCurrentPrice,
-    getPriceChange,
-    refetch: fetchInitialData
+    error,
+    updatePortfolio,
+    refetch: fetchPortfolios,
   };
 };
