@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -36,7 +37,7 @@ interface AuditEntry {
 
 export const LiveMonitoringDashboard = () => {
   const { currentAccount, accounts } = useMultipleAccounts();
-  const { defaultPortfolio, trades } = useRealTimePortfolio();
+  const { portfolio, trades } = useRealTimePortfolio();
   const [liveData, setLiveData] = useState<LiveData[]>([]);
   const [performanceMetrics, setPerformanceMetrics] = useState<PerformanceMetric[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditEntry[]>([]);
@@ -106,7 +107,7 @@ export const LiveMonitoringDashboard = () => {
   // Generate performance metrics
   useEffect(() => {
     const metrics: PerformanceMetric[] = [
-      { name: 'Portfolio Value', value: defaultPortfolio?.total_value || 100000, change: 2.4, status: 'up' },
+      { name: 'Portfolio Value', value: portfolio?.total_value || 100000, change: 2.4, status: 'up' },
       { name: 'Daily P&L', value: currentAccount?.total_pnl || 0, change: -1.2, status: 'down' },
       { name: 'Win Rate', value: 73.5, change: 5.1, status: 'up' },
       { name: 'Active Trades', value: 12, change: 2, status: 'up' },
@@ -116,7 +117,7 @@ export const LiveMonitoringDashboard = () => {
       { name: 'Max Drawdown', value: 8.3, change: -2.1, status: 'up' }
     ];
     setPerformanceMetrics(metrics);
-  }, [defaultPortfolio, currentAccount]);
+  }, [portfolio, currentAccount]);
 
   const recentTrades = trades.slice(0, 10);
   const accountPerformance = accounts.map(acc => ({

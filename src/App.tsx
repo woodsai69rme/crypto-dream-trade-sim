@@ -1,62 +1,54 @@
 
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ErrorBoundary } from '@/components/ErrorBoundary';
-import { Toaster } from '@/components/ui/toaster';
-import { useAuth } from '@/hooks/useAuth';
-import { FullPageLoader } from '@/components/LoadingSpinner';
-import AuthPage from '@/pages/AuthPage';
-import Dashboard from '@/pages/Dashboard';
-import './App.css';
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/hooks/useAuth";
+import { DashboardLayout } from "@/components/layouts/DashboardLayout";
+import Index from "./pages/Index";
+import { Auth } from "./pages/Auth";
+import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: 1,
-      refetchOnWindowFocus: false,
+      retry: 3,
       staleTime: 5 * 60 * 1000, // 5 minutes
+      refetchOnWindowFocus: false,
+    },
+    mutations: {
+      retry: 2,
     },
   },
 });
 
-function AppContent() {
-  const { user, loading } = useAuth();
-
-  if (loading) {
-    return <FullPageLoader text="Initializing CryptoTrader Pro..." />;
-  }
-
+const App = () => {
+  console.log('App component rendering');
+  
   return (
-    <Router>
-      <Routes>
-        <Route 
-          path="/auth" 
-          element={user ? <Navigate to="/" replace /> : <AuthPage />} 
-        />
-        <Route 
-          path="/" 
-          element={user ? <Dashboard /> : <Navigate to="/auth" replace />} 
-        />
-        <Route 
-          path="*" 
-          element={<Navigate to={user ? "/" : "/auth"} replace />} 
-        />
-      </Routes>
-    </Router>
-  );
-}
-
-function App() {
-  return (
-    <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <div className="min-h-screen bg-background">
-          <AppContent />
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <TooltipProvider>
           <Toaster />
-        </div>
-      </QueryClientProvider>
-    </ErrorBoundary>
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/*" element={
+                <DashboardLayout>
+                  <Routes>
+                    <Route path="/" element={<Index />} />
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </DashboardLayout>
+              } />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </AuthProvider>
+    </QueryClientProvider>
   );
-}
+};
 
 export default App;

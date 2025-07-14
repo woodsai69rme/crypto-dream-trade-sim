@@ -4397,10 +4397,6 @@ export type Database = {
         Args: { user_id: string }
         Returns: undefined
       }
-      create_sample_exchange_connections: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
       ensure_user_accounts: {
         Args: Record<PropertyKey, never>
         Returns: undefined

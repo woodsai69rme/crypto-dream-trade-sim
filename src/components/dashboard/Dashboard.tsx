@@ -1,4 +1,3 @@
-
 import { useMultipleAccounts } from "@/hooks/useMultipleAccounts";
 import { useRealTimePortfolio } from "@/hooks/useRealTimePortfolio";
 import { useRealtimeMarketData } from "@/hooks/useRealtimeMarketData";
@@ -9,18 +8,18 @@ import { Wallet, TrendingUp, TrendingDown, Users, Activity, DollarSign, Newspape
 
 export const Dashboard = () => {
   const { currentAccount, accounts } = useMultipleAccounts();
-  const { defaultPortfolio, loading: portfolioLoading } = useRealTimePortfolio();
+  const { paperAccount, loading: portfolioLoading } = useRealTimePortfolio();
   const { getPrice } = useRealtimeMarketData(['BTC', 'ETH', 'DOGE', 'SOL', 'ADA']);
 
   // Mock performance data
   const performanceData = [
-    { date: 'Mon', value: defaultPortfolio?.current_balance || 100000 },
-    { date: 'Tue', value: (defaultPortfolio?.current_balance || 100000) * 1.02 },
-    { date: 'Wed', value: (defaultPortfolio?.current_balance || 100000) * 0.98 },
-    { date: 'Thu', value: (defaultPortfolio?.current_balance || 100000) * 1.05 },
-    { date: 'Fri', value: (defaultPortfolio?.current_balance || 100000) * 1.03 },
-    { date: 'Sat', value: (defaultPortfolio?.current_balance || 100000) * 1.08 },
-    { date: 'Sun', value: (defaultPortfolio?.current_balance || 100000) * 1.12 },
+    { date: 'Mon', value: paperAccount?.balance || 100000 },
+    { date: 'Tue', value: (paperAccount?.balance || 100000) * 1.02 },
+    { date: 'Wed', value: (paperAccount?.balance || 100000) * 0.98 },
+    { date: 'Thu', value: (paperAccount?.balance || 100000) * 1.05 },
+    { date: 'Fri', value: (paperAccount?.balance || 100000) * 1.03 },
+    { date: 'Sat', value: (paperAccount?.balance || 100000) * 1.08 },
+    { date: 'Sun', value: (paperAccount?.balance || 100000) * 1.12 },
   ];
 
   if (portfolioLoading) {
@@ -37,9 +36,9 @@ export const Dashboard = () => {
             <Wallet className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${(defaultPortfolio?.current_balance || 0).toLocaleString()}</div>
+            <div className="text-2xl font-bold">${(paperAccount?.balance || 0).toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">
-              {defaultPortfolio?.total_pnl >= 0 ? '+' : ''}${defaultPortfolio?.total_pnl.toFixed(2)} today
+              {paperAccount?.total_pnl >= 0 ? '+' : ''}${paperAccount?.total_pnl.toFixed(2)} today
             </p>
           </CardContent>
         </Card>
@@ -60,18 +59,18 @@ export const Dashboard = () => {
         <Card className="crypto-card-gradient text-primary-foreground">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">P&L Today</CardTitle>
-            {defaultPortfolio?.total_pnl >= 0 ? (
+            {paperAccount?.total_pnl >= 0 ? (
               <TrendingUp className="h-4 w-4 text-crypto-success" />
             ) : (
               <TrendingDown className="h-4 w-4 text-crypto-danger" />
             )}
           </CardHeader>
           <CardContent>
-            <div className={`text-2xl font-bold ${defaultPortfolio?.total_pnl >= 0 ? 'text-crypto-success' : 'text-crypto-danger'}`}>
-              {defaultPortfolio?.total_pnl >= 0 ? '+' : ''}${defaultPortfolio?.total_pnl.toFixed(2)}
+            <div className={`text-2xl font-bold ${paperAccount?.total_pnl >= 0 ? 'text-crypto-success' : 'text-crypto-danger'}`}>
+              {paperAccount?.total_pnl >= 0 ? '+' : ''}${paperAccount?.total_pnl.toFixed(2)}
             </div>
             <p className="text-xs text-muted-foreground">
-              {defaultPortfolio?.total_pnl_percentage.toFixed(2)}% change
+              {paperAccount?.total_pnl_percentage.toFixed(2)}% change
             </p>
           </CardContent>
         </Card>
