@@ -20,11 +20,27 @@ export interface Portfolio {
   updated_at: string;
 }
 
+export interface Trade {
+  id: string;
+  user_id: string;
+  account_id?: string;
+  symbol: string;
+  side: 'buy' | 'sell';
+  amount: number;
+  price: number;
+  total_value: number;
+  fee: number;
+  status: string;
+  reasoning?: string;
+  created_at: string;
+}
+
 export const useRealTimePortfolio = () => {
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
   const [defaultPortfolio, setDefaultPortfolio] = useState<Portfolio | null>(null);
+  const [trades, setTrades] = useState<Trade[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -70,6 +86,30 @@ export const useRealTimePortfolio = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Fetch trades
+  const fetchTrades = async () => {
+    if (!user?.id) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('paper_trades')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching trades:', error);
+        return;
+      }
+
+      if (data) {
+        setTrades(data);
+      }
+    } catch (err) {
+      console.error('Error in fetchTrades:', err);
     }
   };
 
@@ -172,9 +212,10 @@ export const useRealTimePortfolio = () => {
     }
 
     fetchPortfolios();
+    fetchTrades();
 
-    // Set up real-time subscription
-    const channel = supabase
+    // Set up real-time subscription for portfolios
+    const portfolioChannel = supabase
       .channel('portfolio-changes')
       .on(
         'postgres_changes',
@@ -207,8 +248,37 @@ export const useRealTimePortfolio = () => {
       )
       .subscribe();
 
+    // Set up real-time subscription for trades
+    const tradesChannel = supabase
+      .channel('trades-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'paper_trades',
+          filter: `user_id=eq.${user.id}`
+        },
+        (payload) => {
+          console.log('Trade change detected:', payload);
+          
+          if (payload.eventType === 'INSERT') {
+            setTrades(prev => [payload.new as Trade, ...prev]);
+          } else if (payload.eventType === 'UPDATE') {
+            const updatedTrade = payload.new as Trade;
+            setTrades(prev => 
+              prev.map(t => t.id === updatedTrade.id ? updatedTrade : t)
+            );
+          } else if (payload.eventType === 'DELETE') {
+            setTrades(prev => prev.filter(t => t.id !== payload.old.id));
+          }
+        }
+      )
+      .subscribe();
+
     return () => {
-      channel.unsubscribe();
+      portfolioChannel.unsubscribe();
+      tradesChannel.unsubscribe();
     };
   }, [isAuthenticated, user?.id]);
 
@@ -222,9 +292,13 @@ export const useRealTimePortfolio = () => {
   return {
     portfolios,
     defaultPortfolio,
+    trades,
     loading,
     error,
     updatePortfolio,
     refetch: fetchPortfolios,
+    // Legacy aliases for backward compatibility
+    paperAccount: defaultPortfolio,
+    portfolio: defaultPortfolio,
   };
 };
