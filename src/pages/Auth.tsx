@@ -54,7 +54,7 @@ export const Auth = () => {
         console.error('Sign in error:', error);
         toast({
           title: "Sign In Failed",
-          description: typeof error === 'string' ? error : error.message || "Failed to sign in",
+          description: typeof error === 'string' ? error : (error as any)?.message || "Failed to sign in",
           variant: "destructive",
         });
       } else {
@@ -94,7 +94,7 @@ export const Auth = () => {
       
       if (error) {
         console.error('Sign up error:', error);
-        const errorMessage = typeof error === 'string' ? error : error.message || "Failed to create account";
+        const errorMessage = typeof error === 'string' ? error : (error as any)?.message || "Failed to create account";
         if (errorMessage.includes('already registered')) {
           toast({
             title: "Account Exists",

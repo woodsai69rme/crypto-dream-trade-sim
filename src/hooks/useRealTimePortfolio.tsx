@@ -24,8 +24,9 @@ export interface Trade {
   id: string;
   user_id: string;
   account_id?: string;
+  bot_id?: string;
   symbol: string;
-  side: 'buy' | 'sell';
+  side: string;
   amount: number;
   price: number;
   total_value: number;
@@ -33,6 +34,18 @@ export interface Trade {
   status: string;
   reasoning?: string;
   created_at: string;
+  timestamp?: string;
+  risk_score?: number;
+  confidence_level?: number;
+  stop_loss?: number;
+  take_profit?: number;
+  execution_time_ms?: number;
+  execution_price?: number;
+  trade_category?: string;
+  tags?: string[];
+  notes?: string;
+  trade_type?: string;
+  order_type?: string;
 }
 
 export const useRealTimePortfolio = () => {
