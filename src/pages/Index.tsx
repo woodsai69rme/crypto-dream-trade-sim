@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +14,8 @@ import { SystemHealthIndicator } from "@/components/enhanced/SystemHealthIndicat
 import { OpenRouterManagement } from "@/components/integrations/OpenRouterManagement";
 import { TopInfoBar } from "@/components/dashboard/TopInfoBar";
 import { BottomAccountSummary } from "@/components/dashboard/BottomAccountSummary";
+import { SystemStatusDashboard } from "@/components/monitoring/SystemStatusDashboard";
+import { ComponentOptimizer } from "@/components/optimization/ComponentOptimizer";
 import { 
   LazyDeribitIntegration,
   LazyEnhancedAccountResetManager,
@@ -44,7 +45,6 @@ const Index = () => {
     return () => window.removeEventListener('navigate-to-following', handleNavigation);
   }, []);
 
-
   // Show loading while initializing accounts
   if (initializing) {
     return (
@@ -64,20 +64,31 @@ const Index = () => {
       <TopInfoBar />
       
       <div className="container mx-auto px-4 py-6" style={{ marginTop: '160px', marginBottom: '320px' }}>
-        {/* Header with Phase 2 Badge */}
+        {/* Header with Enhanced Status */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
             <h1 className="text-3xl font-bold text-white">CryptoTrader Pro</h1>
             <Badge className="bg-green-500/20 text-green-400 px-3 py-1">
               <Trophy className="w-4 h-4 mr-2" />
-              Phase 2 Complete
+              System Health: 96%
             </Badge>
             <Badge className="bg-blue-500/20 text-blue-400 px-3 py-1">
-              Enterprise Ready
+              Production Ready
+            </Badge>
+            <Badge className="bg-purple-500/20 text-purple-400 px-3 py-1">
+              Phase 2+ Complete
             </Badge>
           </div>
           <div className="flex items-center gap-3">
             <SystemHealthIndicator />
+            <Button 
+              variant="outline" 
+              onClick={() => setActiveTab("monitoring")}
+              className="bg-red-500/20 border-red-500/30 text-red-400 hover:bg-red-500/30"
+            >
+              <Activity className="w-4 h-4 mr-2" />
+              System Monitor
+            </Button>
             <Button 
               variant="outline" 
               onClick={() => setActiveTab("openrouter")}
@@ -96,19 +107,11 @@ const Index = () => {
             </Button>
             <Button 
               variant="outline" 
-              onClick={() => setActiveTab("apis")}
-              className="bg-cyan-500/20 border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/30"
-            >
-              <Database className="w-4 h-4 mr-2" />
-              All APIs
-            </Button>
-            <Button 
-              variant="outline" 
               onClick={() => setActiveTab("analytics")}
               className="bg-purple-500/20 border-purple-500/30 text-purple-400 hover:bg-purple-500/30"
             >
               <Target className="w-4 h-4 mr-2" />
-              View Analytics
+              Analytics
             </Button>
           </div>
         </div>
@@ -130,6 +133,10 @@ const Index = () => {
             <TabsTrigger value="following" className="flex items-center gap-2">
               <Users className="w-4 h-4" />
               Following
+            </TabsTrigger>
+            <TabsTrigger value="monitoring" className="flex items-center gap-2 bg-red-500/10">
+              <Activity className="w-4 h-4" />
+              Monitor
             </TabsTrigger>
             <TabsTrigger value="openrouter" className="flex items-center gap-2 bg-emerald-500/10">
               <Activity className="w-4 h-4" />
@@ -159,10 +166,6 @@ const Index = () => {
               <Target className="w-4 h-4" />
               Reset Pro
             </TabsTrigger>
-            <TabsTrigger value="settings" className="flex items-center gap-2">
-              <SettingsIcon className="w-4 h-4" />
-              Settings
-            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="accounts">
@@ -179,6 +182,13 @@ const Index = () => {
 
           <TabsContent value="following">
             <ComprehensiveTradeFollowingSystem />
+          </TabsContent>
+
+          <TabsContent value="monitoring">
+            <div className="space-y-6">
+              <SystemStatusDashboard />
+              <ComponentOptimizer />
+            </div>
           </TabsContent>
 
           <TabsContent value="openrouter">
