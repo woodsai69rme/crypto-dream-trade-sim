@@ -44,7 +44,7 @@ export const useRealTimeTradeFollowing = () => {
     return accounts.map(account => ({
       accountId: account.id,
       accountName: account.account_name,
-      isFollowing: settings[`following_${account.id}`] || false,
+      isFollowing: settings[`trade_following_${account.id}`] || false,
       confidenceThreshold: getConfidenceThreshold(account.risk_level)
     }));
   }, [accounts, settings]);
@@ -66,10 +66,12 @@ export const useRealTimeTradeFollowing = () => {
   const startFollowing = useCallback(async () => {
     console.log('🚀 Starting multi-account trade following system');
     
-    // Enable following for all accounts
-    const enablePromises = accounts.map(account => 
-      updateSetting(`following_${account.id}`, true)
-    );
+    // Enable following for all accounts and sync with AI bots
+    const enablePromises = accounts.map(async (account) => {
+      await updateSetting(`trade_following_${account.id}`, true);
+      // Sync with AI bots setting
+      await updateSetting(`ai_bots_${account.id}`, true);
+    });
     
     await Promise.all(enablePromises);
     setIsActive(true);
@@ -234,7 +236,7 @@ export const useRealTimeTradeFollowing = () => {
   const getAccountStats = useCallback(() => {
     return accounts.map(account => {
       const defaultSettings: AccountSettings = {
-        isActive: settings[`following_${account.id}`] || false,
+        isActive: settings[`trade_following_${account.id}`] || false,
         confidenceThreshold: getConfidenceThreshold(account.risk_level),
         minConfidence: 75,
         followRatio: 0.5,
