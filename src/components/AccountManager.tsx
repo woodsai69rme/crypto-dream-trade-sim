@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useMultipleAccounts } from '@/hooks/useMultipleAccounts';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { useSettings } from '@/hooks/useSettings';
 import { supabase } from '@/integrations/supabase/client';
 import { Users, TrendingUp, DollarSign, Settings, Bot, Play, Pause, CheckSquare, Square } from 'lucide-react';
 
@@ -16,52 +17,27 @@ export const AccountManager = () => {
   const { user } = useAuth();
   const { accounts, currentAccount, switchAccount } = useMultipleAccounts();
   const { toast } = useToast();
-  const [aiBotsEnabled, setAiBotsEnabled] = useState<Record<string, boolean>>({});
-  const [tradeFollowingEnabled, setTradeFollowingEnabled] = useState<Record<string, boolean>>({});
   const [selectedAccounts, setSelectedAccounts] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
 
-  // Load AI Bot and Trade Following settings for each account
-  useEffect(() => {
-    if (user && accounts.length > 0) {
-      loadAccountSettings();
-    }
-  }, [user, accounts]);
+  // Optimize settings loading by batching all account settings
+  const settingNames = accounts.flatMap(acc => [
+    `ai_bots_${acc.id}`,
+    `trade_following_${acc.id}`
+  ]);
 
-  const loadAccountSettings = async () => {
-    if (!user) return;
+  const { settings, updateSetting } = useSettings(settingNames);
 
-    try {
-      const { data: settings, error } = await supabase
-        .from('user_settings')
-        .select('setting_name, setting_value')
-        .eq('user_id', user.id)
-        .in('setting_name', accounts.flatMap(acc => [
-          `ai_bots_${acc.id}`,
-          `trade_following_${acc.id}`
-        ]));
+  // Parse settings into separate objects for easier access
+  const aiBotsEnabled = accounts.reduce((acc, account) => {
+    acc[account.id] = Boolean(settings[`ai_bots_${account.id}`]);
+    return acc;
+  }, {} as Record<string, boolean>);
 
-      if (error) throw error;
-
-      const aiBots: Record<string, boolean> = {};
-      const tradeFollowing: Record<string, boolean> = {};
-
-      settings?.forEach(setting => {
-        if (setting.setting_name.startsWith('ai_bots_')) {
-          const accountId = setting.setting_name.replace('ai_bots_', '');
-          aiBots[accountId] = Boolean(setting.setting_value);
-        } else if (setting.setting_name.startsWith('trade_following_')) {
-          const accountId = setting.setting_name.replace('trade_following_', '');
-          tradeFollowing[accountId] = Boolean(setting.setting_value);
-        }
-      });
-
-      setAiBotsEnabled(aiBots);
-      setTradeFollowingEnabled(tradeFollowing);
-    } catch (error) {
-      console.error('Error loading account settings:', error);
-    }
-  };
+  const tradeFollowingEnabled = accounts.reduce((acc, account) => {
+    acc[account.id] = Boolean(settings[`trade_following_${account.id}`]);
+    return acc;
+  }, {} as Record<string, boolean>);
 
   const toggleAIBots = async (accountId: string, enabled: boolean) => {
     if (!user) return;
@@ -69,31 +45,12 @@ export const AccountManager = () => {
     setLoading(true);
     try {
       // Update AI bots setting
-      const { error: aiBotsError } = await supabase
-        .from('user_settings')
-        .upsert({
-          user_id: user.id,
-          setting_name: `ai_bots_${accountId}`,
-          setting_value: enabled,
-          updated_at: new Date().toISOString()
-        });
-
-      if (aiBotsError) throw aiBotsError;
+      const success1 = await updateSetting(`ai_bots_${accountId}`, enabled);
+      if (!success1) throw new Error('Failed to update AI bots setting');
 
       // Sync trade following with AI bots
-      const { error: tradeFollowingError } = await supabase
-        .from('user_settings')
-        .upsert({
-          user_id: user.id,
-          setting_name: `trade_following_${accountId}`,
-          setting_value: enabled,
-          updated_at: new Date().toISOString()
-        });
-
-      if (tradeFollowingError) throw tradeFollowingError;
-
-      setAiBotsEnabled(prev => ({ ...prev, [accountId]: enabled }));
-      setTradeFollowingEnabled(prev => ({ ...prev, [accountId]: enabled }));
+      const success2 = await updateSetting(`trade_following_${accountId}`, enabled);
+      if (!success2) throw new Error('Failed to update trade following setting');
       
       toast({
         title: enabled ? "AI Bots Enabled" : "AI Bots Disabled",
@@ -117,31 +74,12 @@ export const AccountManager = () => {
     setLoading(true);
     try {
       // Update trade following setting
-      const { error: tradeFollowingError } = await supabase
-        .from('user_settings')
-        .upsert({
-          user_id: user.id,
-          setting_name: `trade_following_${accountId}`,
-          setting_value: enabled,
-          updated_at: new Date().toISOString()
-        });
-
-      if (tradeFollowingError) throw tradeFollowingError;
+      const success1 = await updateSetting(`trade_following_${accountId}`, enabled);
+      if (!success1) throw new Error('Failed to update trade following setting');
 
       // Sync AI bots with trade following
-      const { error: aiBotsError } = await supabase
-        .from('user_settings')
-        .upsert({
-          user_id: user.id,
-          setting_name: `ai_bots_${accountId}`,
-          setting_value: enabled,
-          updated_at: new Date().toISOString()
-        });
-
-      if (aiBotsError) throw aiBotsError;
-
-      setTradeFollowingEnabled(prev => ({ ...prev, [accountId]: enabled }));
-      setAiBotsEnabled(prev => ({ ...prev, [accountId]: enabled }));
+      const success2 = await updateSetting(`ai_bots_${accountId}`, enabled);
+      if (!success2) throw new Error('Failed to update AI bots setting');
       
       toast({
         title: enabled ? "Trade Following Enabled" : "Trade Following Disabled",
@@ -186,36 +124,12 @@ export const AccountManager = () => {
     try {
       const promises = Array.from(selectedAccounts).map(async (accountId) => {
         // Update AI bots setting
-        await supabase
-          .from('user_settings')
-          .upsert({
-            user_id: user.id,
-            setting_name: `ai_bots_${accountId}`,
-            setting_value: enabled,
-            updated_at: new Date().toISOString()
-          });
-
+        await updateSetting(`ai_bots_${accountId}`, enabled);
         // Sync trade following with AI bots
-        await supabase
-          .from('user_settings')
-          .upsert({
-            user_id: user.id,
-            setting_name: `trade_following_${accountId}`,
-            setting_value: enabled,
-            updated_at: new Date().toISOString()
-          });
+        await updateSetting(`trade_following_${accountId}`, enabled);
       });
 
       await Promise.all(promises);
-
-      // Update local state
-      const updates = Array.from(selectedAccounts).reduce((acc, accountId) => {
-        acc[accountId] = enabled;
-        return acc;
-      }, {} as Record<string, boolean>);
-
-      setAiBotsEnabled(prev => ({ ...prev, ...updates }));
-      setTradeFollowingEnabled(prev => ({ ...prev, ...updates }));
 
       toast({
         title: enabled ? "AI Bots Enabled" : "AI Bots Disabled",

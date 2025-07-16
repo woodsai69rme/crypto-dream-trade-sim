@@ -50,16 +50,18 @@ export const useAITradingBots = () => {
   const [loading, setLoading] = useState(true);
   const [activeBots, setActiveBots] = useState<Set<string>>(new Set());
 
-  // Load AI trading bots
-  const loadBots = useCallback(async () => {
+  // Load AI trading bots with pagination for performance
+  const loadBots = useCallback(async (limit = 20) => {
     if (!user) return;
 
     try {
+      // Only load essential data for the first 20 bots to improve performance
       const { data, error } = await supabase
         .from('ai_trading_bots')
-        .select('*')
+        .select('id, name, strategy, ai_model, target_symbols, status, mode, paper_balance, max_position_size, risk_level, performance, created_at, updated_at')
         .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(limit);
 
       if (error) throw error;
 
@@ -76,15 +78,15 @@ export const useAITradingBots = () => {
           monthly_pnl: number;
         },
         paper_balance: bot.paper_balance || 0,
-        live_balance: bot.live_balance || 0,
-        last_trade_at: bot.last_trade_at || null
+        config: {}, // Default empty config for optimization
+        user_id: user.id // Set user_id from context
       })));
       
       // Activate first 5 bots by default
       const activeIds = new Set((data || []).slice(0, 5).map(bot => bot.id));
       setActiveBots(activeIds);
       
-      console.log(`📋 Loaded ${data?.length || 0} AI trading bots, ${activeIds.size} active`);
+      console.log(`📋 Loaded ${data?.length || 0} AI trading bots (limited to ${limit}), ${activeIds.size} active`);
     } catch (error) {
       console.error('Error loading AI trading bots:', error);
     } finally {
@@ -315,7 +317,7 @@ export const useAITradingBots = () => {
   }, [toast]);
 
   useEffect(() => {
-    loadBots();
+    loadBots(20); // Load only 20 bots initially for performance
   }, [loadBots]);
 
   return {
@@ -323,6 +325,7 @@ export const useAITradingBots = () => {
     loading,
     activeBots,
     toggleBotStatus,
-    loadBots
+    loadBots,
+    totalBots: bots.length
   };
 };

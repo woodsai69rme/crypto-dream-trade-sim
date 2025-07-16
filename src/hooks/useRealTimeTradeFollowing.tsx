@@ -256,21 +256,29 @@ export const useRealTimeTradeFollowing = () => {
     });
   }, [accounts, settings, accountSettings]);
 
-  // Load saved state on mount
+  // Load saved state on mount and manage intervals
   useEffect(() => {
     const savedState = localStorage.getItem('tradeFollowingActive');
     if (savedState === 'true' && accounts.length > 0) {
       setIsActive(true);
-      generateRealTimeSignals();
     }
   }, [accounts.length]);
 
-  // Save state when isActive changes
+  // Save state when isActive changes and manage signal generation
   useEffect(() => {
     localStorage.setItem('tradeFollowingActive', isActive.toString());
+    
+    let cleanup: (() => void) | undefined;
+    
     if (isActive) {
-      generateRealTimeSignals();
+      cleanup = generateRealTimeSignals();
     }
+    
+    return () => {
+      if (cleanup) {
+        cleanup();
+      }
+    };
   }, [isActive, generateRealTimeSignals]);
 
   return {

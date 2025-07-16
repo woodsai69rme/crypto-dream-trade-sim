@@ -18,7 +18,7 @@ export const useSettings = (settingNames: string[] = []): SettingsHook => {
 
   useEffect(() => {
     loadSettings();
-  }, []);
+  }, [settingNames.join(',')]); // Re-load if requested settings change
 
   const loadSettings = async () => {
     try {
@@ -33,10 +33,18 @@ export const useSettings = (settingNames: string[] = []): SettingsHook => {
 
       console.log('Loading settings for user:', user.id);
 
-      const { data, error } = await supabase
+      // Optimize query by filtering specific settings if provided
+      let query = supabase
         .from('user_settings')
         .select('setting_name, setting_value')
         .eq('user_id', user.id);
+
+      // If specific settings are requested, filter for them
+      if (settingNames.length > 0) {
+        query = query.in('setting_name', settingNames);
+      }
+
+      const { data, error } = await query;
 
       if (error) {
         console.error('Settings load error:', error);
