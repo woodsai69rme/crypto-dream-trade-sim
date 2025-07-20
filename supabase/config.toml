@@ -2,3 +2,6 @@ project_id = "xtjowrewuuhmnvmuilcz"
 
 [functions.real-trade-executor]
 verify_jwt = true
+
+[functions.realtime-market-feed]
+verify_jwt = false

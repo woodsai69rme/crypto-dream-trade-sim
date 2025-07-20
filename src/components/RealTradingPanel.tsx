@@ -106,7 +106,8 @@ export const RealTradingPanel = () => {
       symbol: tradeForm.symbol,
       side: tradeForm.side,
       amount: parseFloat(tradeForm.amount),
-      price: parseFloat(tradeForm.price)
+      price: parseFloat(tradeForm.price),
+      trade_type: tradeForm.tradeType === 'stop' ? 'market' : tradeForm.tradeType
     });
 
     if (!validation || !(validation as any).valid) {
@@ -138,7 +139,7 @@ export const RealTradingPanel = () => {
       side: tradeForm.side,
       amount: parseFloat(tradeForm.amount),
       price: parseFloat(tradeForm.price),
-      trade_type: tradeForm.tradeType,
+      trade_type: tradeForm.tradeType === 'stop' ? 'market' : tradeForm.tradeType,
       confirmation_token: confirmationData.confirmation_token
     });
 
@@ -177,7 +178,7 @@ export const RealTradingPanel = () => {
                     <span className="font-medium">{alert.risk_type}</span>
                     <Badge variant="destructive">{alert.risk_level}</Badge>
                   </div>
-                  <p className="text-sm text-red-300 mt-1">{alert.alert_message}</p>
+                  <p className="text-sm text-red-300 mt-1">{alert.alert_message || 'Risk threshold exceeded'}</p>
                   <div className="flex items-center gap-2 mt-2 text-xs text-red-400">
                     <span>Current: ${alert.current_value}</span>
                     <span>•</span>
@@ -353,7 +354,7 @@ export const RealTradingPanel = () => {
                       )}
                     </div>
                     <div className="text-sm text-white/60 mt-1">
-                      Daily Limit: ${cred.daily_limit} • Position Limit: ${cred.position_limit}
+                      Daily Limit: ${cred.daily_limit || 1000} • Position Limit: ${cred.position_limit || 5000}
                     </div>
                   </div>
                   <Switch
