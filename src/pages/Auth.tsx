@@ -135,6 +135,25 @@ export const Auth = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {/* Demo Login Button */}
+          <div className="mb-4">
+            <Button 
+              onClick={() => window.location.href = '/'} 
+              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
+            >
+              🚀 Try Demo (No Account Required)
+            </Button>
+          </div>
+          
+          <div className="relative mb-4">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-white/20" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-transparent px-2 text-white/60">Or sign in/up</span>
+            </div>
+          </div>
+
           <Tabs defaultValue="signin" className="space-y-4">
             <TabsList className="grid w-full grid-cols-2 bg-white/10">
               <TabsTrigger value="signin" className="data-[state=active]:bg-white/20">

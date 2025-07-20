@@ -32,13 +32,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const initializeAuth = async () => {
       try {
+        console.log('Initializing auth...');
         // Get initial session
         const { data: { session: initialSession } } = await supabase.auth.getSession();
+        console.log('Initial session:', !!initialSession);
         
         if (mounted) {
           setSession(initialSession);
           setUser(initialSession?.user ?? null);
           setLoading(false);
+          console.log('Auth initialized, user:', !!initialSession?.user);
         }
       } catch (error) {
         console.error('Auth initialization error:', error);

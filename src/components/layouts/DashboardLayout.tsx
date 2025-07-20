@@ -14,21 +14,35 @@ interface DashboardLayoutProps {
 export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const { user, loading } = useAuth();
 
+  console.log('DashboardLayout render:', { user: !!user, loading });
+
   // Show loading while auth is initializing
   if (loading) {
+    console.log('Showing loading state...');
     return (
-      <div className="min-h-screen crypto-gradient flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-4">
-          <LoadingSpinner />
-          <p className="text-xl text-gray-300">Loading CryptoTrader Pro...</p>
+          <LoadingSpinner size="lg" />
+          <p className="text-xl text-foreground">Loading CryptoTrader Pro...</p>
+          <p className="text-sm text-muted-foreground">Initializing authentication...</p>
         </div>
       </div>
     );
   }
 
-  // Redirect to auth if not authenticated
-  if (!user) {
+  // For demo purposes, allow access without authentication
+  // In production, this should redirect to auth
+  const isDemo = process.env.NODE_ENV === 'development' || window.location.hostname.includes('lovableproject.com');
+  
+  if (!user && !isDemo) {
+    console.log('No user found, redirecting to auth...');
     return <Navigate to="/auth" replace />;
+  }
+
+  if (!user && isDemo) {
+    console.log('Demo mode: allowing access without authentication');
+  } else {
+    console.log('User authenticated, rendering dashboard...');
   }
 
   return (
