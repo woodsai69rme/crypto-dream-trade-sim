@@ -7,6 +7,8 @@ import { StatusIndicator } from "@/components/StatusIndicator";
 import { MobileNavigation } from "@/components/mobile/MobileNavigation";
 import { ModernNavigationMenu } from "@/components/navigation/ModernNavigationMenu";
 import { SystemHealthIndicator } from "@/components/enhanced/SystemHealthIndicator";
+import { GlobalSearch } from "@/components/search/GlobalSearch";
+import { RealTimeNotifications } from "@/components/realtime/RealTimeNotifications";
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -18,7 +20,6 @@ import {
   User, 
   Settings, 
   LogOut, 
-  Bell,
   Activity,
   Shield
 } from "lucide-react";
@@ -52,6 +53,11 @@ export const Header = () => {
           <ModernNavigationMenu />
         </div>
 
+        {/* Center Search */}
+        <div className="hidden lg:flex flex-1 justify-center max-w-md mx-8">
+          <GlobalSearch />
+        </div>
+
         {/* Right Side Actions */}
         <div className="flex items-center space-x-3">
           <StatusIndicator isActive={true} label="Live" />
@@ -69,15 +75,7 @@ export const Header = () => {
           </DropdownMenu>
 
           {/* Notifications */}
-          <Button variant="ghost" size="sm" className="relative hover:bg-accent">
-            <Bell className="w-4 h-4" />
-            <Badge 
-              variant="destructive" 
-              className="absolute -top-1 -right-1 h-5 w-5 text-xs p-0 flex items-center justify-center animate-pulse"
-            >
-              3
-            </Badge>
-          </Button>
+          <RealTimeNotifications />
 
           {/* User Menu */}
           <DropdownMenu>

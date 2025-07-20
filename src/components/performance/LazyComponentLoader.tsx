@@ -1,40 +1,37 @@
-import React, { Suspense, memo, lazy } from 'react';
-import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
-// Lazy load components for better performance
-export const LazyDeribitIntegration = lazy(() => 
-  import('@/components/integrations/DeribitIntegration').then(module => ({ 
-    default: module.DeribitIntegration 
-  }))
-);
+import { lazy, Suspense } from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
 
-export const LazyComprehensiveAuditDashboard = lazy(() => 
-  import('@/components/enhanced/ComprehensiveAuditDashboard').then(module => ({ 
-    default: module.ComprehensiveAuditDashboard 
-  }))
-);
-
-export const LazyEnhancedAccountResetManager = lazy(() => 
-  import('@/components/EnhancedAccountResetManager').then(module => ({ 
-    default: module.EnhancedAccountResetManager 
-  }))
-);
-
-export const LazyAITradingBot = lazy(() => 
-  import('@/components/ai/AITradingBot').then(module => ({ 
-    default: module.AITradingBot 
-  }))
-);
-
-interface LazyWrapperProps {
-  children: React.ReactNode;
+interface LazyComponentLoaderProps {
+  component: () => Promise<{ default: React.ComponentType<any> }>;
   fallback?: React.ReactNode;
+  props?: any;
 }
 
-export const LazyWrapper = memo(({ children, fallback }: LazyWrapperProps) => (
-  <Suspense fallback={fallback || <LoadingSpinner />}>
-    {children}
-  </Suspense>
-));
+export const LazyComponentLoader = ({ 
+  component, 
+  fallback, 
+  props = {} 
+}: LazyComponentLoaderProps) => {
+  const LazyComponent = lazy(component);
+  
+  const defaultFallback = (
+    <div className="space-y-2 p-4">
+      <Skeleton className="h-4 w-full" />
+      <Skeleton className="h-4 w-3/4" />
+      <Skeleton className="h-4 w-1/2" />
+    </div>
+  );
 
-LazyWrapper.displayName = 'LazyWrapper';
+  return (
+    <Suspense fallback={fallback || defaultFallback}>
+      <LazyComponent {...props} />
+    </Suspense>
+  );
+};
+
+// Lazy loaded components
+export const LazyTradingPanel = () => import('@/components/TradingPanel');
+export const LazyAccountManager = () => import('@/components/accounts/EnhancedAccountManager');
+export const LazySettingsPanel = () => import('@/components/settings/SettingsPanel');
+export const LazyAITradingBot = () => import('@/components/ai/AITradingBot');
