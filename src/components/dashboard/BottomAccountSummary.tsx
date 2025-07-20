@@ -173,24 +173,22 @@ export const BottomAccountSummary = () => {
 
   if (!isVisible) {
     return (
-      <div className="fixed bottom-0 left-0 right-0 z-40 bg-background/80 backdrop-blur-sm border-t">
-        <div className="flex justify-between items-center p-2">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => setIsVisible(true)}
-            className="text-muted-foreground hover:text-foreground"
-          >
-            <Eye className="w-4 h-4 mr-2" />
-            Show Account Summary
-          </Button>
-        </div>
+      <div className="h-full bg-background/80 backdrop-blur-sm border-t flex items-center justify-center">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={() => setIsVisible(true)}
+          className="text-muted-foreground hover:text-foreground"
+        >
+          <Eye className="w-4 h-4 mr-2" />
+          Show Account Summary
+        </Button>
       </div>
     );
   }
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-sm border-t shadow-lg">
+    <div className="h-full bg-background/95 backdrop-blur-sm border-t shadow-lg overflow-hidden">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between py-2 border-b border-white/10">
           <div className="flex items-center gap-4">

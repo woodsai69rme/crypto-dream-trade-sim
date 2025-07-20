@@ -116,8 +116,8 @@ const Index = () => {
         topContent={topContent}
         mainContent={mainContent}
         bottomContent={bottomContent}
-        defaultTopSize={20}
-        defaultBottomSize={30}
+        defaultTopSize={25}
+        defaultBottomSize={25}
       />
     </div>
   );
