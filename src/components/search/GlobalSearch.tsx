@@ -39,7 +39,7 @@ export const GlobalSearch = () => {
           id: '1',
           title: 'Main Trading Account',
           description: 'Primary trading account with $10,000 balance',
-          type: 'account',
+          type: 'account' as const,
           icon: <Wallet className="w-4 h-4" />,
           action: () => console.log('Navigate to account')
         },
@@ -47,7 +47,7 @@ export const GlobalSearch = () => {
           id: '2',
           title: 'BTC/USD Trade',
           description: 'Recent Bitcoin trade - +$250 profit',
-          type: 'trade',
+          type: 'trade' as const,
           icon: <TrendingUp className="w-4 h-4" />,
           action: () => console.log('View trade details')
         },
@@ -55,7 +55,7 @@ export const GlobalSearch = () => {
           id: '3',
           title: 'AI Trading Bot',
           description: 'Conservative strategy bot - Active',
-          type: 'bot',
+          type: 'bot' as const,
           icon: <Bot className="w-4 h-4" />,
           action: () => console.log('View bot settings')
         },
@@ -63,7 +63,7 @@ export const GlobalSearch = () => {
           id: '4',
           title: 'API Settings',
           description: 'Manage exchange connections',
-          type: 'setting',
+          type: 'setting' as const,
           icon: <Settings className="w-4 h-4" />,
           action: () => console.log('Open API settings')
         }
