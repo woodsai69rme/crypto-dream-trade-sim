@@ -10,6 +10,15 @@ import { ErrorBoundary } from "@/components/ui/error-boundary";
 import Index from "./pages/Index";
 import { Auth } from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+import Monitoring from "./pages/Monitoring";
+import Trading from "./pages/Trading";
+import Accounts from "./pages/Accounts";
+import Analytics from "./pages/Analytics";
+import Bots from "./pages/Bots";
+import Following from "./pages/Following";
+import Risk from "./pages/Risk";
+import Settings from "./pages/Settings";
+import Profile from "./pages/Profile";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -41,6 +50,15 @@ const App = () => {
                   <DashboardLayout>
                     <Routes>
                       <Route path="/" element={<Index />} />
+                      <Route path="/monitoring" element={<Monitoring />} />
+                      <Route path="/trading" element={<Trading />} />
+                      <Route path="/accounts" element={<Accounts />} />
+                      <Route path="/analytics" element={<Analytics />} />
+                      <Route path="/bots" element={<Bots />} />
+                      <Route path="/following" element={<Following />} />
+                      <Route path="/risk" element={<Risk />} />
+                      <Route path="/settings" element={<Settings />} />
+                      <Route path="/profile" element={<Profile />} />
                       <Route path="*" element={<NotFound />} />
                     </Routes>
                   </DashboardLayout>

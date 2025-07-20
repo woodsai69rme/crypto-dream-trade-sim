@@ -53,19 +53,19 @@ const navigationGroups = [
 ];
 
 const ListItem = React.forwardRef<
-  React.ElementRef<"a">,
-  React.ComponentPropsWithoutRef<"a"> & { icon: React.ElementType }
->(({ className, title, children, icon: Icon, ...props }, ref) => {
+  HTMLAnchorElement,
+  { icon: React.ElementType; title: string; to: string; children: React.ReactNode; className?: string }
+>(({ className, title, children, icon: Icon, to }, ref) => {
   return (
     <li>
       <NavigationMenuLink asChild>
-        <a
+        <NavLink
+          to={to}
           ref={ref}
           className={cn(
             "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
             className
           )}
-          {...props}
         >
           <div className="flex items-center gap-2">
             <Icon className="w-4 h-4" />
@@ -74,7 +74,7 @@ const ListItem = React.forwardRef<
           <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
             {children}
           </p>
-        </a>
+        </NavLink>
       </NavigationMenuLink>
     </li>
   )
@@ -106,7 +106,7 @@ export const ModernNavigationMenu = () => {
                   <ListItem
                     key={item.to}
                     title={item.label}
-                    href={item.to}
+                    to={item.to}
                     icon={item.icon}
                   >
                     {item.description}
