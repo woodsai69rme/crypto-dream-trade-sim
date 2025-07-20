@@ -48,10 +48,12 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   return (
     <ErrorBoundary>
       <NotificationProvider>
-        <div className="min-h-screen bg-background">
+        <div className="min-h-screen bg-background flex flex-col">
           <Header />
-          <main className="container mx-auto px-4 py-6">
-            {children}
+          <main className="flex-1 overflow-y-auto scrollbar-thin">
+            <div className="container mx-auto px-4 py-6 max-w-7xl">
+              {children}
+            </div>
           </main>
         </div>
       </NotificationProvider>
