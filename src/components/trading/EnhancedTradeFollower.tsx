@@ -6,6 +6,8 @@ import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { useRealTimeTradeFollowing } from '@/hooks/useRealTimeTradeFollowing';
+import { useBackgroundTrading } from '@/hooks/useBackgroundTrading';
+import { BackgroundTradingManager } from '../enhanced/BackgroundTradingManager';
 import { TradeSignalCard, TradeSignal } from './TradeSignal';
 import { Users, Activity, TrendingUp, Settings, CheckCircle, XCircle } from 'lucide-react';
 
@@ -23,6 +25,8 @@ export const EnhancedTradeFollower = () => {
     totalAccounts
   } = useRealTimeTradeFollowing();
 
+  const backgroundTrading = useBackgroundTrading();
+
   const accountStats = getAccountStats();
   const [expandedSettings, setExpandedSettings] = useState<string | null>(null);
 
@@ -31,16 +35,21 @@ export const EnhancedTradeFollower = () => {
   };
 
   return (
-    <Card className="crypto-card-gradient text-white">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Users className="w-5 h-5" />
-          Enhanced Multi-Account Trade Following
-          <Badge className={`ml-auto ${isActive ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'}`}>
-            {isActive ? `Active on ${activeAccounts}/${totalAccounts}` : 'Inactive'}
-          </Badge>
-        </CardTitle>
-      </CardHeader>
+    <div className="space-y-6">
+      {/* Background Trading Manager */}
+      <BackgroundTradingManager />
+      
+      {/* Legacy/Manual Controls */}
+      <Card className="crypto-card-gradient text-white">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="w-5 h-5" />
+            Manual Trade Following Controls
+            <Badge className={`ml-auto ${isActive ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'}`}>
+              {isActive ? `Legacy Active ${activeAccounts}/${totalAccounts}` : 'Legacy Mode'}
+            </Badge>
+          </CardTitle>
+        </CardHeader>
       <CardContent className="space-y-6">
         {/* Global Controls */}
         <div className="flex items-center justify-between p-4 bg-white/5 rounded-lg">
@@ -217,7 +226,8 @@ export const EnhancedTradeFollower = () => {
             follow ratios, and execution delays. This ensures diversified trading behavior across your portfolio.
           </p>
         </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </div>
   );
 };

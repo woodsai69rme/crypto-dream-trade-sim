@@ -1,4 +1,5 @@
 
+import React from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -7,6 +8,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
+import { backgroundTradingService } from "@/services/backgroundTradingService";
 import Index from "./pages/Index";
 import { Auth } from "./pages/Auth";
 import NotFound from "./pages/NotFound";
@@ -35,6 +37,16 @@ const queryClient = new QueryClient({
 
 const App = () => {
   console.log('App component rendering');
+  
+  // Initialize background trading service
+  React.useEffect(() => {
+    backgroundTradingService.start();
+    
+    return () => {
+      // Don't stop on unmount to keep background services running
+      // backgroundTradingService.stop();
+    };
+  }, []);
   
   return (
     <ErrorBoundary>

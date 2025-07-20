@@ -11,6 +11,8 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useMultipleAccounts } from "@/hooks/useMultipleAccounts";
+import { useBackgroundTrading } from "@/hooks/useBackgroundTrading";
+import { BackgroundTradingManager } from "../enhanced/BackgroundTradingManager";
 import { Bot, Play, Pause, Settings, TrendingUp, TrendingDown, BarChart3, Users, Zap, Target } from "lucide-react";
 
 interface AITradingBot {
@@ -39,6 +41,7 @@ export const EnhancedMultiAccountBotManager = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const { accounts } = useMultipleAccounts();
+  const backgroundTrading = useBackgroundTrading();
   const [bots, setBots] = useState<AITradingBot[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedBot, setSelectedBot] = useState<AITradingBot | null>(null);
@@ -164,23 +167,31 @@ export const EnhancedMultiAccountBotManager = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Bot className="w-6 h-6" />
-          <h2 className="text-2xl font-bold text-primary-foreground">Multi-Account Bot Manager</h2>
-          <Badge variant="outline">{bots.length} bots</Badge>
-        </div>
-        <div className="flex items-center gap-4 text-sm">
+      {/* Background Trading Manager */}
+      <BackgroundTradingManager />
+      
+      {/* Bot Manager */}
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-            <span>Active: {activeBots.length}</span>
+            <Bot className="w-6 h-6" />
+            <h2 className="text-2xl font-bold text-primary-foreground">Multi-Account Bot Manager</h2>
+            <Badge variant="outline">{bots.length} bots</Badge>
+            <Badge className={backgroundTrading.status.aiBots.active ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'}>
+              Background: {backgroundTrading.status.aiBots.active ? 'Active' : 'Inactive'}
+            </Badge>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
-            <span>Paused: {pausedBots.length}</span>
+          <div className="flex items-center gap-4 text-sm">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+              <span>Active: {activeBots.length}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
+              <span>Paused: {pausedBots.length}</span>
+            </div>
           </div>
         </div>
-      </div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -412,6 +423,7 @@ export const EnhancedMultiAccountBotManager = () => {
           </div>
         </TabsContent>
       </Tabs>
+      </div>
     </div>
   );
 };
