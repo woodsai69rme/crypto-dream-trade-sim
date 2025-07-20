@@ -82,8 +82,8 @@ export const useAITradingBots = () => {
         user_id: user.id // Set user_id from context
       })));
       
-      // Activate first 5 bots by default
-      const activeIds = new Set((data || []).slice(0, 5).map(bot => bot.id));
+      // Load active bots from database status, not just first 5
+      const activeIds = new Set((data || []).filter(bot => bot.status === 'active').map(bot => bot.id));
       setActiveBots(activeIds);
       
       console.log(`📋 Loaded ${data?.length || 0} AI trading bots (limited to ${limit}), ${activeIds.size} active`);
@@ -155,9 +155,9 @@ export const useAITradingBots = () => {
     const strategyFunc = strategies[bot.strategy as keyof typeof strategies] || strategies['trend-following'];
     const signal = strategyFunc();
 
-    // Price ranges for different symbols
+    // Updated realistic price ranges
     const priceRanges = {
-      BTC: { min: 40000, max: 70000 },
+      BTC: { min: 99000, max: 105000 }, // Current realistic Bitcoin range
       ETH: { min: 2000, max: 4000 },
       SOL: { min: 80, max: 200 },
       ADA: { min: 0.3, max: 1.5 },

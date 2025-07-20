@@ -22,25 +22,40 @@ export const RealTimeMarketTicker = () => {
 
   // Mock WebSocket connection for demo
   useEffect(() => {
-    const generateMockData = () => {
-      return MOCK_SYMBOLS.map(symbol => ({
-        symbol,
-        price: Math.random() * 50000 + 1000,
-        change24h: (Math.random() - 0.5) * 2000,
-        changePercent24h: (Math.random() - 0.5) * 20,
-        volume24h: Math.random() * 1000000000,
-        lastUpdate: new Date().toISOString()
-      }));
+    const generateRealisticData = () => {
+      const baseData = {
+        'BTC': { basePrice: 102500, symbol: 'BTC' },
+        'ETH': { basePrice: 3750, symbol: 'ETH' },
+        'SOL': { basePrice: 195, symbol: 'SOL' },
+        'ADA': { basePrice: 0.89, symbol: 'ADA' },
+        'DOT': { basePrice: 8.5, symbol: 'DOT' },
+        'LINK': { basePrice: 23.4, symbol: 'LINK' }
+      };
+
+      return Object.values(baseData).map(({ basePrice, symbol }) => {
+        const changePercent = (Math.random() - 0.5) * 8; // -4% to +4%
+        const currentPrice = basePrice * (1 + changePercent / 100);
+        const change24h = basePrice * (changePercent / 100);
+        
+        return {
+          symbol,
+          price: currentPrice,
+          change24h,
+          changePercent24h: changePercent,
+          volume24h: Math.random() * (symbol === 'BTC' ? 50000000000 : 5000000000),
+          lastUpdate: new Date().toISOString()
+        };
+      });
     };
 
     // Initial load
-    setMarketData(generateMockData());
+    setMarketData(generateRealisticData());
     setIsLoading(false);
 
-    // Update every 5 seconds for demo
+    // Update every 3 seconds with realistic price movements
     const interval = setInterval(() => {
-      setMarketData(generateMockData());
-    }, 5000);
+      setMarketData(generateRealisticData());
+    }, 3000);
 
     return () => clearInterval(interval);
   }, []);

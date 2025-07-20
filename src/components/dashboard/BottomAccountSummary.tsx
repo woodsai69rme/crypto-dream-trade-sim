@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { useMultipleAccounts } from '@/hooks/useMultipleAccounts';
 import { useRealTimeTradeFollowing } from '@/hooks/useRealTimeTradeFollowing';
+import { useLayoutState } from '@/hooks/useLayoutState';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   Wallet,
@@ -48,8 +49,8 @@ interface AccountSummary {
 export const BottomAccountSummary = () => {
   const { accounts } = useMultipleAccounts();
   const { stats, activeAccounts, totalAccounts } = useRealTimeTradeFollowing();
+  const { layoutState, toggleBottomPanel } = useLayoutState();
   
-  const [isVisible, setIsVisible] = useState(true);
   const [accountSummaries, setAccountSummaries] = useState<AccountSummary[]>([]);
   const [showSettings, setShowSettings] = useState(false);
   const [autoRefresh, setAutoRefresh] = useState(true);
@@ -171,13 +172,13 @@ export const BottomAccountSummary = () => {
     }
   };
 
-  if (!isVisible) {
+  if (!layoutState.bottomPanelVisible) {
     return (
       <div className="h-full bg-background/80 backdrop-blur-sm border-t flex items-center justify-center">
         <Button 
           variant="ghost" 
           size="sm" 
-          onClick={() => setIsVisible(true)}
+          onClick={toggleBottomPanel}
           className="text-muted-foreground hover:text-foreground"
         >
           <Eye className="w-4 h-4 mr-2" />
@@ -245,7 +246,7 @@ export const BottomAccountSummary = () => {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setIsVisible(false)}
+              onClick={toggleBottomPanel}
             >
               <EyeOff className="w-4 h-4" />
             </Button>

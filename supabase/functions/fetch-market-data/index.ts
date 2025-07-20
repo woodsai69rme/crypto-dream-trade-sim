@@ -89,13 +89,13 @@ serve(async (req) => {
           id: 'bitcoin',
           symbol: 'BTC',
           name: 'Bitcoin',
-          current_price: 98000 + Math.random() * 4000, // $98k-$102k range
-          market_cap: 1900000000000,
+          current_price: 101500 + Math.random() * 3000, // $101.5k-$104.5k range (real current range)
+          market_cap: 2000000000000,
           market_cap_rank: 1,
-          price_change_percentage_24h: (Math.random() - 0.5) * 8,
-          total_volume: 45000000000,
-          high_24h: 102000,
-          low_24h: 97000,
+          price_change_percentage_24h: (Math.random() - 0.5) * 6,
+          total_volume: 48000000000,
+          high_24h: 104500,
+          low_24h: 99800,
           last_updated: new Date().toISOString(),
         },
         {
