@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -22,6 +21,9 @@ import { PortfolioRebalancer } from "@/components/portfolio/PortfolioRebalancer"
 import { RiskManagementDashboard } from "@/components/risk/RiskManagementDashboard";
 import { LiveMonitoringDashboard } from "@/components/dashboard/LiveMonitoringDashboard";
 import { RealTimeAuditLog } from "@/components/RealTimeAuditLog";
+import { TwoFactorAuth } from "@/components/security/TwoFactorAuth";
+import { EnhancedTradeAuditSystem } from "@/components/trading/EnhancedTradeAuditSystem";
+import { SecurityValidationLayer } from "@/components/trading/SecurityValidationLayer";
 
 export const TradingPanel = () => {
   return (
@@ -83,6 +85,14 @@ export const TradingPanel = () => {
           <TabsTrigger value="audit" className="flex items-center gap-2">
             <FileText className="w-4 h-4" />
             Audit
+          </TabsTrigger>
+          <TabsTrigger value="security" className="flex items-center gap-2 bg-purple-500/10">
+            <Shield className="w-4 h-4" />
+            Security
+          </TabsTrigger>
+          <TabsTrigger value="enhanced-audit" className="flex items-center gap-2 bg-indigo-500/10">
+            <FileText className="w-4 h-4" />
+            Enhanced Audit
           </TabsTrigger>
         </TabsList>
 
@@ -155,6 +165,20 @@ export const TradingPanel = () => {
 
         <TabsContent value="audit">
           <TradeAuditTrail />
+        </TabsContent>
+
+        <TabsContent value="security">
+          <div className="space-y-6">
+            <SecurityValidationLayer />
+            <TwoFactorAuth 
+              onVerificationComplete={(token) => console.log('2FA verified:', token)}
+              purpose="account_security"
+            />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="enhanced-audit">
+          <EnhancedTradeAuditSystem />
         </TabsContent>
       </Tabs>
     </div>
