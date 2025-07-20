@@ -10,15 +10,17 @@ import { useMultipleAccounts } from '@/hooks/useMultipleAccounts';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useSettings } from '@/hooks/useSettings';
+import { AccountModeToggle } from '@/components/accounts/AccountModeToggle';
 import { supabase } from '@/integrations/supabase/client';
-import { Users, TrendingUp, DollarSign, Settings, Bot, Play, Pause, CheckSquare, Square } from 'lucide-react';
+import { Users, TrendingUp, DollarSign, Settings, Bot, Play, Pause, CheckSquare, Square, Shield } from 'lucide-react';
 
 export const AccountManager = () => {
   const { user } = useAuth();
-  const { accounts, currentAccount, switchAccount } = useMultipleAccounts();
+  const { accounts, currentAccount, switchAccount, refreshAccounts } = useMultipleAccounts();
   const { toast } = useToast();
   const [selectedAccounts, setSelectedAccounts] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
+  const [showModeToggle, setShowModeToggle] = useState<string | null>(null);
 
   // Optimize settings loading by batching all account settings
   const settingNames = accounts.flatMap(acc => [
@@ -147,6 +149,12 @@ export const AccountManager = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleModeChange = async (accountId: string, newMode: string) => {
+    // Refresh accounts after mode change
+    await refreshAccounts();
+    setShowModeToggle(null);
   };
 
   return (
@@ -298,6 +306,23 @@ export const AccountManager = () => {
                     </Button>
                   )}
                 </div>
+
+                {/* Trading Mode Toggle Button */}
+                <div className="flex items-center justify-center">
+                  <Button
+                    onClick={() => setShowModeToggle(account.id)}
+                    size="sm"
+                    variant="outline"
+                    className={`border-white/20 hover:bg-white/10 ${
+                      account.trading_mode === 'live' 
+                        ? 'border-red-500/30 text-red-400 hover:bg-red-500/10' 
+                        : 'border-green-500/30 text-green-400 hover:bg-green-500/10'
+                    }`}
+                  >
+                    <Shield className="w-3 h-3 mr-1" />
+                    {account.trading_mode === 'live' ? 'Live Mode' : 'Paper Mode'}
+                  </Button>
+                </div>
               </div>
 
               <div className="flex items-center justify-between text-xs text-white/60 pt-3 border-t border-white/10">
@@ -306,6 +331,28 @@ export const AccountManager = () => {
               </div>
             </div>
           ))
+        )}
+
+        {/* Mode Toggle Modal */}
+        {showModeToggle && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <AccountModeToggle
+                accountId={showModeToggle}
+                currentMode={accounts.find(acc => acc.id === showModeToggle)?.trading_mode || 'paper'}
+                onModeChange={handleModeChange}
+              />
+              <div className="mt-4 text-center">
+                <Button
+                  onClick={() => setShowModeToggle(null)}
+                  variant="outline"
+                  className="border-white/20 hover:bg-white/10 text-white"
+                >
+                  Close
+                </Button>
+              </div>
+            </div>
+          </div>
         )}
       </CardContent>
     </Card>

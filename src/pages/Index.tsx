@@ -11,6 +11,7 @@ import { AdvancedPortfolioAnalytics } from "@/components/analytics/AdvancedPortf
 import { ComprehensiveTradeFollowingSystem } from "@/components/trading/ComprehensiveTradeFollowingSystem";
 import { AccountDashboard } from "@/components/accounts/AccountDashboard";
 import { SystemHealthIndicator } from "@/components/enhanced/SystemHealthIndicator";
+import { RealTradingDashboard } from "@/components/enhanced/RealTradingDashboard";
 import { OpenRouterManagement } from "@/components/integrations/OpenRouterManagement";
 import { TopInfoBar } from "@/components/dashboard/TopInfoBar";
 import { BottomAccountSummary } from "@/components/dashboard/BottomAccountSummary";
@@ -27,7 +28,7 @@ import { useAccountInitialization } from "@/hooks/useAccountInitialization";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { 
   Wallet, TrendingUp, BarChart3, Users, Settings as SettingsIcon,
-  Activity, Trophy, Target, Database
+  Activity, Trophy, Target, Database, Shield
 } from "lucide-react";
 
 const Index = () => {
@@ -117,7 +118,7 @@ const Index = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-12 bg-card/50 backdrop-blur-sm">
+          <TabsList className="grid w-full grid-cols-13 bg-card/50 backdrop-blur-sm">
             <TabsTrigger value="accounts" className="flex items-center gap-2">
               <Wallet className="w-4 h-4" />
               Accounts
@@ -129,6 +130,10 @@ const Index = () => {
             <TabsTrigger value="trading" className="flex items-center gap-2">
               <TrendingUp className="w-4 h-4" />
               Trading
+            </TabsTrigger>
+            <TabsTrigger value="live-trading" className="flex items-center gap-2 bg-red-500/10">
+              <Shield className="w-4 h-4" />
+              Live Trading
             </TabsTrigger>
             <TabsTrigger value="following" className="flex items-center gap-2">
               <Users className="w-4 h-4" />
@@ -178,6 +183,10 @@ const Index = () => {
 
           <TabsContent value="trading">
             <TradingPanel />
+          </TabsContent>
+
+          <TabsContent value="live-trading">
+            <RealTradingDashboard />
           </TabsContent>
 
           <TabsContent value="following">

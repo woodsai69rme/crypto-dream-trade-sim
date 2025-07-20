@@ -1,1 +1,4 @@
 project_id = "xtjowrewuuhmnvmuilcz"
+
+[functions.real-trade-executor]
+verify_jwt = true
