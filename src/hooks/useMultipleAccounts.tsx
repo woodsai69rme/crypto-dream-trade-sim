@@ -32,6 +32,13 @@ export interface PaperAccount {
   auto_rebalance?: boolean;
   currency?: string;
   timezone?: string;
+  trading_mode?: string;
+  daily_loss_limit?: number;
+  weekly_loss_limit?: number;
+  max_position_percentage?: number;
+  two_factor_enabled?: boolean;
+  emergency_stop?: boolean;
+  last_risk_check?: string;
 }
 
 export interface AccountTemplate {

@@ -1925,12 +1925,16 @@ export type Database = {
           api_key_encrypted: string | null
           api_secret_encrypted: string | null
           created_at: string | null
+          daily_volume_limit: number | null
+          environment: string | null
           exchange_name: string
           id: string
           is_active: boolean | null
           last_sync: string | null
           passphrase_encrypted: string | null
           permissions: Json | null
+          position_size_limit: number | null
+          risk_level: string | null
           sandbox_mode: boolean | null
           updated_at: string | null
           user_id: string
@@ -1939,12 +1943,16 @@ export type Database = {
           api_key_encrypted?: string | null
           api_secret_encrypted?: string | null
           created_at?: string | null
+          daily_volume_limit?: number | null
+          environment?: string | null
           exchange_name: string
           id?: string
           is_active?: boolean | null
           last_sync?: string | null
           passphrase_encrypted?: string | null
           permissions?: Json | null
+          position_size_limit?: number | null
+          risk_level?: string | null
           sandbox_mode?: boolean | null
           updated_at?: string | null
           user_id: string
@@ -1953,12 +1961,16 @@ export type Database = {
           api_key_encrypted?: string | null
           api_secret_encrypted?: string | null
           created_at?: string | null
+          daily_volume_limit?: number | null
+          environment?: string | null
           exchange_name?: string
           id?: string
           is_active?: boolean | null
           last_sync?: string | null
           passphrase_encrypted?: string | null
           permissions?: Json | null
+          position_size_limit?: number | null
+          risk_level?: string | null
           sandbox_mode?: boolean | null
           updated_at?: string | null
           user_id?: string
@@ -2727,7 +2739,9 @@ export type Database = {
           copy_settings: Json | null
           created_at: string | null
           currency: string | null
+          daily_loss_limit: number | null
           description: string | null
+          emergency_stop: boolean | null
           icon: string | null
           id: string
           initial_balance: number
@@ -2735,8 +2749,10 @@ export type Database = {
           is_default: boolean | null
           is_public: boolean | null
           last_accessed: string | null
+          last_risk_check: string | null
           max_daily_loss: number | null
           max_drawdown_limit: number | null
+          max_position_percentage: number | null
           max_position_size: number | null
           name: string | null
           notification_settings: Json | null
@@ -2748,9 +2764,12 @@ export type Database = {
           timezone: string | null
           total_pnl: number
           total_pnl_percentage: number
+          trading_mode: string | null
           trading_strategy: string | null
+          two_factor_enabled: boolean | null
           updated_at: string | null
           user_id: string
+          weekly_loss_limit: number | null
         }
         Insert: {
           access_count?: number | null
@@ -2764,7 +2783,9 @@ export type Database = {
           copy_settings?: Json | null
           created_at?: string | null
           currency?: string | null
+          daily_loss_limit?: number | null
           description?: string | null
+          emergency_stop?: boolean | null
           icon?: string | null
           id?: string
           initial_balance?: number
@@ -2772,8 +2793,10 @@ export type Database = {
           is_default?: boolean | null
           is_public?: boolean | null
           last_accessed?: string | null
+          last_risk_check?: string | null
           max_daily_loss?: number | null
           max_drawdown_limit?: number | null
+          max_position_percentage?: number | null
           max_position_size?: number | null
           name?: string | null
           notification_settings?: Json | null
@@ -2785,9 +2808,12 @@ export type Database = {
           timezone?: string | null
           total_pnl?: number
           total_pnl_percentage?: number
+          trading_mode?: string | null
           trading_strategy?: string | null
+          two_factor_enabled?: boolean | null
           updated_at?: string | null
           user_id: string
+          weekly_loss_limit?: number | null
         }
         Update: {
           access_count?: number | null
@@ -2801,7 +2827,9 @@ export type Database = {
           copy_settings?: Json | null
           created_at?: string | null
           currency?: string | null
+          daily_loss_limit?: number | null
           description?: string | null
+          emergency_stop?: boolean | null
           icon?: string | null
           id?: string
           initial_balance?: number
@@ -2809,8 +2837,10 @@ export type Database = {
           is_default?: boolean | null
           is_public?: boolean | null
           last_accessed?: string | null
+          last_risk_check?: string | null
           max_daily_loss?: number | null
           max_drawdown_limit?: number | null
+          max_position_percentage?: number | null
           max_position_size?: number | null
           name?: string | null
           notification_settings?: Json | null
@@ -2822,9 +2852,12 @@ export type Database = {
           timezone?: string | null
           total_pnl?: number
           total_pnl_percentage?: number
+          trading_mode?: string | null
           trading_strategy?: string | null
+          two_factor_enabled?: boolean | null
           updated_at?: string | null
           user_id?: string
+          weekly_loss_limit?: number | null
         }
         Relationships: [
           {
@@ -3301,6 +3334,140 @@ export type Database = {
         }
         Relationships: []
       }
+      real_trades: {
+        Row: {
+          account_id: string | null
+          amount: number
+          confirmation_required: boolean | null
+          confirmed_at: string | null
+          created_at: string | null
+          error_message: string | null
+          exchange_name: string
+          executed_at: string | null
+          execution_price: number
+          fee: number
+          id: string
+          order_id: string | null
+          price: number
+          side: string
+          slippage: number | null
+          status: string | null
+          symbol: string
+          total_value: number
+          trade_type: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          account_id?: string | null
+          amount: number
+          confirmation_required?: boolean | null
+          confirmed_at?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          exchange_name: string
+          executed_at?: string | null
+          execution_price: number
+          fee?: number
+          id?: string
+          order_id?: string | null
+          price: number
+          side: string
+          slippage?: number | null
+          status?: string | null
+          symbol: string
+          total_value: number
+          trade_type?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          account_id?: string | null
+          amount?: number
+          confirmation_required?: boolean | null
+          confirmed_at?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          exchange_name?: string
+          executed_at?: string | null
+          execution_price?: number
+          fee?: number
+          id?: string
+          order_id?: string | null
+          price?: number
+          side?: string
+          slippage?: number | null
+          status?: string | null
+          symbol?: string
+          total_value?: number
+          trade_type?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "real_trades_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "paper_trading_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      real_trading_credentials: {
+        Row: {
+          api_key_encrypted: string
+          api_secret_encrypted: string
+          created_at: string | null
+          daily_limit: number | null
+          encryption_key_id: string
+          exchange_name: string
+          id: string
+          is_active: boolean | null
+          is_testnet: boolean | null
+          last_used: string | null
+          passphrase_encrypted: string | null
+          permissions: Json | null
+          position_limit: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          api_key_encrypted: string
+          api_secret_encrypted: string
+          created_at?: string | null
+          daily_limit?: number | null
+          encryption_key_id: string
+          exchange_name: string
+          id?: string
+          is_active?: boolean | null
+          is_testnet?: boolean | null
+          last_used?: string | null
+          passphrase_encrypted?: string | null
+          permissions?: Json | null
+          position_limit?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          api_key_encrypted?: string
+          api_secret_encrypted?: string
+          created_at?: string | null
+          daily_limit?: number | null
+          encryption_key_id?: string
+          exchange_name?: string
+          id?: string
+          is_active?: boolean | null
+          is_testnet?: boolean | null
+          last_used?: string | null
+          passphrase_encrypted?: string | null
+          permissions?: Json | null
+          position_limit?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       resume_analytics: {
         Row: {
           created_at: string | null
@@ -3499,6 +3666,62 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      risk_monitoring: {
+        Row: {
+          account_id: string | null
+          alert_message: string | null
+          alert_triggered: boolean | null
+          created_at: string | null
+          current_value: number
+          id: string
+          resolution_action: string | null
+          resolved_at: string | null
+          risk_level: string | null
+          risk_type: string
+          threshold_value: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          account_id?: string | null
+          alert_message?: string | null
+          alert_triggered?: boolean | null
+          created_at?: string | null
+          current_value: number
+          id?: string
+          resolution_action?: string | null
+          resolved_at?: string | null
+          risk_level?: string | null
+          risk_type: string
+          threshold_value: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          account_id?: string | null
+          alert_message?: string | null
+          alert_triggered?: boolean | null
+          created_at?: string | null
+          current_value?: number
+          id?: string
+          resolution_action?: string | null
+          resolved_at?: string | null
+          risk_level?: string | null
+          risk_type?: string
+          threshold_value?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "risk_monitoring_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "paper_trading_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       scraping_jobs: {
         Row: {
@@ -4031,6 +4254,45 @@ export type Database = {
           },
         ]
       }
+      trading_confirmations: {
+        Row: {
+          confirmation_token: string
+          confirmed: boolean | null
+          confirmed_at: string | null
+          created_at: string | null
+          expires_at: string
+          id: string
+          ip_address: unknown | null
+          trade_data: Json
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          confirmation_token: string
+          confirmed?: boolean | null
+          confirmed_at?: string | null
+          created_at?: string | null
+          expires_at: string
+          id?: string
+          ip_address?: unknown | null
+          trade_data: Json
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          confirmation_token?: string
+          confirmed?: boolean | null
+          confirmed_at?: string | null
+          created_at?: string | null
+          expires_at?: string
+          id?: string
+          ip_address?: unknown | null
+          trade_data?: Json
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       trading_signals: {
         Row: {
           bot_id: string | null
@@ -4418,6 +4680,19 @@ export type Database = {
         }
         Returns: Json
       }
+      execute_real_trade: {
+        Args: {
+          p_user_id: string
+          p_account_id: string
+          p_exchange_name: string
+          p_symbol: string
+          p_side: string
+          p_amount: number
+          p_price: number
+          p_confirmation_token?: string
+        }
+        Returns: Json
+      }
       log_comprehensive_audit: {
         Args: {
           p_account_id: string
@@ -4453,6 +4728,17 @@ export type Database = {
       set_default_account: {
         Args: { account_id_param: string }
         Returns: boolean
+      }
+      validate_real_trade: {
+        Args: {
+          p_user_id: string
+          p_account_id: string
+          p_symbol: string
+          p_side: string
+          p_amount: number
+          p_price: number
+        }
+        Returns: Json
       }
     }
     Enums: {
