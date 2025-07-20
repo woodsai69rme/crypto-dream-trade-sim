@@ -78,6 +78,9 @@ export const EnhancedTradeAuditSystem = () => {
       // Transform audit logs with risk assessment
       const enhancedLogs: AuditLog[] = (logs || []).map(log => ({
         ...log,
+        ip_address: (log.ip_address as string) || '127.0.0.1',
+        user_id: (log.user_id as string) || '',
+        user_agent: (log.user_agent as string) || '',
         risk_level: assessRiskLevel(log.action, log.details),
         compliance_status: assessComplianceStatus(log.action, log.details)
       }));

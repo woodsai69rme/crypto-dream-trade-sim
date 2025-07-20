@@ -1,179 +1,301 @@
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { 
+  TrendingUp, 
+  TrendingDown, 
+  AlertTriangle, 
+  CheckCircle, 
+  Clock,
+  Activity,
+  Target,
+  Zap
+} from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { useAIEnsembleTrading } from '@/hooks/useAIEnsembleTrading';
-import { useMultipleAccounts } from '@/hooks/useMultipleAccounts';
-import { Activity, TrendingUp, TrendingDown, AlertTriangle } from 'lucide-react';
+interface TradingSignal {
+  id: string;
+  symbol: string;
+  signal_type: 'buy' | 'sell' | 'hold';
+  strength: number;
+  confidence: number;
+  price_target: number;
+  stop_loss: number;
+  time_horizon: string;
+  source: string;
+  created_at: string;
+  status: 'active' | 'executed' | 'expired';
+}
 
-export const RealTimeSignalProcessor = () => {
-  const { 
-    bots, 
-    signals, 
-    marketConditions, 
-    loading, 
-    ensembleActive, 
-    startEnsemble, 
-    stopEnsemble 
-  } = useAIEnsembleTrading();
-  
-  const { currentAccount, executeTrade } = useMultipleAccounts();
-  const [processedSignals, setProcessedSignals] = useState(0);
-  const [successRate, setSuccessRate] = useState(0);
+interface RiskMetrics {
+  portfolio_risk: number;
+  position_concentration: number;
+  correlation_risk: number;
+  volatility_score: number;
+  max_drawdown: number;
+}
 
+export const RealTimeSignalProcessor: React.FC = () => {
+  const [signals, setSignals] = useState<TradingSignal[]>([]);
+  const [riskMetrics, setRiskMetrics] = useState<RiskMetrics | null>(null);
+  const [processingStatus, setProcessingStatus] = useState<'idle' | 'processing' | 'error'>('idle');
+  const [autoExecute, setAutoExecute] = useState(false);
+  const { toast } = useToast();
+
+  // Generate mock signals for demo
   useEffect(() => {
-    if (signals.length > 0) {
-      setProcessedSignals(signals.length);
-      const successful = signals.filter(signal => signal.confidence > 75).length;
-      setSuccessRate((successful / signals.length) * 100);
-    }
-  }, [signals]);
+    const generateSignals = () => {
+      const symbols = ['BTC', 'ETH', 'SOL', 'ADA', 'DOT'];
+      const sources = ['Technical Analysis', 'AI Model', 'News Sentiment', 'Options Flow'];
+      
+      const mockSignals: TradingSignal[] = symbols.map((symbol, index) => ({
+        id: `signal_${index}`,
+        symbol,
+        signal_type: Math.random() > 0.5 ? 'buy' : 'sell',
+        strength: Math.floor(Math.random() * 100),
+        confidence: Math.floor(Math.random() * 100),
+        price_target: 50000 + Math.random() * 10000,
+        stop_loss: 45000 + Math.random() * 5000,
+        time_horizon: ['1H', '4H', '1D', '1W'][Math.floor(Math.random() * 4)],
+        source: sources[Math.floor(Math.random() * sources.length)],
+        created_at: new Date().toISOString(),
+        status: ['active', 'executed', 'expired'][Math.floor(Math.random() * 3)] as any
+      }));
 
-  const executeSignal = async (signal: any) => {
-    if (!currentAccount) return;
+      setSignals(mockSignals);
+    };
 
-    const success = await executeTrade({
-      symbol: signal.symbol,
-      side: signal.side,
-      amount: signal.amount,
-      price: signal.price,
-      type: 'market'
-    });
+    const generateRiskMetrics = () => {
+      setRiskMetrics({
+        portfolio_risk: Math.floor(Math.random() * 100),
+        position_concentration: Math.floor(Math.random() * 100),
+        correlation_risk: Math.floor(Math.random() * 100),
+        volatility_score: Math.floor(Math.random() * 100),
+        max_drawdown: Math.floor(Math.random() * 20)
+      });
+    };
 
-    if (success) {
-      console.log('Signal executed successfully:', signal);
+    generateSignals();
+    generateRiskMetrics();
+
+    // Update every 30 seconds
+    const interval = setInterval(() => {
+      generateSignals();
+      generateRiskMetrics();
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const executeSignal = async (signal: TradingSignal) => {
+    setProcessingStatus('processing');
+    
+    try {
+      // Simulate signal execution
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      setSignals(prev => prev.map(s => 
+        s.id === signal.id 
+          ? { ...s, status: 'executed' as const }
+          : s
+      ));
+
+      toast({
+        title: "Signal Executed",
+        description: `${signal.signal_type.toUpperCase()} signal for ${signal.symbol} executed successfully`,
+      });
+    } catch (error) {
+      setProcessingStatus('error');
+      toast({
+        title: "Execution Error",
+        description: "Failed to execute trading signal",
+        variant: "destructive",
+      });
+    } finally {
+      setProcessingStatus('idle');
     }
   };
 
-  const getMarketTrend = () => {
-    switch (marketConditions.trend) {
-      case 'bullish':
-        return { icon: TrendingUp, color: 'text-green-500', label: 'Bullish' };
-      case 'bearish':
-        return { icon: TrendingDown, color: 'text-red-500', label: 'Bearish' };
-      default:
-        return { icon: Activity, color: 'text-yellow-500', label: 'Sideways' };
+  const getSignalIcon = (type: string) => {
+    switch (type) {
+      case 'buy': return <TrendingUp className="h-4 w-4 text-green-500" />;
+      case 'sell': return <TrendingDown className="h-4 w-4 text-red-500" />;
+      default: return <Clock className="h-4 w-4 text-yellow-500" />;
     }
   };
 
-  const trend = getMarketTrend();
-  const TrendIcon = trend.icon;
+  const getStrengthColor = (strength: number) => {
+    if (strength >= 80) return 'text-green-500';
+    if (strength >= 60) return 'text-yellow-500';
+    return 'text-red-500';
+  };
+
+  const getRiskColor = (risk: number) => {
+    if (risk <= 30) return 'text-green-500';
+    if (risk <= 70) return 'text-yellow-500';
+    return 'text-red-500';
+  };
 
   return (
     <div className="space-y-6">
-      <Card className="crypto-card-gradient text-white">
+      {/* Real-Time Signals */}
+      <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Activity className="w-5 h-5" />
-            Real-Time Signal Processor
-            <Badge className={ensembleActive ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'}>
-              {ensembleActive ? 'Active' : 'Inactive'}
-            </Badge>
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Activity className="h-5 w-5" />
+              Live Trading Signals
+            </CardTitle>
+            <div className="flex items-center gap-2">
+              <Badge variant={processingStatus === 'processing' ? 'default' : 'secondary'}>
+                {processingStatus === 'processing' ? 'Processing' : 'Active'}
+              </Badge>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setAutoExecute(!autoExecute)}
+              >
+                Auto-Execute: {autoExecute ? 'ON' : 'OFF'}
+              </Button>
+            </div>
+          </div>
         </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Control Panel */}
-          <div className="flex items-center justify-between p-4 bg-white/5 rounded-lg">
-            <div>
-              <h3 className="font-medium">Ensemble Processing</h3>
-              <p className="text-sm text-white/60">
-                {ensembleActive ? 'Processing signals from AI ensemble' : 'Signal processing is paused'}
-              </p>
-            </div>
-            <Button
-              onClick={ensembleActive ? stopEnsemble : startEnsemble}
-              variant={ensembleActive ? "destructive" : "default"}
-            >
-              {ensembleActive ? 'Stop Processing' : 'Start Processing'}
-            </Button>
-          </div>
-
-          {/* Market Conditions */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-4 bg-white/5 rounded-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <TrendIcon className={`w-4 h-4 ${trend.color}`} />
-                <span className="text-sm font-medium">Market Trend</span>
-              </div>
-              <div className={`text-lg font-bold ${trend.color}`}>
-                {trend.label}
-              </div>
-            </div>
-
-            <div className="p-4 bg-white/5 rounded-lg">
-              <div className="text-sm font-medium text-white/60 mb-2">Volatility</div>
-              <div className="text-lg font-bold">
-                {(marketConditions.volatility * 100).toFixed(1)}%
-              </div>
-            </div>
-
-            <div className="p-4 bg-white/5 rounded-lg">
-              <div className="text-sm font-medium text-white/60 mb-2">Volume</div>
-              <div className="text-lg font-bold">
-                ${(marketConditions.volume / 1000000).toFixed(1)}M
-              </div>
-            </div>
-          </div>
-
-          {/* Processing Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-blue-400">{bots.filter(b => b.status === 'active').length}</div>
-              <div className="text-sm text-white/60">Active Bots</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-green-400">{processedSignals}</div>
-              <div className="text-sm text-white/60">Signals Processed</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-purple-400">{successRate.toFixed(1)}%</div>
-              <div className="text-sm text-white/60">Success Rate</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-yellow-400">{signals.length}</div>
-              <div className="text-sm text-white/60">Pending Signals</div>
-            </div>
-          </div>
-
-          {/* Recent Signals */}
-          {signals.length > 0 && (
-            <div className="space-y-3">
-              <h3 className="font-medium">Recent Signals</h3>
-              {signals.slice(0, 5).map((signal) => (
-                <div key={signal.timestamp} className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
+        <CardContent>
+          <div className="space-y-4">
+            {signals.map((signal) => (
+              <div key={signal.id} className="border rounded-lg p-4">
+                <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-3">
-                    <Badge className={signal.side === 'buy' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}>
-                      {signal.side.toUpperCase()}
-                    </Badge>
-                    <span className="font-medium">{signal.symbol}</span>
-                    <span className="text-white/60">${signal.price.toLocaleString()}</span>
+                    {getSignalIcon(signal.signal_type)}
+                    <div>
+                      <h4 className="font-medium">{signal.symbol}</h4>
+                      <p className="text-sm text-muted-foreground">{signal.source}</p>
+                    </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge className="bg-blue-500/20 text-blue-400">
-                      {signal.confidence.toFixed(0)}%
+                    <Badge variant={signal.status === 'active' ? 'default' : 'secondary'}>
+                      {signal.status}
                     </Badge>
-                    <Button
-                      size="sm"
-                      onClick={() => executeSignal(signal)}
-                      disabled={!currentAccount}
-                    >
-                      Execute
-                    </Button>
+                    {signal.status === 'active' && (
+                      <Button 
+                        size="sm" 
+                        onClick={() => executeSignal(signal)}
+                        disabled={processingStatus === 'processing'}
+                      >
+                        Execute
+                      </Button>
+                    )}
                   </div>
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                  <div>
+                    <div className="text-muted-foreground">Signal Strength</div>
+                    <div className={`font-medium ${getStrengthColor(signal.strength)}`}>
+                      {signal.strength}%
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-muted-foreground">Confidence</div>
+                    <div className="font-medium">{signal.confidence}%</div>
+                  </div>
+                  <div>
+                    <div className="text-muted-foreground">Target Price</div>
+                    <div className="font-medium">${signal.price_target.toLocaleString()}</div>
+                  </div>
+                  <div>
+                    <div className="text-muted-foreground">Time Horizon</div>
+                    <div className="font-medium">{signal.time_horizon}</div>
+                  </div>
+                </div>
+
+                <div className="mt-3">
+                  <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                    <span>Confidence Level</span>
+                    <span>{signal.confidence}%</span>
+                  </div>
+                  <Progress value={signal.confidence} className="h-2" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Risk Monitoring */}
+      {riskMetrics && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Target className="h-5 w-5" />
+              Real-Time Risk Monitoring
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {Object.entries(riskMetrics).map(([key, value]) => (
+                <div key={key} className="p-4 border rounded-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="font-medium capitalize">
+                      {key.replace('_', ' ')}
+                    </h4>
+                    <span className={`font-bold ${getRiskColor(value)}`}>
+                      {key === 'max_drawdown' ? `${value}%` : `${value}/100`}
+                    </span>
+                  </div>
+                  <Progress 
+                    value={value} 
+                    className={`h-2 ${value > 70 ? 'bg-red-100' : value > 40 ? 'bg-yellow-100' : 'bg-green-100'}`}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {value <= 30 ? 'Low Risk' : value <= 70 ? 'Medium Risk' : 'High Risk'}
+                  </p>
                 </div>
               ))}
             </div>
-          )}
 
-          {/* No Signals Message */}
-          {signals.length === 0 && ensembleActive && (
-            <div className="text-center py-8 text-white/60">
-              <AlertTriangle className="w-12 h-12 mx-auto mb-4 text-white/40" />
-              <p>No signals detected</p>
-              <p className="text-sm mt-2">AI ensemble is analyzing market conditions</p>
+            {riskMetrics.portfolio_risk > 80 && (
+              <Alert className="mt-4">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>
+                  High portfolio risk detected. Consider reducing position sizes or implementing hedging strategies.
+                </AlertDescription>
+              </Alert>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Performance Analytics */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Zap className="h-5 w-5" />
+            Signal Performance Analytics
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="text-center p-4 border rounded-lg">
+              <div className="text-2xl font-bold text-green-500">78%</div>
+              <div className="text-sm text-muted-foreground">Win Rate</div>
             </div>
-          )}
+            <div className="text-center p-4 border rounded-lg">
+              <div className="text-2xl font-bold">2.4x</div>
+              <div className="text-sm text-muted-foreground">Profit Factor</div>
+            </div>
+            <div className="text-center p-4 border rounded-lg">
+              <div className="text-2xl font-bold">156</div>
+              <div className="text-sm text-muted-foreground">Signals Today</div>
+            </div>
+            <div className="text-center p-4 border rounded-lg">
+              <div className="text-2xl font-bold text-blue-500">1.2s</div>
+              <div className="text-sm text-muted-foreground">Avg Execution</div>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>

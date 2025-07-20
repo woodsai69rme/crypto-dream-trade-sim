@@ -1,158 +1,139 @@
-import { useState, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from './useAuth';
-import { useToast } from './use-toast';
+import { SecureStorage } from '@/utils/encryption';
+import { useToast } from '@/hooks/use-toast';
 
-export interface RealTradingCredentials {
+// Interface definitions
+interface RealTradingCredentials {
   id: string;
   exchange_name: string;
-  is_testnet: boolean;
   is_active: boolean;
-  permissions: any;
-  daily_limit: number;
-  position_limit: number;
-  last_used?: string;
+  is_testnet: boolean;
   created_at: string;
-  updated_at: string;
+  permissions: any;
+  daily_limit?: number;
+  position_limit?: number;
 }
 
-export interface RealTradeRequest {
+interface RealTradeRequest {
   account_id: string;
   exchange_name: string;
   symbol: string;
   side: 'buy' | 'sell';
   amount: number;
   price: number;
-  trade_type?: 'market' | 'limit' | 'stop';
+  trade_type: 'market' | 'limit';
   confirmation_token?: string;
 }
 
-export interface TradingConfirmation {
-  id: string;
+interface TradingConfirmation {
   confirmation_token: string;
-  trade_data: any;
   expires_at: string;
-  confirmed: boolean;
+  trade_data: any;
 }
 
-export interface RiskMonitoring {
+interface RiskMonitoring {
   id: string;
+  account_id: string;
   risk_type: string;
   current_value: number;
   threshold_value: number;
   risk_level: string;
-  alert_triggered: boolean;
+  created_at: string;
   alert_message?: string;
 }
 
 export const useRealTrading = () => {
-  const { user } = useAuth();
-  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [credentials, setCredentials] = useState<RealTradingCredentials[]>([]);
   const [riskAlerts, setRiskAlerts] = useState<RiskMonitoring[]>([]);
+  const { toast } = useToast();
 
-  // Fetch real trading credentials
-  const fetchCredentials = useCallback(async () => {
-    if (!user) return;
-
+  // Fetch credentials
+  const fetchCredentials = async (): Promise<void> => {
     try {
+      setLoading(true);
       const { data, error } = await supabase
         .from('real_trading_credentials')
         .select('*')
-        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
       setCredentials(data || []);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error fetching credentials:', error);
       toast({
         title: "Error",
         description: "Failed to fetch trading credentials",
         variant: "destructive",
       });
+    } finally {
+      setLoading(false);
     }
-  }, [user, toast]);
+  };
 
-  // Add real trading credentials
-  const addCredentials = useCallback(async (
+  // Add credentials with enhanced security
+  const addCredentials = async (
     exchangeName: string,
     apiKey: string,
     apiSecret: string,
     passphrase?: string,
     isTestnet: boolean = true
-  ) => {
-    if (!user) return false;
-
-    setLoading(true);
+  ): Promise<boolean> => {
     try {
-      // Generate a simple encryption key ID (in production, use proper encryption)
-      const encryptionKeyId = `key_${Date.now()}`;
+      setLoading(true);
       
-      const { error } = await supabase
-        .from('real_trading_credentials')
-        .insert({
-          user_id: user.id,
-          exchange_name: exchangeName,
-          api_key_encrypted: btoa(apiKey), // Base64 encoding (use proper encryption in production)
-          api_secret_encrypted: btoa(apiSecret),
-          passphrase_encrypted: passphrase ? btoa(passphrase) : null,
-          encryption_key_id: encryptionKeyId,
-          is_testnet: isTestnet,
-          is_active: false, // Start inactive for safety
-          permissions: ['read'], // Start with read-only
-          daily_limit: isTestnet ? 10000 : 1000,
-          position_limit: isTestnet ? 5000 : 500
-        });
+      // Validate inputs
+      if (!apiKey || !apiSecret) {
+        throw new Error('API key and secret are required');
+      }
 
-      if (error) throw error;
+      // Store encrypted credentials
+      await SecureStorage.storeSecureCredentials(
+        exchangeName,
+        apiKey,
+        apiSecret,
+        passphrase
+      );
 
       toast({
-        title: "Credentials Added",
-        description: `${exchangeName} credentials added successfully. Please activate them to start trading.`,
+        title: "Success",
+        description: "Trading credentials added successfully",
       });
 
       await fetchCredentials();
       return true;
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error adding credentials:', error);
       toast({
-        title: "Failed to Add Credentials",
-        description: error.message || "Failed to add trading credentials",
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to add credentials",
         variant: "destructive",
       });
       return false;
     } finally {
       setLoading(false);
     }
-  }, [user, toast, fetchCredentials]);
+  };
 
-  // Toggle credentials activation
-  const toggleCredentials = useCallback(async (credentialId: string, isActive: boolean) => {
-    if (!user) return false;
-
-    setLoading(true);
+  // Toggle credentials active status
+  const toggleCredentials = async (credentialId: string, isActive: boolean): Promise<boolean> => {
     try {
       const { error } = await supabase
         .from('real_trading_credentials')
-        .update({ 
-          is_active: isActive,
-          last_used: isActive ? new Date().toISOString() : null
-        })
-        .eq('id', credentialId)
-        .eq('user_id', user.id);
+        .update({ is_active: isActive })
+        .eq('id', credentialId);
 
       if (error) throw error;
 
       toast({
-        title: isActive ? "Credentials Activated" : "Credentials Deactivated",
-        description: `Trading credentials ${isActive ? 'activated' : 'deactivated'} successfully`,
+        title: "Success",
+        description: `Credentials ${isActive ? 'activated' : 'deactivated'}`,
       });
 
       await fetchCredentials();
       return true;
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error toggling credentials:', error);
       toast({
         title: "Error",
@@ -160,28 +141,23 @@ export const useRealTrading = () => {
         variant: "destructive",
       });
       return false;
-    } finally {
-      setLoading(false);
     }
-  }, [user, toast, fetchCredentials]);
+  };
 
   // Create trading confirmation
-  const createTradingConfirmation = useCallback(async (tradeData: any) => {
-    if (!user) return null;
-
+  const createTradingConfirmation = async (tradeData: any): Promise<TradingConfirmation | null> => {
     try {
-      const confirmationToken = `conf_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const confirmationToken = crypto.randomUUID();
       const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
 
       const { data, error } = await supabase
         .from('trading_confirmations')
         .insert({
-          user_id: user.id,
-          trade_data: tradeData,
           confirmation_token: confirmationToken,
+          user_id: (await supabase.auth.getUser()).data.user?.id,
+          trade_data: tradeData,
           expires_at: expiresAt.toISOString(),
-          ip_address: '127.0.0.1', // In production, get real IP
-          user_agent: navigator.userAgent
+          confirmed: false
         })
         .select()
         .single();
@@ -193,24 +169,19 @@ export const useRealTrading = () => {
         expires_at: expiresAt.toISOString(),
         trade_data: tradeData
       };
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error creating confirmation:', error);
-      toast({
-        title: "Error",
-        description: "Failed to create trade confirmation",
-        variant: "destructive",
-      });
       return null;
     }
-  }, [user, toast]);
+  };
 
   // Validate real trade
-  const validateRealTrade = useCallback(async (tradeRequest: Omit<RealTradeRequest, 'confirmation_token'>) => {
-    if (!user) return null;
-
+  const validateRealTrade = async (
+    tradeRequest: Omit<RealTradeRequest, 'confirmation_token'>
+  ): Promise<any | null> => {
     try {
       const { data, error } = await supabase.rpc('validate_real_trade', {
-        p_user_id: user.id,
+        p_user_id: (await supabase.auth.getUser()).data.user?.id,
         p_account_id: tradeRequest.account_id,
         p_symbol: tradeRequest.symbol,
         p_side: tradeRequest.side,
@@ -219,70 +190,64 @@ export const useRealTrading = () => {
       });
 
       if (error) throw error;
-      return data as any;
-    } catch (error: any) {
+      return data;
+    } catch (error) {
       console.error('Error validating trade:', error);
       toast({
         title: "Validation Error",
-        description: error.message || "Failed to validate trade",
+        description: "Failed to validate trade request",
         variant: "destructive",
       });
       return null;
     }
-  }, [user, toast]);
+  };
 
   // Execute real trade
-  const executeRealTrade = useCallback(async (tradeRequest: RealTradeRequest) => {
-    if (!user) return null;
-
-    setLoading(true);
+  const executeRealTrade = async (tradeRequest: RealTradeRequest): Promise<any | null> => {
     try {
-      const { data, error } = await supabase.rpc('execute_real_trade', {
-        p_user_id: user.id,
-        p_account_id: tradeRequest.account_id,
-        p_exchange_name: tradeRequest.exchange_name,
-        p_symbol: tradeRequest.symbol,
-        p_side: tradeRequest.side,
-        p_amount: tradeRequest.amount,
-        p_price: tradeRequest.price,
-        p_confirmation_token: tradeRequest.confirmation_token || null
+      setLoading(true);
+
+      // Validate trade first
+      const validation = await validateRealTrade(tradeRequest);
+      if (!validation?.valid) {
+        throw new Error(validation?.error || 'Trade validation failed');
+      }
+
+      // Execute trade via edge function
+      const { data, error } = await supabase.functions.invoke('real-trade-executor', {
+        body: tradeRequest
       });
 
       if (error) throw error;
 
-      const result = data as any;
-      if (result.valid) {
+      if (data.success) {
         toast({
-          title: "Trade Submitted",
-          description: `${tradeRequest.side.toUpperCase()} order for ${tradeRequest.amount} ${tradeRequest.symbol} submitted`,
+          title: "Trade Executed",
+          description: `${tradeRequest.side.toUpperCase()} order for ${tradeRequest.amount} ${tradeRequest.symbol}`,
         });
+        return data;
       } else {
-        throw new Error(result.error || 'Trade validation failed');
+        throw new Error(data.error || 'Trade execution failed');
       }
-
-      return data;
-    } catch (error: any) {
-      console.error('Error executing real trade:', error);
+    } catch (error) {
+      console.error('Error executing trade:', error);
       toast({
-        title: "Trade Failed",
-        description: error.message || "Failed to execute trade",
+        title: "Execution Error",
+        description: error instanceof Error ? error.message : "Failed to execute trade",
         variant: "destructive",
       });
       return null;
     } finally {
       setLoading(false);
     }
-  }, [user, toast]);
+  };
 
-  // Fetch risk monitoring data
-  const fetchRiskAlerts = useCallback(async (accountId?: string) => {
-    if (!user) return;
-
+  // Fetch risk alerts
+  const fetchRiskAlerts = async (accountId?: string): Promise<void> => {
     try {
       let query = supabase
         .from('risk_monitoring')
         .select('*')
-        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (accountId) {
@@ -290,36 +255,31 @@ export const useRealTrading = () => {
       }
 
       const { data, error } = await query;
-
       if (error) throw error;
-      setRiskAlerts((data || []) as RiskMonitoring[]);
-    } catch (error: any) {
+      setRiskAlerts(data || []);
+    } catch (error) {
       console.error('Error fetching risk alerts:', error);
     }
-  }, [user]);
+  };
 
-  // Emergency stop all trading
-  const emergencyStop = useCallback(async (accountId: string) => {
-    if (!user) return false;
-
-    setLoading(true);
+  // Emergency stop
+  const emergencyStop = async (accountId: string): Promise<boolean> => {
     try {
       const { error } = await supabase
         .from('paper_trading_accounts')
         .update({ emergency_stop: true })
-        .eq('id', accountId)
-        .eq('user_id', user.id);
+        .eq('id', accountId);
 
       if (error) throw error;
 
       toast({
         title: "Emergency Stop Activated",
-        description: "All trading has been stopped for this account",
+        description: "All trading has been halted for this account",
         variant: "destructive",
       });
 
       return true;
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error activating emergency stop:', error);
       toast({
         title: "Error",
@@ -327,32 +287,26 @@ export const useRealTrading = () => {
         variant: "destructive",
       });
       return false;
-    } finally {
-      setLoading(false);
     }
-  }, [user, toast]);
+  };
 
   // Remove emergency stop
-  const removeEmergencyStop = useCallback(async (accountId: string) => {
-    if (!user) return false;
-
-    setLoading(true);
+  const removeEmergencyStop = async (accountId: string): Promise<boolean> => {
     try {
       const { error } = await supabase
         .from('paper_trading_accounts')
         .update({ emergency_stop: false })
-        .eq('id', accountId)
-        .eq('user_id', user.id);
+        .eq('id', accountId);
 
       if (error) throw error;
 
       toast({
         title: "Emergency Stop Removed",
-        description: "Trading can now resume for this account",
+        description: "Trading has been resumed for this account",
       });
 
       return true;
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error removing emergency stop:', error);
       toast({
         title: "Error",
@@ -360,16 +314,18 @@ export const useRealTrading = () => {
         variant: "destructive",
       });
       return false;
-    } finally {
-      setLoading(false);
     }
-  }, [user, toast]);
+  };
+
+  useEffect(() => {
+    fetchCredentials();
+    fetchRiskAlerts();
+  }, []);
 
   return {
+    loading,
     credentials,
     riskAlerts,
-    loading,
-    fetchCredentials,
     addCredentials,
     toggleCredentials,
     createTradingConfirmation,
@@ -377,6 +333,7 @@ export const useRealTrading = () => {
     executeRealTrade,
     fetchRiskAlerts,
     emergencyStop,
-    removeEmergencyStop
+    removeEmergencyStop,
+    fetchCredentials
   };
 };

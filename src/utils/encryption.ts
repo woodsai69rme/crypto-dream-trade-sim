@@ -99,6 +99,7 @@ export class SecureStorage {
     const { data, error } = await supabase
       .from('real_trading_credentials')
       .insert({
+        user_id: (await supabase.auth.getUser()).data.user?.id || '',
         exchange_name: exchangeName,
         api_key_encrypted: encryptedApiKey,
         api_secret_encrypted: encryptedApiSecret,
