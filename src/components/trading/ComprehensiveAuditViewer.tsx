@@ -154,7 +154,7 @@ export const ComprehensiveAuditViewer = () => {
                     <SelectValue placeholder="Action Type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Actions</SelectItem>
+                    <SelectItem value="all">All Actions</SelectItem>
                     <SelectItem value="trade_executed">Trade Executed</SelectItem>
                     <SelectItem value="bot_activated">Bot Activated</SelectItem>
                     <SelectItem value="bot_paused">Bot Paused</SelectItem>
@@ -168,7 +168,7 @@ export const ComprehensiveAuditViewer = () => {
                     <SelectValue placeholder="Entity Type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Entities</SelectItem>
+                    <SelectItem value="all">All Entities</SelectItem>
                     <SelectItem value="trade">Trade</SelectItem>
                     <SelectItem value="bot">Bot</SelectItem>
                     <SelectItem value="account">Account</SelectItem>

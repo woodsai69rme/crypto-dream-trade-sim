@@ -45,8 +45,8 @@ export const useComprehensiveAudit = () => {
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
     accountId: '',
-    actionType: '',
-    entityType: '',
+    actionType: 'all',
+    entityType: 'all',
     dateFrom: '',
     dateTo: ''
   });
@@ -67,10 +67,10 @@ export const useComprehensiveAudit = () => {
       if (filters.accountId) {
         query = query.eq('account_id', filters.accountId);
       }
-      if (filters.actionType) {
+      if (filters.actionType && filters.actionType !== 'all') {
         query = query.eq('action_type', filters.actionType);
       }
-      if (filters.entityType) {
+      if (filters.entityType && filters.entityType !== 'all') {
         query = query.eq('entity_type', filters.entityType);
       }
       if (filters.dateFrom) {
