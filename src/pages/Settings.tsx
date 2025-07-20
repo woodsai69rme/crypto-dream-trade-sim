@@ -1,9 +1,10 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Settings as SettingsIcon, Plug, Bot, Activity } from "lucide-react";
+import { Settings as SettingsIcon, Plug, Bot, Activity, Globe } from "lucide-react";
 import { SettingsPanel } from "@/components/settings/SettingsPanel";
 import { DeribitIntegration } from "@/components/integrations/DeribitIntegration";
 import { OpenRouterManagement } from "@/components/integrations/OpenRouterManagement";
 import { LiveTradingIntegration } from "@/components/accounts/LiveTradingIntegration";
+import { ComprehensiveIntegrationsManager } from "@/components/integrations/ComprehensiveIntegrationsManager";
 
 const Settings = () => {
   return (
@@ -13,11 +14,15 @@ const Settings = () => {
         <h1 className="text-3xl font-bold text-primary-foreground">Settings & Integrations</h1>
       </div>
 
-      <Tabs defaultValue="integrations" className="w-full">
-        <TabsList className="grid w-full grid-cols-4 bg-card/50 backdrop-blur-sm">
-          <TabsTrigger value="integrations" className="flex items-center gap-2">
+      <Tabs defaultValue="all-integrations" className="w-full">
+        <TabsList className="grid w-full grid-cols-5 bg-card/50 backdrop-blur-sm">
+          <TabsTrigger value="all-integrations" className="flex items-center gap-2">
+            <Globe className="w-4 h-4" />
+            All Integrations
+          </TabsTrigger>
+          <TabsTrigger value="legacy" className="flex items-center gap-2">
             <Plug className="w-4 h-4" />
-            Integrations
+            Legacy
           </TabsTrigger>
           <TabsTrigger value="ai" className="flex items-center gap-2">
             <Bot className="w-4 h-4" />
@@ -33,7 +38,11 @@ const Settings = () => {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="integrations" className="space-y-6">
+        <TabsContent value="all-integrations" className="space-y-6">
+          <ComprehensiveIntegrationsManager />
+        </TabsContent>
+
+        <TabsContent value="legacy" className="space-y-6">
           <DeribitIntegration />
         </TabsContent>
 
