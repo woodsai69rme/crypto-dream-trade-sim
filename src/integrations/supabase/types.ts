@@ -672,6 +672,8 @@ export type Database = {
           id: string
           last_trade_at: string | null
           live_balance: number | null
+          live_trading_enabled: boolean | null
+          max_live_balance: number | null
           max_position_size: number
           mode: string
           name: string
@@ -679,6 +681,7 @@ export type Database = {
           paper_balance: number
           performance: Json
           risk_level: string
+          risk_parameters: Json | null
           status: string
           stop_loss_percentage: number
           strategy: string
@@ -694,6 +697,8 @@ export type Database = {
           id?: string
           last_trade_at?: string | null
           live_balance?: number | null
+          live_trading_enabled?: boolean | null
+          max_live_balance?: number | null
           max_position_size?: number
           mode?: string
           name: string
@@ -701,6 +706,7 @@ export type Database = {
           paper_balance?: number
           performance?: Json
           risk_level?: string
+          risk_parameters?: Json | null
           status?: string
           stop_loss_percentage?: number
           strategy: string
@@ -716,6 +722,8 @@ export type Database = {
           id?: string
           last_trade_at?: string | null
           live_balance?: number | null
+          live_trading_enabled?: boolean | null
+          max_live_balance?: number | null
           max_position_size?: number
           mode?: string
           name?: string
@@ -723,6 +731,7 @@ export type Database = {
           paper_balance?: number
           performance?: Json
           risk_level?: string
+          risk_parameters?: Json | null
           status?: string
           stop_loss_percentage?: number
           strategy?: string
@@ -2732,6 +2741,7 @@ export type Database = {
           account_name: string
           account_type: Database["public"]["Enums"]["account_type"] | null
           auto_rebalance: boolean | null
+          auto_stop_loss_percentage: number | null
           balance: number
           benchmark_symbol: string | null
           color_theme: string | null
@@ -2776,6 +2786,7 @@ export type Database = {
           account_name?: string
           account_type?: Database["public"]["Enums"]["account_type"] | null
           auto_rebalance?: boolean | null
+          auto_stop_loss_percentage?: number | null
           balance?: number
           benchmark_symbol?: string | null
           color_theme?: string | null
@@ -2820,6 +2831,7 @@ export type Database = {
           account_name?: string
           account_type?: Database["public"]["Enums"]["account_type"] | null
           auto_rebalance?: boolean | null
+          auto_stop_loss_percentage?: number | null
           balance?: number
           benchmark_symbol?: string | null
           color_theme?: string | null
