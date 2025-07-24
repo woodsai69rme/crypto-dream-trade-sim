@@ -4516,6 +4516,42 @@ export type Database = {
         }
         Relationships: []
       }
+      users: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          followers: number | null
+          id: string
+          total_profit: number | null
+          trades_count: number | null
+          updated_at: string | null
+          username: string
+          win_rate: number | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          followers?: number | null
+          id?: string
+          total_profit?: number | null
+          trades_count?: number | null
+          updated_at?: string | null
+          username: string
+          win_rate?: number | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          followers?: number | null
+          id?: string
+          total_profit?: number | null
+          trades_count?: number | null
+          updated_at?: string | null
+          username?: string
+          win_rate?: number | null
+        }
+        Relationships: []
+      }
       wallet_connections: {
         Row: {
           balance: number | null
