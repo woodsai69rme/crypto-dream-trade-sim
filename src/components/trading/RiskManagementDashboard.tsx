@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,9 +19,19 @@ interface RiskMetrics {
   correlation: number;
 }
 
+interface RiskAlert {
+  id: string;
+  risk_type: string;
+  risk_level: string;
+  current_value: number;
+  threshold_value: number;
+  created_at: string;
+  is_active: boolean;
+}
+
 export const RiskManagementDashboard = () => {
   const { user } = useAuth();
-  const [riskAlerts, setRiskAlerts] = useState<any[]>([]);
+  const [riskAlerts, setRiskAlerts] = useState<RiskAlert[]>([]);
   const [metrics, setMetrics] = useState<RiskMetrics>({
     totalExposure: 0,
     dailyLoss: 0,
@@ -34,7 +45,7 @@ export const RiskManagementDashboard = () => {
   useEffect(() => {
     if (user) {
       fetchRiskData();
-      const interval = setInterval(fetchRiskData, 30000); // Update every 30 seconds
+      const interval = setInterval(fetchRiskData, 30000);
       return () => clearInterval(interval);
     }
   }, [user]);
@@ -46,7 +57,7 @@ export const RiskManagementDashboard = () => {
         .from('risk_monitoring')
         .select('*')
         .eq('is_active', true)
-        .order('created_at', { ascending: false});
+        .order('created_at', { ascending: false });
 
       if (alertsError) {
         console.error('Risk alerts error:', alertsError);
@@ -55,7 +66,7 @@ export const RiskManagementDashboard = () => {
         setRiskAlerts(alerts || []);
       }
 
-      // Calculate risk metrics
+      // Fetch real trades for metrics calculation
       const { data: realTrades, error: tradesError } = await supabase
         .from('real_trades')
         .select('*')
@@ -63,36 +74,21 @@ export const RiskManagementDashboard = () => {
 
       if (tradesError) {
         console.error('Real trades error:', tradesError);
-        setMetrics({
-          totalExposure: 0,
-          dailyLoss: 0,
-          positionCount: 0,
-          maxDrawdown: 0,
-          volatility: 0,
-          correlation: 0,
-        });
       } else {
-        const { data: accounts, error: accountsError } = await supabase
-          .from('paper_trading_accounts')
-          .select('*')
-          .eq('trading_mode', 'live');
-
-        if (accountsError) {
-          console.error('Accounts error:', accountsError);
-        }
-
-        // Calculate metrics
-        const totalExposure = (realTrades || []).reduce((sum: number, trade: any) => sum + (trade.total_value || 0), 0);
-        const dailyLoss = (realTrades || []).filter((t: any) => t.total_value < 0).reduce((sum: number, trade: any) => sum + Math.abs(trade.total_value), 0);
-        const positionCount = (realTrades || []).filter((t: any) => t.status === 'filled').length;
+        const trades = realTrades || [];
+        const totalExposure = trades.reduce((sum, trade) => sum + (trade.total_value || 0), 0);
+        const dailyLoss = trades
+          .filter(t => t.total_value < 0)
+          .reduce((sum, trade) => sum + Math.abs(trade.total_value), 0);
+        const positionCount = trades.filter(t => t.status === 'filled').length;
 
         setMetrics({
           totalExposure,
           dailyLoss,
           positionCount,
-          maxDrawdown: Math.max(...(accounts || []).map((acc: any) => acc.total_pnl_percentage || 0)),
-          volatility: 0, // Would need historical data for proper calculation
-          correlation: 0, // Would need market data for proper calculation
+          maxDrawdown: 0,
+          volatility: 0,
+          correlation: 0,
         });
       }
     } catch (error) {
@@ -116,7 +112,7 @@ export const RiskManagementDashboard = () => {
     return Math.min((current / threshold) * 100, 100);
   };
 
-  const criticalAlerts = riskAlerts.filter((alert: any) => alert.risk_level === 'critical');
+  const criticalAlerts = riskAlerts.filter(alert => alert.risk_level === 'critical');
 
   return (
     <div className="space-y-6">
@@ -202,7 +198,7 @@ export const RiskManagementDashboard = () => {
             </div>
           ) : (
             <div className="space-y-4">
-              {riskAlerts.map((alert: any) => (
+              {riskAlerts.map((alert) => (
                 <div key={alert.id} className="border rounded-lg p-4">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
@@ -253,7 +249,6 @@ export const RiskManagementDashboard = () => {
               variant="destructive" 
               className="w-full"
               onClick={() => {
-                // TODO: Implement emergency stop
                 console.log('Emergency stop triggered');
               }}
             >
@@ -265,7 +260,6 @@ export const RiskManagementDashboard = () => {
               variant="outline" 
               className="w-full"
               onClick={() => {
-                // TODO: Implement position closure
                 console.log('Close all positions');
               }}
             >
