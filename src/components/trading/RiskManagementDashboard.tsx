@@ -21,12 +21,18 @@ interface RiskMetrics {
 
 interface RiskAlert {
   id: string;
+  user_id: string;
+  account_id: string;
   risk_type: string;
   risk_level: string;
   current_value: number;
   threshold_value: number;
   created_at: string;
-  is_active: boolean;
+  updated_at: string;
+  alert_message?: string;
+  alert_triggered: boolean;
+  resolved_at?: string;
+  resolution_action?: string;
 }
 
 export const RiskManagementDashboard = () => {
@@ -56,7 +62,7 @@ export const RiskManagementDashboard = () => {
       const { data: alerts, error: alertsError } = await supabase
         .from('risk_monitoring')
         .select('*')
-        .eq('is_active', true)
+        .eq('alert_triggered', true)
         .order('created_at', { ascending: false });
 
       if (alertsError) {
