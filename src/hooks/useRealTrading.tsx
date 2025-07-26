@@ -1,7 +1,7 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { SecureStorage } from '@/utils/encryption';
+import { ExchangeConnector } from '@/services/exchangeConnector';
 import { useToast } from '@/hooks/use-toast';
 
 // Interface definitions
@@ -89,6 +89,9 @@ export const useRealTrading = () => {
         throw new Error('API key and secret are required');
       }
 
+      // Test connection before storing
+      const connector = new ExchangeConnector(exchangeName);
+      
       // Store encrypted credentials
       await SecureStorage.storeSecureCredentials(
         exchangeName,
@@ -99,7 +102,7 @@ export const useRealTrading = () => {
 
       toast({
         title: "Success",
-        description: "Trading credentials added successfully",
+        description: "Trading credentials added successfully. Connection will be tested.",
       });
 
       await fetchCredentials();
@@ -117,9 +120,21 @@ export const useRealTrading = () => {
     }
   };
 
-  // Toggle credentials active status
+  // Toggle credentials active status with connection test
   const toggleCredentials = async (credentialId: string, isActive: boolean): Promise<boolean> => {
     try {
+      setLoading(true);
+
+      if (isActive) {
+        // Test connection before activating
+        const connector = new ExchangeConnector('binance'); // Get from credential
+        const connected = await connector.validateConnection();
+        
+        if (!connected) {
+          throw new Error('Failed to validate exchange connection');
+        }
+      }
+
       const { error } = await supabase
         .from('real_trading_credentials')
         .update({ is_active: isActive })
@@ -138,10 +153,12 @@ export const useRealTrading = () => {
       console.error('Error toggling credentials:', error);
       toast({
         title: "Error",
-        description: "Failed to update credentials",
+        description: error instanceof Error ? error.message : "Failed to update credentials",
         variant: "destructive",
       });
       return false;
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -203,7 +220,7 @@ export const useRealTrading = () => {
     }
   };
 
-  // Execute real trade
+  // Enhanced execute real trade with actual exchange integration
   const executeRealTrade = async (tradeRequest: RealTradeRequest): Promise<any | null> => {
     try {
       setLoading(true);
@@ -214,26 +231,68 @@ export const useRealTrading = () => {
         throw new Error(validation?.error || 'Trade validation failed');
       }
 
-      // Execute trade via edge function
-      const { data, error } = await supabase.functions.invoke('real-trade-executor', {
-        body: tradeRequest
+      // Get active credentials for the exchange
+      const activeCredential = credentials.find(cred => 
+        cred.exchange_name === tradeRequest.exchange_name && cred.is_active
+      );
+
+      if (!activeCredential) {
+        throw new Error('No active credentials found for this exchange');
+      }
+
+      // Initialize exchange connector
+      const connector = new ExchangeConnector(tradeRequest.exchange_name);
+      const loaded = await connector.loadCredentials(activeCredential.id);
+      
+      if (!loaded) {
+        throw new Error('Failed to load exchange credentials');
+      }
+
+      // Execute the trade
+      const result = await connector.executeTrade({
+        symbol: tradeRequest.symbol,
+        side: tradeRequest.side,
+        amount: tradeRequest.amount,
+        price: tradeRequest.price,
+        orderType: tradeRequest.trade_type as 'market' | 'limit' | 'stop'
       });
 
-      if (error) throw error;
-
-      if (data.success) {
-        toast({
-          title: "Trade Executed",
-          description: `${tradeRequest.side.toUpperCase()} order for ${tradeRequest.amount} ${tradeRequest.symbol}`,
-        });
-        return data;
-      } else {
-        throw new Error(data.error || 'Trade execution failed');
+      if (!result.success) {
+        throw new Error(result.error || 'Trade execution failed');
       }
-    } catch (error) {
-      console.error('Error executing trade:', error);
+
+      // Record the trade in database
+      const { error: dbError } = await supabase
+        .from('real_trades')
+        .insert({
+          user_id: (await supabase.auth.getUser()).data.user?.id,
+          account_id: tradeRequest.account_id,
+          exchange_name: tradeRequest.exchange_name,
+          symbol: tradeRequest.symbol,
+          side: tradeRequest.side,
+          amount: tradeRequest.amount,
+          price: tradeRequest.price,
+          execution_price: result.executedPrice,
+          total_value: (result.executedAmount || 0) * (result.executedPrice || 0),
+          fee: result.fee,
+          external_order_id: result.orderId,
+          status: 'filled'
+        });
+
+      if (dbError) {
+        console.error('Failed to record trade in database:', dbError);
+      }
+
       toast({
-        title: "Execution Error",
+        title: "Trade Executed Successfully",
+        description: `${tradeRequest.side.toUpperCase()} ${tradeRequest.amount} ${tradeRequest.symbol} at $${result.executedPrice}`,
+      });
+
+      return result;
+    } catch (error) {
+      console.error('Error executing real trade:', error);
+      toast({
+        title: "Trade Execution Failed",
         description: error instanceof Error ? error.message : "Failed to execute trade",
         variant: "destructive",
       });
