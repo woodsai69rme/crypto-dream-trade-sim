@@ -33,7 +33,7 @@ const Analytics = () => {
         </TabsList>
 
         <TabsContent value="analytics" className="space-y-6">
-          <AnalyticsDashboard onDataChange={setAnalyticsData} />
+          <AnalyticsDashboard />
         </TabsContent>
 
         <TabsContent value="risk" className="space-y-6">
