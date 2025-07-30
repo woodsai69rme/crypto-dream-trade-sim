@@ -1,5 +1,7 @@
 import React from 'react';
 import { ComprehensiveTestingSuite } from '@/components/settings/ComprehensiveTestingSuite';
+import { RealTradingValidator } from '@/components/testing/RealTradingValidator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const Testing = () => {
   return (
@@ -10,7 +12,20 @@ const Testing = () => {
           Comprehensive testing and validation suite
         </p>
       </div>
-      <ComprehensiveTestingSuite />
+      <Tabs defaultValue="comprehensive" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="comprehensive">System Audit</TabsTrigger>
+          <TabsTrigger value="real-trading">Real Trading Validation</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="comprehensive">
+          <ComprehensiveTestingSuite />
+        </TabsContent>
+        
+        <TabsContent value="real-trading">
+          <RealTradingValidator />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
