@@ -201,15 +201,16 @@ export class PortfolioCorrelationMonitor {
 
   async analyzePortfolioCorrelation(accountId: string): Promise<PortfolioCorrelation> {
     try {
-      // Get portfolio holdings
-      const { data: holdings, error } = await supabase
-        .from('portfolio_holdings')
-        .select('asset_symbol, current_value, quantity')
-        .eq('portfolio_id', accountId);
+      // Get portfolio holdings from paper_trades (since portfolio_holdings doesn't exist)
+      const { data: trades, error } = await supabase
+        .from('paper_trades')
+        .select('symbol, amount, price')
+        .eq('account_id', accountId)
+        .eq('status', 'completed');
       
       if (error) throw error;
       
-      if (!holdings || holdings.length === 0) {
+      if (!trades || trades.length === 0) {
         return {
           averageCorrelation: 0,
           maxCorrelation: 0,
@@ -219,8 +220,37 @@ export class PortfolioCorrelationMonitor {
         };
       }
       
-      const symbols = holdings.map(h => h.asset_symbol);
-      const weights = this.calculateWeights(holdings);
+      // Calculate portfolio composition from trades
+      const holdings: { [symbol: string]: { amount: number; value: number } } = {};
+      
+      trades.forEach(trade => {
+        if (!holdings[trade.symbol]) {
+          holdings[trade.symbol] = { amount: 0, value: 0 };
+        }
+        if (trade.side === 'buy') {
+          holdings[trade.symbol].amount += trade.amount;
+          holdings[trade.symbol].value += trade.amount * trade.price;
+        } else {
+          holdings[trade.symbol].amount -= trade.amount;
+          holdings[trade.symbol].value -= trade.amount * trade.price;
+        }
+      });
+      
+      // Filter out zero/negative positions
+      const activeHoldings = Object.entries(holdings).filter(([_, data]) => data.amount > 0);
+      
+      if (activeHoldings.length === 0) {
+        return {
+          averageCorrelation: 0,
+          maxCorrelation: 0,
+          riskScore: 0,
+          correlationMatrix: {},
+          recommendations: ['No active positions in portfolio']
+        };
+      }
+      
+      const symbols = activeHoldings.map(([symbol]) => symbol);
+      const weights = this.calculateWeightsFromHoldings(activeHoldings);
       
       // Build correlation matrix
       const correlationMatrix: CorrelationMatrix = {};
@@ -289,12 +319,12 @@ export class PortfolioCorrelationMonitor {
     }
   }
 
-  private calculateWeights(holdings: any[]): { [symbol: string]: number } {
-    const totalValue = holdings.reduce((sum, h) => sum + h.current_value, 0);
+  private calculateWeightsFromHoldings(holdings: [string, { amount: number; value: number }][]): { [symbol: string]: number } {
+    const totalValue = holdings.reduce((sum, [_, data]) => sum + data.value, 0);
     const weights: { [symbol: string]: number } = {};
     
-    holdings.forEach(holding => {
-      weights[holding.asset_symbol] = totalValue > 0 ? holding.current_value / totalValue : 0;
+    holdings.forEach(([symbol, data]) => {
+      weights[symbol] = totalValue > 0 ? data.value / totalValue : 0;
     });
     
     return weights;

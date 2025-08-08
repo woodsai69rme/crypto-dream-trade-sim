@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 
 export interface CircuitBreakerConfig {
@@ -32,7 +33,7 @@ export class TradingCircuitBreaker {
     marketWideBreaker: true
   };
 
-  constructor(private config: CircuitBreakerConfig = {}) {
+  constructor(private config: Partial<CircuitBreakerConfig> = {}) {
     this.config = { ...this.DEFAULT_CONFIG, ...config };
   }
 
