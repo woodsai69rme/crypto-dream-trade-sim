@@ -64,24 +64,21 @@ export class SecurityAuditor {
 
   private async auditRLSPolicies(findings: SecurityFinding[]) {
     try {
-      // Check if RLS is enabled on critical tables
-      const { data: tables } = await supabase
-        .rpc('check_rls_status', {});
+      // Since we can't use the RPC function, we'll do a simpler check
+      const { data: testAccess } = await supabase
+        .from('paper_trading_accounts')
+        .select('id')
+        .limit(1);
 
-      // This would need a custom RPC function, for now we'll simulate
-      const criticalTables = [
-        'paper_trading_accounts',
-        'ai_trading_bots',
-        'exchange_connections',
-        'real_trading_credentials'
-      ];
-
-      findings.push({
-        severity: 'medium',
-        component: 'database_security',
-        issue: 'RLS policies should be audited regularly',
-        recommendation: 'Implement automated RLS policy validation'
-      });
+      // If we can access data without auth context, RLS might be disabled
+      if (testAccess) {
+        findings.push({
+          severity: 'medium',
+          component: 'database_security',
+          issue: 'RLS policies should be audited regularly',
+          recommendation: 'Implement automated RLS policy validation'
+        });
+      }
 
     } catch (error) {
       findings.push({
