@@ -43,60 +43,35 @@ export const useSystemAudit = () => {
 
     setLoading(true);
     try {
-      // Create new audit run using raw SQL to bypass type issues
-      const { data: newRun, error: runError } = await supabase.rpc('execute_sql', {
-        sql: `
-          INSERT INTO audit_runs (user_id, audit_type, status)
-          VALUES ($1, $2, 'running')
-          RETURNING *
-        `,
-        params: [user.id, auditType]
-      }).single();
-
-      if (runError) {
-        // Fallback: create a local audit run object
-        const fallbackRun = {
-          id: `audit_${Date.now()}`,
-          user_id: user.id,
-          audit_type: auditType,
-          status: 'running',
-          start_time: new Date().toISOString()
-        };
-        setAuditRun(fallbackRun);
-      } else {
-        setAuditRun(newRun);
-      }
+      // Create a local audit run object since we can't save to database yet
+      const auditRunId = `audit_${Date.now()}`;
+      const localAuditRun = {
+        id: auditRunId,
+        user_id: user.id,
+        audit_type: auditType,
+        status: 'running',
+        start_time: new Date().toISOString()
+      };
+      setAuditRun(localAuditRun);
 
       // Run comprehensive audit
-      const auditResults = await runComprehensiveAudit(newRun?.id || `audit_${Date.now()}`);
+      const auditResults = await runComprehensiveAudit(auditRunId);
       setResults(auditResults);
 
       // Generate summary
       const auditSummary = generateAuditSummary(auditResults);
       setSummary(auditSummary);
 
-      // Try to update audit run with results
-      try {
-        await supabase.rpc('execute_sql', {
-          sql: `
-            UPDATE audit_runs 
-            SET status = 'completed', 
-                end_time = NOW(), 
-                results = $2, 
-                summary = $3, 
-                go_no_go_decision = $4
-            WHERE id = $1
-          `,
-          params: [
-            newRun?.id || `audit_${Date.now()}`,
-            JSON.stringify({ components: auditResults }),
-            JSON.stringify(auditSummary),
-            auditSummary.goNoGoDecision
-          ]
-        });
-      } catch (updateError) {
-        console.warn('Could not update audit run:', updateError);
-      }
+      // Update local audit run with results
+      const completedRun = {
+        ...localAuditRun,
+        status: 'completed',
+        end_time: new Date().toISOString(),
+        results: { components: auditResults },
+        summary: auditSummary,
+        go_no_go_decision: auditSummary.goNoGoDecision
+      };
+      setAuditRun(completedRun);
 
       toast({
         title: "System Audit Complete",
@@ -104,7 +79,7 @@ export const useSystemAudit = () => {
         variant: auditSummary.goNoGoDecision === 'GO' ? 'default' : 'destructive'
       });
 
-      return { run: newRun, results: auditResults, summary: auditSummary };
+      return { run: completedRun, results: auditResults, summary: auditSummary };
     } catch (error: any) {
       console.error('Audit failed:', error);
       toast({
@@ -124,7 +99,7 @@ export const useSystemAudit = () => {
     // 1. Database Connectivity Test
     await testComponent(results, auditRunId, 'database', 'supabase_connection', async () => {
       const start = Date.now();
-      const { data, error } = await supabase.from('profiles').select('id').limit(1);
+      const { data, error } = await supabase.from('paper_trading_accounts').select('id').limit(1);
       const responseTime = Date.now() - start;
       
       if (error) throw error;
@@ -215,33 +190,17 @@ export const useSystemAudit = () => {
       };
     });
 
-    // 6. Market Data Cache Freshness Test
+    // 6. Market Data Freshness Test
     await testComponent(results, auditRunId, 'market_data', 'data_freshness', async () => {
       const start = Date.now();
       const { data: latestData, error } = await supabase
-        .from('market_data_cache')
+        .from('market_data')
         .select('symbol, last_updated')
         .order('last_updated', { ascending: false })
         .limit(10);
       const responseTime = Date.now() - start;
       
-      if (error) {
-        // Fallback to regular market_data table
-        const { data: fallbackData } = await supabase
-          .from('market_data')
-          .select('symbol, last_updated')
-          .order('last_updated', { ascending: false })
-          .limit(10);
-        
-        return { 
-          response_time_ms: responseTime, 
-          metadata: { 
-            symbols_checked: fallbackData?.length || 0,
-            fallback_used: true,
-            note: 'Using fallback market_data table'
-          } 
-        };
-      }
+      if (error) throw error;
       
       const now = Date.now();
       const staleData = latestData?.filter(item => {
@@ -354,25 +313,7 @@ export const useSystemAudit = () => {
       }
 
       results.push(result);
-      
-      // Try to save to database (with error handling)
-      try {
-        await supabase.rpc('execute_sql', {
-          sql: `
-            INSERT INTO system_diagnostics (
-              audit_run_id, user_id, component_type, component_name, 
-              status, response_time_ms, error_details, metadata
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-          `,
-          params: [
-            auditRunId, user!.id, componentType, componentName,
-            result.status, result.response_time_ms, 
-            JSON.stringify(result.error_details), JSON.stringify(result.metadata)
-          ]
-        });
-      } catch (dbError) {
-        console.warn('Could not save diagnostic to database:', dbError);
-      }
+      console.log('Audit result:', result);
 
     } catch (error: any) {
       const result: AuditResult = {
@@ -386,24 +327,7 @@ export const useSystemAudit = () => {
       };
 
       results.push(result);
-      
-      // Try to save error to database
-      try {
-        await supabase.rpc('execute_sql', {
-          sql: `
-            INSERT INTO system_diagnostics (
-              audit_run_id, user_id, component_type, component_name, 
-              status, error_details, metadata
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7)
-          `,
-          params: [
-            auditRunId, user!.id, componentType, componentName,
-            'critical', JSON.stringify(result.error_details), JSON.stringify(result.metadata)
-          ]
-        });
-      } catch (dbError) {
-        console.warn('Could not save error to database:', dbError);
-      }
+      console.log('Audit error result:', result);
     }
   };
 
