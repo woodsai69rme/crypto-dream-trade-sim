@@ -201,14 +201,23 @@ export class PortfolioCorrelationMonitor {
 
   async analyzePortfolioCorrelation(accountId: string): Promise<PortfolioCorrelation> {
     try {
-      // Get portfolio holdings from paper_trades (since portfolio_holdings doesn't exist)
+      // Get portfolio holdings from paper_trades
       const { data: trades, error } = await supabase
         .from('paper_trades')
-        .select('symbol, amount, price')
+        .select('symbol, amount, price, side')
         .eq('account_id', accountId)
         .eq('status', 'completed');
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching trades:', error);
+        return {
+          averageCorrelation: 0,
+          maxCorrelation: 0,
+          riskScore: 0,
+          correlationMatrix: {},
+          recommendations: ['Error fetching portfolio data']
+        };
+      }
       
       if (!trades || trades.length === 0) {
         return {
@@ -227,13 +236,11 @@ export class PortfolioCorrelationMonitor {
         if (!holdings[trade.symbol]) {
           holdings[trade.symbol] = { amount: 0, value: 0 };
         }
-        if (trade.side === 'buy') {
-          holdings[trade.symbol].amount += trade.amount;
-          holdings[trade.symbol].value += trade.amount * trade.price;
-        } else {
-          holdings[trade.symbol].amount -= trade.amount;
-          holdings[trade.symbol].value -= trade.amount * trade.price;
-        }
+        
+        // Handle buy/sell sides if available, otherwise assume all are positions
+        const multiplier = trade.side === 'sell' ? -1 : 1;
+        holdings[trade.symbol].amount += trade.amount * multiplier;
+        holdings[trade.symbol].value += trade.amount * trade.price * multiplier;
       });
       
       // Filter out zero/negative positions
