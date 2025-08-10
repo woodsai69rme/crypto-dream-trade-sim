@@ -1,7 +1,7 @@
 
 import React from 'react';
-import { ComprehensiveAuditSystem } from '@/components/testing/ComprehensiveAuditSystem';
+import { ComprehensiveTestSuite } from '@/components/audit/ComprehensiveTestSuite';
 
 export const ComprehensiveTestingSuite = () => {
-  return <ComprehensiveAuditSystem />;
+  return <ComprehensiveTestSuite />;
 };
