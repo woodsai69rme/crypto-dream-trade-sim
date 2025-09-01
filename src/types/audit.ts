@@ -24,6 +24,7 @@ export interface SystemAuditSummary {
   recommendedFixes: string[];
   testDuration: number;
   completedAt: string;
+  results?: AuditResult[];
 }
 
 export interface TradingAccuracy {
