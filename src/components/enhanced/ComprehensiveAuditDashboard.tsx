@@ -1,340 +1,378 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Progress } from "@/components/ui/progress";
-import { useComprehensiveAudit } from '@/hooks/useComprehensiveAudit';
-import { useMultipleAccounts } from '@/hooks/useMultipleAccounts';
-import { 
-  Download, FileText, BarChart3, TrendingUp, TrendingDown, 
-  DollarSign, Activity, Search, Filter, Calendar, Eye
-} from 'lucide-react';
-import { format } from 'date-fns';
+
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useComprehensiveAudit, type AccountSummary, type AuditEntry, type AuditFilters } from '@/hooks/useComprehensiveAudit';
+import { Activity, AlertTriangle, CheckCircle, TrendingUp, DollarSign, Shield, Zap } from 'lucide-react';
 
 export const ComprehensiveAuditDashboard = () => {
   const { 
+    loading, 
+    report, 
     auditEntries, 
     accountSummaries, 
-    loading, 
-    filters, 
-    setFilters,
-    exportAuditData,
-    getTotalPortfolioValue,
-    getConsolidatedHoldings
+    filters,
+    runComprehensiveAudit, 
+    exportReport, 
+    saveToDocumentation 
   } = useComprehensiveAudit();
-  
-  const { accounts } = useMultipleAccounts();
-  const [selectedTimeframe, setSelectedTimeframe] = useState('7d');
 
-  const totalValue = getTotalPortfolioValue();
-  const consolidatedHoldings = getConsolidatedHoldings();
+  const [activeTab, setActiveTab] = useState('overview');
+
+  const handleRunAudit = async () => {
+    try {
+      await runComprehensiveAudit();
+    } catch (error) {
+      console.error('Audit failed:', error);
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'healthy': return 'text-green-600';
+      case 'warning': return 'text-yellow-600';
+      case 'critical': return 'text-red-600';
+      default: return 'text-gray-600';
+    }
+  };
+
+  const getSeverityBadge = (severity: string) => {
+    const colors = {
+      low: 'bg-green-100 text-green-800',
+      medium: 'bg-yellow-100 text-yellow-800',
+      high: 'bg-red-100 text-red-800',
+      critical: 'bg-red-500 text-white'
+    };
+    return colors[severity as keyof typeof colors] || 'bg-gray-100 text-gray-800';
+  };
+
+  if (loading) {
+    return (
+      <div className="space-y-6 p-6">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
+          <h2 className="text-2xl font-semibold mt-4">Running Comprehensive System Audit</h2>
+          <p className="text-gray-600 mt-2">This may take several minutes...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Activity className="w-6 h-6" />
-          <h1 className="text-3xl font-bold text-primary-foreground">Comprehensive Audit</h1>
-        </div>
-        <div className="flex items-center gap-3">
-          <Select value={selectedTimeframe} onValueChange={setSelectedTimeframe}>
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="1d">1 Day</SelectItem>
-              <SelectItem value="7d">7 Days</SelectItem>
-              <SelectItem value="30d">30 Days</SelectItem>
-              <SelectItem value="90d">90 Days</SelectItem>
-              <SelectItem value="1y">1 Year</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button variant="outline" onClick={() => exportAuditData('csv')}>
-            <Download className="w-4 h-4 mr-2" />
-            Export CSV
+    <div className="space-y-6 p-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold">Comprehensive Audit Dashboard</h1>
+        <div className="flex gap-2">
+          <Button onClick={handleRunAudit} disabled={loading}>
+            <Activity className="w-4 h-4 mr-2" />
+            Run Full Audit
           </Button>
-          <Button variant="outline" onClick={() => exportAuditData('json')}>
-            <Download className="w-4 h-4 mr-2" />
-            Export JSON
-          </Button>
+          {report && (
+            <>
+              <Button variant="outline" onClick={() => exportReport('json')}>
+                Export JSON
+              </Button>
+              <Button variant="outline" onClick={() => exportReport('csv')}>
+                Export CSV
+              </Button>
+              <Button variant="outline" onClick={saveToDocumentation}>
+                Save to Docs
+              </Button>
+            </>
+          )}
         </div>
       </div>
 
-      {/* Portfolio Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card className="crypto-card-gradient text-white">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-white/60">Total Portfolio Value</p>
-                <p className="text-2xl font-bold">${totalValue.toLocaleString()}</p>
-              </div>
-              <DollarSign className="w-8 h-8 text-green-400" />
+      {report && (
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="trading">Trading</TabsTrigger>
+            <TabsTrigger value="security">Security</TabsTrigger>
+            <TabsTrigger value="accounts">Accounts</TabsTrigger>
+            <TabsTrigger value="logs">Audit Logs</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overview" className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">System Health</CardTitle>
+                  <CheckCircle className={`h-4 w-4 ${getStatusColor(report.systemHealth.overallStatus)}`} />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{report.systemHealth.overallStatus.toUpperCase()}</div>
+                  <p className="text-xs text-muted-foreground">
+                    {report.systemHealth.healthyCount}/{report.systemHealth.totalComponents} components healthy
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Trading Performance</CardTitle>
+                  <TrendingUp className="h-4 w-4 text-green-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{report.tradingAccuracy.accuracy.toFixed(1)}%</div>
+                  <p className="text-xs text-muted-foreground">
+                    {report.tradingAccuracy.correctSignals}/{report.tradingAccuracy.totalSignals} successful trades
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Profitability</CardTitle>
+                  <DollarSign className="h-4 w-4 text-green-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">${report.profitability.netPnL.toLocaleString()}</div>
+                  <p className="text-xs text-muted-foreground">
+                    {report.profitability.winRate.toFixed(1)}% win rate
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Security Score</CardTitle>
+                  <Shield className="h-4 w-4 text-blue-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{report.securityAssessment.score}/100</div>
+                  <p className="text-xs text-muted-foreground">
+                    {report.securityAssessment.vulnerabilities.length} critical issues
+                  </p>
+                </CardContent>
+              </Card>
             </div>
-          </CardContent>
-        </Card>
 
-        <Card className="crypto-card-gradient text-white">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-white/60">Total Accounts</p>
-                <p className="text-2xl font-bold">{accountSummaries.length}</p>
-              </div>
-              <Activity className="w-8 h-8 text-blue-400" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="crypto-card-gradient text-white">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-white/60">Holdings</p>
-                <p className="text-2xl font-bold">{consolidatedHoldings.length}</p>
-              </div>
-              <BarChart3 className="w-8 h-8 text-purple-400" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="crypto-card-gradient text-white">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-white/60">Audit Entries</p>
-                <p className="text-2xl font-bold">{auditEntries.length}</p>
-              </div>
-              <FileText className="w-8 h-8 text-orange-400" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="holdings">Holdings</TabsTrigger>
-          <TabsTrigger value="accounts">Accounts</TabsTrigger>
-          <TabsTrigger value="audit">Audit Trail</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Account Performance */}
-            <Card className="crypto-card-gradient text-white">
+            <Card>
               <CardHeader>
-                <CardTitle>Account Performance</CardTitle>
+                <CardTitle>Real Money Readiness Assessment</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {accountSummaries.map((account) => (
-                    <div key={account.account_id} className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
-                      <div>
-                        <p className="font-medium">{account.account_name}</p>
-                        <p className="text-sm text-white/60">{account.total_trades} trades</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-bold">${account.current_balance.toLocaleString()}</p>
-                        <div className={`text-sm flex items-center ${account.total_pnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                          {account.total_pnl >= 0 ? <TrendingUp className="w-3 h-3 mr-1" /> : <TrendingDown className="w-3 h-3 mr-1" />}
-                          {account.total_pnl >= 0 ? '+' : ''}${account.total_pnl.toFixed(2)}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Recent Activities */}
-            <Card className="crypto-card-gradient text-white">
-              <CardHeader>
-                <CardTitle>Recent Activities</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {auditEntries.slice(0, 10).map((entry) => (
-                    <div key={entry.id} className="flex items-center justify-between p-2 bg-white/5 rounded">
-                      <div>
-                        <p className="text-sm font-medium">{entry.action_type.replace('_', ' ')}</p>
-                        <p className="text-xs text-white/60">{entry.entity_type}: {entry.entity_id.substring(0, 8)}...</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-xs text-white/60">
-                          {format(new Date(entry.created_at), 'MMM dd, HH:mm')}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="holdings">
-          <Card className="crypto-card-gradient text-white">
-            <CardHeader>
-              <CardTitle>Consolidated Holdings</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {consolidatedHoldings.map((holding) => (
-                  <div key={holding.symbol} className="p-4 bg-white/5 rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-                          <span className="text-xs font-bold">{holding.symbol.substring(0, 2)}</span>
-                        </div>
-                        <div>
-                          <h3 className="font-semibold">{holding.symbol}</h3>
-                          <p className="text-sm text-white/60">{holding.total_amount.toFixed(4)} tokens</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-bold">${holding.current_value?.toLocaleString() || '0'}</p>
-                        <div className={`text-sm ${(holding.unrealized_pnl || 0) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                          {(holding.unrealized_pnl || 0) >= 0 ? '+' : ''}${(holding.unrealized_pnl || 0).toFixed(2)}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span>Portfolio: {holding.percentage_of_portfolio.toFixed(1)}%</span>
-                      <span>Avg: ${holding.average_price.toFixed(2)}</span>
-                    </div>
-                    <Progress value={holding.percentage_of_portfolio} className="mt-2" />
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="accounts">
-          <div className="space-y-6">
-            {accountSummaries.map((account) => (
-              <Card key={account.account_id} className="crypto-card-gradient text-white">
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    {account.account_name}
-                    <Badge variant="outline" className="border-white/20">
-                      {account.total_trades} trades
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">Overall Readiness</span>
+                    <Badge className={report.realMoneyReadiness.ready ? 'bg-green-500' : 'bg-red-500'}>
+                      {report.realMoneyReadiness.ready ? 'READY' : 'NOT READY'}
                     </Badge>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Account Stats */}
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-sm text-white/60">Balance</p>
-                          <p className="text-xl font-bold">${account.current_balance.toLocaleString()}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-white/60">P&L</p>
-                          <p className={`text-xl font-bold ${account.total_pnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                            {account.total_pnl >= 0 ? '+' : ''}${account.total_pnl.toFixed(2)}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-white/60">Volume</p>
-                          <p className="text-lg font-bold">${account.total_volume.toLocaleString()}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-white/60">Holdings</p>
-                          <p className="text-lg font-bold">{account.holdings.length}</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Account Holdings */}
+                  </div>
+                  <Progress value={report.realMoneyReadiness.confidence} className="w-full" />
+                  <p className="text-sm text-gray-600">
+                    Confidence: {report.realMoneyReadiness.confidence}%
+                  </p>
+                  {report.realMoneyReadiness.requirements.length > 0 && (
                     <div>
-                      <h4 className="text-sm font-medium mb-2">Holdings</h4>
-                      <div className="space-y-2 max-h-32 overflow-y-auto">
-                        {account.holdings.map((holding) => (
-                          <div key={holding.symbol} className="flex items-center justify-between text-sm">
-                            <span>{holding.symbol}</span>
-                            <span>{holding.total_amount.toFixed(4)}</span>
-                            <span className={(holding.unrealized_pnl || 0) >= 0 ? 'text-green-400' : 'text-red-400'}>
-                              {(holding.unrealized_pnl || 0) >= 0 ? '+' : ''}${(holding.unrealized_pnl || 0).toFixed(2)}
-                            </span>
-                          </div>
+                      <h4 className="font-medium mb-2">Requirements to meet:</h4>
+                      <ul className="list-disc list-inside space-y-1">
+                        {report.realMoneyReadiness.requirements.map((req, index) => (
+                          <li key={index} className="text-sm text-gray-600">{req}</li>
                         ))}
-                      </div>
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="trading" className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Trading Accuracy Metrics</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm font-medium">Accuracy</p>
+                      <p className="text-2xl font-bold">{report.tradingAccuracy.accuracy.toFixed(2)}%</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">Precision</p>
+                      <p className="text-2xl font-bold">{report.tradingAccuracy.precision.toFixed(2)}%</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">Recall</p>
+                      <p className="text-2xl font-bold">{report.tradingAccuracy.recall.toFixed(2)}%</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">F1 Score</p>
+                      <p className="text-2xl font-bold">{report.tradingAccuracy.f1Score.toFixed(2)}</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
-            ))}
-          </div>
-        </TabsContent>
 
-        <TabsContent value="audit">
-          <Card className="crypto-card-gradient text-white">
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                Audit Trail
-                <div className="flex items-center gap-2">
-                  <Input
-                    placeholder="Search..."
-                    className="w-64"
-                    value={filters.actionType}
-                    onChange={(e) => setFilters({ ...filters, actionType: e.target.value })}
-                  />
-                  <Button variant="outline" size="sm">
-                    <Filter className="w-4 h-4" />
-                  </Button>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Profitability Analysis</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm font-medium">Total P&L</p>
+                      <p className={`text-2xl font-bold ${report.profitability.netPnL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        ${report.profitability.netPnL.toLocaleString()}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">Win Rate</p>
+                      <p className="text-2xl font-bold">{report.profitability.winRate.toFixed(1)}%</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">Sharpe Ratio</p>
+                      <p className="text-2xl font-bold">{report.profitability.sharpeRatio.toFixed(2)}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">Max Drawdown</p>
+                      <p className="text-2xl font-bold text-red-600">{report.profitability.maxDrawdown.toFixed(1)}%</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Real Money Projection</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div>
+                    <p className="text-sm font-medium">Paper P&L</p>
+                    <p className="text-lg font-semibold">${report.profitability.realMoneyProjection.wouldHaveMade.toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">Risk Adjusted</p>
+                    <p className="text-lg font-semibold">${report.profitability.realMoneyProjection.riskAdjusted.toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">After Fees</p>
+                    <p className="text-lg font-semibold">${report.profitability.realMoneyProjection.netAfterFees.toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">Annual Projection</p>
+                    <p className="text-lg font-semibold">${report.profitability.realMoneyProjection.annualizedReturn.toLocaleString()}</p>
+                  </div>
                 </div>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Account</TableHead>
-                    <TableHead>Action</TableHead>
-                    <TableHead>Entity</TableHead>
-                    <TableHead>Details</TableHead>
-                    <TableHead></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {auditEntries.slice(0, 50).map((entry) => (
-                    <TableRow key={entry.id}>
-                      <TableCell className="text-sm">
-                        {format(new Date(entry.created_at), 'MMM dd, HH:mm')}
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        {accountSummaries.find(acc => acc.account_id === entry.account_id)?.account_name || 'N/A'}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="text-xs">
-                          {entry.action_type.replace('_', ' ')}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="security" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Security Assessment</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">Security Score</span>
+                    <span className="text-2xl font-bold">{report.securityAssessment.score}/100</span>
+                  </div>
+                  <Progress value={report.securityAssessment.score} className="w-full" />
+                  
+                  {report.securityAssessment.vulnerabilities.length > 0 && (
+                    <div>
+                      <h4 className="font-medium mb-2 text-red-600">Critical Vulnerabilities</h4>
+                      <ul className="space-y-1">
+                        {report.securityAssessment.vulnerabilities.map((vuln, index) => (
+                          <li key={index} className="flex items-center text-sm">
+                            <AlertTriangle className="w-4 h-4 text-red-500 mr-2" />
+                            {vuln}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  <div>
+                    <h4 className="font-medium mb-2">Security Recommendations</h4>
+                    <ul className="space-y-1">
+                      {report.securityAssessment.recommendations.map((rec, index) => (
+                        <li key={index} className="flex items-center text-sm">
+                          <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
+                          {rec}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="accounts" className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {accountSummaries.map((account) => (
+                <Card key={account.id}>
+                  <CardHeader>
+                    <CardTitle className="text-lg">{account.name}</CardTitle>
+                    <Badge variant="outline">{account.status}</Badge>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div>
+                        <p className="font-medium">Balance</p>
+                        <p>${account.balance.toLocaleString()}</p>
+                      </div>
+                      <div>
+                        <p className="font-medium">P&L</p>
+                        <p className={account.pnl >= 0 ? 'text-green-600' : 'text-red-600'}>
+                          ${account.pnl.toLocaleString()}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="font-medium">Total Value</p>
+                        <p>${account.totalValue.toLocaleString()}</p>
+                      </div>
+                      <div>
+                        <p className="font-medium">Holdings</p>
+                        <p>{account.holdings?.length || 0} assets</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="logs" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Recent Audit Entries</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {auditEntries.slice(0, 10).map((entry) => (
+                    <div key={entry.id} className="flex items-center justify-between p-3 border rounded">
+                      <div className="flex items-center space-x-3">
+                        <Badge className={getSeverityBadge(entry.severity)}>
+                          {entry.severity}
                         </Badge>
-                      </TableCell>
-                      <TableCell className="text-sm">{entry.entity_type}</TableCell>
-                      <TableCell className="text-sm">{entry.entity_id.substring(0, 12)}...</TableCell>
-                      <TableCell>
-                        <Button variant="ghost" size="sm">
-                          <Eye className="w-3 h-3" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
+                        <div>
+                          <p className="font-medium">{entry.component}</p>
+                          <p className="text-sm text-gray-600">{entry.message}</p>
+                        </div>
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {new Date(entry.timestamp).toLocaleString()}
+                      </div>
+                    </div>
                   ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      )}
     </div>
   );
 };
